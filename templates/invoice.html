@@ -1,0 +1,55 @@
+<style>
+     .body-invoice{
+            font-size: small;
+            border-style:solid;
+            border-width:2px;
+            border-color:#00BBB6;
+            width: 100%;
+            heigth:100%;
+        }
+        table{
+            border-style:solid;
+            border-width:2px;
+            border-color:#00BBB6;
+        }
+        .footer{
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 99%;
+            border-style:solid;
+            border-width:2px;
+            border-color:#00BBB6;
+            heigth-min:100px;
+        }
+</style>
+<br/>
+<body>
+    <div class="body-invoice">
+        <table>
+            <thead>
+                <th>Código</th>
+                <th>Cantidad</th>
+                <th>Descripción del producto</th>
+                <th>I.V.A</th>
+                <th>Total</th>
+            </thead>
+            <tbody>
+                {% for row_index in range(x['date']|count) %}
+                    <tr>
+                      <td>{{ x['date'][row_index]|tojson|safe }}</td>
+                      <td>{{ x['users'][row_index] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p style="color:red">{{key_mh}}</p>
+    </div>
+    <div class="footer">
+        <div>
+            <b>Observaciones:</b>
+        </div>
+        <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
+    </div>
+</body>
+</html>

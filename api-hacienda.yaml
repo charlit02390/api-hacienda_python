@@ -1,0 +1,405 @@
+openapi: 3.0.0
+info:
+  title: API Hacienda
+  description: REST API for the Haciend project
+  version: 0.0.1
+servers:
+  - url: https://localhost:3005
+components:
+  schemas:
+    company:
+      type: object
+      properties:
+          id_compania:
+            type: string
+          codigo_actividad:
+            type: integer
+          otras_senas:
+            type: string
+          cod_telefono:
+            type: string
+          canton:
+            type: string
+          distrito:
+            type: string
+          email:
+            type: string
+          ambiente:
+            type: string
+          cedula:
+            type: string
+          nombre_compania:
+            type: string
+          barrio:
+            type: string
+          password_hacienda:
+            type: string
+          telefono:
+            type: string
+          pin:
+            type: string
+          provincia:
+            type: string
+          nombre_comercial:
+            type: string
+          tipo_identificacion:
+            type: string
+          usuario_hacienda:
+            type: string
+          firma:
+            type: string
+            format: binary
+    document:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            tipo:
+              type: string
+            nombre_usuario:
+              type: string
+            situacion:
+              type: string
+            consecutivo:
+              type: string
+            clave:
+              type: string
+            terminal:
+              type: string
+            sucursal:
+              type: string
+            fecha:
+              type: string
+            codigo_actividad:
+              type: string
+            otro_telefono:
+              type: string
+            condicion_venta:
+              type: string
+            plazo_credito:
+              type: string
+            num_fecha:
+              type: string
+            num_referencia:
+              type: string
+            codigo_vendedor:
+              type: string
+            receptor:
+              type: object
+              properties:
+                tipo_identificacion:
+                  type: string
+                numero_identificacion:
+                  type: string
+                nombre:
+                  type: string
+                provincia:
+                  type: string
+                canton:
+                  type: string
+                distrito:
+                  type: string
+                otras_senas:
+                  type: string
+                cod_pais:
+                  type: string
+                telefono:
+                  type: string
+                website:
+                  type: string
+                correo:
+                  type: string
+                nombre_comercial:
+                  type: string
+                correo_gasto:
+                  type: string
+            medio_pago:
+              type: array
+              properties:
+                codigo:
+                  type: string
+            detalles:
+              type: array
+              properties:
+                numero:
+                  type: string
+                cantidad:
+                  type: string
+                codigo_comercial:
+                  type: array
+                  properties:
+                    tipo:
+                      type: string
+                    codigo:
+                      type: string
+                unidad_medidad_comercial:
+                  type: string
+                unidad:
+                  type: string
+                detalle:
+                  type: string
+                precio_unitario:
+                  type: string
+                monto_total:
+                  type: string
+                descuento:
+                  type: array
+                  properties:
+                    monto:
+                      type: string
+                    descripcion:
+                      type: string
+                subtotal:
+                  type: string
+                impuesto:
+                  type: array
+                  properties:
+                    codigo_tarifa:
+                      type: string
+                    codigo:
+                      type: string
+                    tarifa:
+                      type: string
+                    monto:
+                      type: string
+                    factor_iva:
+                      type: string
+                impuesto_neto:
+                  type: string
+                total_linea:
+                  type: string
+                partida_arancelaria:
+                  type: string
+                base_imponible:
+                  type: string
+            codigo_moneda:
+              type: object
+              properties:
+                tipo_moneda:
+                  type: string
+                tipo_cambio:
+                  type: string
+
+            total_serv_gravados:
+              type: string
+            total_serv_exentos:
+              type: string
+            total_serv_exonerado:
+              type: string
+            total_mercan_gravados:
+              type: string
+            total_mercan_exentos:
+              type: string
+            total_mercan_exonerada:
+              type: string
+            total_gravados:
+              type: string
+            total_exentos:
+              type: string
+            total_exonerados:
+              type: string
+            total_ventas:
+              type: string
+            total_descuentos:
+              type: string
+            total_ventas_netas:
+              type: string
+            total_impuestos:
+              type: string
+            total_iva_devuelto:
+              type: string
+            total_otros_cargos:
+              type: string
+            total_comprobante:
+              type: string
+            otros_cargos:
+              type: array
+              properties:
+                tipo_documento:
+                  type: string
+                numero_identidad_tercero:
+                  type: string
+                detalle:
+                  type: string
+                porcentaje:
+                  type: string
+                monto_cargo:
+                  type: string
+
+            referencia:
+              type: object
+              properties:
+                num_factura:
+                  type: string
+            otros:
+              type: object
+              properties:
+                otro_texto:
+                  type: string
+                otro_contenido:
+                  type: string
+    key:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            tipo:
+              type: string
+            nombre_usuario:
+              type: string
+            situacion:
+              type: string
+            consecutivo:
+              type: string
+            terminal:
+              type: string
+            sucursal:
+              type: string
+paths:
+  /api/companies:
+    get:
+      tags:
+        - companies
+      operationId: routes.companies.route_list_companies
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+    post:
+      tags:
+        - companies
+      summary: Creates a company.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/company'
+      operationId: routes.companies.save_company
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+  /api/companies/{id}:
+    get:
+      tags:
+        - companies
+      operationId: routes.companies.route_get_company_byid
+      parameters:
+        - name: id
+          in: path
+          description: Company ID
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+  /api/documents:
+    get:
+      tags:
+        - documents
+      summary: Processing all documents in state procesando
+      operationId: routes.documents.consult_documents
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+    post:
+      tags:
+        - documents
+      summary: Create a document (FE, NC, ND FEE).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/document'
+      operationId: routes.documents.create_documents
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+  /api/documents/consult/{company_id}/{key}:
+    get:
+      tags:
+        - documents
+      summary: Consult a document in MH
+      operationId: routes.documents.consult_document_company
+      parameters:
+        - name: company_id
+          in: path
+          description: Company ID
+          required: true
+          schema:
+            type: string
+        - name: key
+          in: path
+          description: key of MH
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+  /api/documents/validate/{company_id}/{key}:
+    get:
+      tags:
+        - documents
+      summary: Consult a document in MH
+      operationId: routes.documents.validate_document_company
+      parameters:
+        - name: company_id
+          in: path
+          description: Company ID
+          required: true
+          schema:
+            type: string
+        - name: key
+          in: path
+          description: key of MH
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+  /api/references/key:
+    post:
+      tags:
+        - references
+      summary: Create a document (FE, NC, ND FEE).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/key'
+      operationId: routes.references.generated_key
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+
+tags:
+  - name: companies
+    description: Everything about your Companies
+  - name: documents
+    description: Everything about your documents
+  - name: references
+    description: Everything about your references data
+
+

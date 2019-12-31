@@ -8,15 +8,15 @@ def create_company(company_user, name, tradename, type_identification, dni, stat
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_createCompany', (company_user, name, tradename, type_identification, dni, state, county,
-                                              district, neighbor, address, phone_code, phone, email, activity_code))
+                                             district, neighbor, address, phone_code, phone, email, activity_code))
         data = cursor.fetchall()
         if len(data) is 0:
             conn.commit()
-            return json.dumps({'message': 'company created successfully!'})
+            return True
         else:
-            return json.dumps({'error': str(data[0])})
+            return {'error': str(data[0])}
     except Exception as e:
-        return json.dumps({'error': str(e)})
+        return {'error': str(e)}
     finally:
         cursor.close()
         conn.close()
@@ -30,35 +30,77 @@ def save_mh_data(company_user, user_mh, pass_mh, signature, pin_sig, env):
         data = cursor.fetchall()
         if len(data) is 0:
             conn.commit()
-            return json.dumps({'message': 'information saved successfully!'})
+            return True
         else:
-            return json.dumps({'error': str(data[0])})
+            return {'error': str(data[0])}
     except Exception as e:
-        return json.dumps( {'error': str(e)})
+        return {'error': str(e)}
     finally:
         cursor.close()
         conn.close()
 
 
-def get_mh_data(company_user):
+def get_company_data(company_user):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_getMHInfo', (company_user,))
+        cursor.callproc('sp_getCompanyInfo', (company_user,))
+        row_headers = [x[0] for x in cursor.description]
         data = cursor.fetchall()
-        if len(data) is not 0:
+        if len( data ) is not 0:
             conn.commit()
-            return data
+            json_data = []
+            for row in data:
+                json_data.append(dict(zip(row_headers, row)))
+            return json_data
         else:
-            return json.dumps({'error': 'Error: Not get information of your company'})
+            return {'error': 'Error: Not get information of your company'}
     except Exception as e:
-        return json.dumps( {'error': str(e)})
+        return {'error': str(e)}
     finally:
         cursor.close()
         conn.close()
 
 
+def get_companies():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_getCompanies', ())
+        row_headers = [x[0] for x in cursor.description]
+        data = cursor.fetchall()
+        if len( data ) is not 0:
+            conn.commit()
+            json_data = []
+            for row in data:
+                json_data.append(dict(zip(row_headers, row)))
+            return json_data
+        else:
+            return {'error': 'Error: Not get information of your company'}
+    except Exception as e:
+        return {'error': str( e )}
+    finally:
+        cursor.close()
+        conn.close()
 
 
-def get_companies(id_company=0):
-    return json.dumps({'error': str(id_company)})
+def get_sign_data(company_user):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_getSignCompany', (company_user,))
+        row_headers = [x[0] for x in cursor.description]
+        data = cursor.fetchall()
+        if len(data) is not 0:
+            conn.commit()
+            for row in data:
+               signature = dict(zip(row_headers, row))
+            return signature
+        else:
+            return {'error': 'Error: Not get information of your company'}
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+

@@ -1,0 +1,11 @@
+mysql:
+    host: localhost
+    user: root
+    passwd: root
+    db: jack_api_hacienda
+email:
+    host: smtp.gmail.com
+    port: 587
+    type: TLS
+    user: cmonge@jackdevelopers.com
+    password: Jack1351#
