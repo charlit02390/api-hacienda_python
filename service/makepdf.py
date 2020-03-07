@@ -2,7 +2,7 @@ import os
 import tempfile
 
 import pdfkit
-from . import emails
+
 from flask import render_template, make_response
 
 
@@ -19,7 +19,7 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     add_pdf_header(options, company_data[0], document_type, consecutive, key_mh, receptor, date, payment_methods,
                    sale_conditions, moneda, activity_code)
     pdf = pdfkit.from_string(main_content, False, options=options)
-    emails.sent_email(pdf)
+
     return pdf
 
 

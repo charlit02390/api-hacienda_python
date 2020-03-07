@@ -461,8 +461,8 @@ def receptor_xml(sb, receiver_company, document_type):
         if document_type == 'TE' or (document_type == 'NC' and not receiver_company.get('numero_identificacion')):
             pass
         else:
-            vat = re.sub('[^0-9]', '', receiver_company['numero_identificacion'])
-            if not receiver_company['tipo_identificacion']:
+            vat = re.sub('[^0-9]', '', receiver_company['numeroIdentificacion'])
+            if not receiver_company['tipoIdentificacion']:
                 if len(vat) == 9:  # cedula fisica
                     id_code = '01'
                 elif len(vat) == 10:  # cedula juridica
@@ -472,7 +472,7 @@ def receptor_xml(sb, receiver_company, document_type):
                 else:
                     id_code = '05'
             else:
-                id_code = receiver_company['tipo_identificacion']
+                id_code = receiver_company['tipoIdentificacion']
 
             if receiver_company.get('nombre'):
                 sb.Append('<Receptor>')
@@ -526,8 +526,8 @@ def lines_xml(sb, lines, document_type, receiver_company):
         sb.Append('<LineaDetalle>')
         sb.Append('<NumeroLinea>' + str(v['numero']) + '</NumeroLinea>')
 
-        if document_type == 'FEE' and v.get('partida_arancelaria'):
-            sb.Append('<PartidaArancelaria>' + str(v['partida_arancelaria']) + '</PartidaArancelaria>')
+        if document_type == 'FEE' and v.get('partidaArancelaria'):
+            sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
         # sb.Append('<CodigoComercial>' + str(v['codigoProducto']) + '</CodigoComercial>')
 
@@ -536,8 +536,8 @@ def lines_xml(sb, lines, document_type, receiver_company):
                   str(v['unidad']) + '</UnidadMedida>')
         sb.Append('<Detalle>' + v['detalle'] + '</Detalle>')
         sb.Append('<PrecioUnitario>' +
-                  str(v['precio_unitario']) + '</PrecioUnitario>')
-        sb.Append('<MontoTotal>' + str(v['monto_total']) + '</MontoTotal>')
+                  str(v['precioUnitario']) + '</PrecioUnitario>')
+        sb.Append('<MontoTotal>' + str(v['montoTotal']) + '</MontoTotal>')
         if v.get('descuento'):
             for b in v['descuento']:
                 sb.Append('<Descuento>')
@@ -558,7 +558,7 @@ def lines_xml(sb, lines, document_type, receiver_company):
             for b in v['impuesto']:
                 sb.Append('<Impuesto>')
                 sb.Append('<Codigo>' + str(b['codigo']) + '</Codigo>')
-                sb.Append('<CodigoTarifa>' + str(b['codigo_tarifa']) + '</CodigoTarifa>')
+                sb.Append('<CodigoTarifa>' + str(b['codigoTarifa']) + '</CodigoTarifa>')
                 sb.Append('<Tarifa>' + str(b['tarifa']) + '</Tarifa>')
                 sb.Append('<Monto>' + str(b['monto']) + '</Monto>')
 
@@ -578,9 +578,9 @@ def lines_xml(sb, lines, document_type, receiver_company):
 
                 sb.Append('</Impuesto>')
 
-            sb.Append('<ImpuestoNeto>' + str(v['impuesto_neto']) + '</ImpuestoNeto>')
+            sb.Append('<ImpuestoNeto>' + str(v['impuestoNeto']) + '</ImpuestoNeto>')
 
-        sb.Append('<MontoTotalLinea>' + str(v['total_linea']) + '</MontoTotalLinea>')
+        sb.Append('<MontoTotalLinea>' + str(v['totalLinea']) + '</MontoTotalLinea>')
         sb.Append('</LineaDetalle>')
     sb.Append('</DetalleServicio>')
 
@@ -658,9 +658,9 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
 
     sb.Append('<ResumenFactura>')
     sb.Append('<CodigoTipoMoneda><CodigoMoneda>' +
-              moneda['tipo_moneda'] +
+              moneda['tipoMoneda'] +
               '</CodigoMoneda><TipoCambio>' +
-              moneda['tipo_cambio'] +
+              moneda['tipoCambio'] +
               '</TipoCambio></CodigoTipoMoneda>')
 
     sb.Append('<TotalServGravados>' + str(total_servicio_gravado) + '</TotalServGravados>')

@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 cfg = globalsettings.cfg
 
 
-def sent_email(pdf):
+def sent_email(pdf,signxml):
     subject = "An email with attachment from Python"
     body = "This is an email with attachment sent from Python"
     sender_email = cfg['email']['user']
@@ -39,11 +39,24 @@ def sent_email(pdf):
     # Add header as key/value pair to attachment part
     part.add_header(
         "Content-Disposition",
-        f"attachment; filename= example.pdf",
+        f"attachment; filename= example.pdf"
+    )
+
+    part2 = MIMEBase("application", "octet-stream")
+    part2.set_payload(signxml)
+
+    # Encode file in ASCII characters to send by email
+    encoders.encode_base64(part2)
+
+    # Add header as key/value pair to attachment part
+    part2.add_header(
+        "Content-Disposition",
+        f"attachment; filename= FE_comprobante.xml",
     )
 
     # Add attachment to message and convert message to string
     message.attach(part)
+    message.attach(part2)
     text = message.as_string()
 
     # Log in to server using secure context and send email

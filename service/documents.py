@@ -2,6 +2,7 @@ import json
 from . import api_facturae
 from . import fe_enums
 from . import makepdf
+from . import emails
 import base64
 
 from infrastructure import companies
@@ -18,31 +19,31 @@ def create_document(data):
     _branch = data['sucursal']
     _datestr = api_facturae.get_time_hacienda()
     datecr = api_facturae.get_time_hacienda(True)
-    _activity_code = data['codigo_actividad']
+    _activity_code = data['codigoActividad']
     _other_phone = data['otro_telefono']
     _receptor = data['receptor']
-    _sale_condition = data['condicion_venta']
-    _credit_term = data['plazo_credito']
-    _payment_methods = data['medio_pago']
+    _sale_condition = data['condicionVenta']
+    _credit_term = data['plazoCredito']
+    _payment_methods = data['medioPago']
     _lines = data['detalles']
-    _currency = data['codigo_moneda']
-    _total_serv_taxed = data['total_serv_gravados']
-    _total_serv_untaxed = data['total_serv_exentos']
-    _total_serv_exone = data['total_serv_exonerado']
-    _total_merch_taxed = data['total_merc_gravados']
-    _total_merch_untaxed = data['total_merc_exentos']
-    _total_merch_exone = data['total_merc_exonerada']
-    _total_taxed = data['total_gravado']
-    _total_untaxed = data['total_exento']
-    _total_exone = data['total_exonerado']
-    _total_sales = data['total_ventas']
-    _total_discount = data['total_descuentos']
-    _total_net_sales = data['total_ventas_netas']
-    _total_taxes = data['total_impuestos']
-    _total_return_iva = data['total_iva_devuelto']
-    _total_other_charges = data['total_otros_cargos']
-    _total_document = data['total_comprobante']
-    _other_charges = data['otros_cargos']
+    _currency = data['codigoTipoMoneda']
+    _total_serv_taxed = data['totalServGravados']
+    _total_serv_untaxed = data['totalServExentos']
+    _total_serv_exone = data['totalServExonerado']
+    _total_merch_taxed = data['totalMercanciasGravados']
+    _total_merch_untaxed = data['totalMercanciasExentos']
+    _total_merch_exone = data['totalMercExonerada']
+    _total_taxed = data['totalGravados']
+    _total_untaxed = data['totalExentos']
+    _total_exone = data['totalExonerado']
+    _total_sales = data['totalVentas']
+    _total_discount = data['totalDescuentos']
+    _total_net_sales = data['totalVentasNetas']
+    _total_taxes = data['totalImpuestos']
+    _total_return_iva = data['totalIVADevuelto']
+    _total_other_charges = data['totalOtrosCargos']
+    _total_document = data['totalComprobantes']
+    _other_charges = data['otrosCargos']
     _reference = data['referencia']
     _others = data['otros']
 
@@ -64,16 +65,19 @@ def create_document(data):
 
     xmlencoded = base64.b64encode(xml_sign)
 
-    '''pdf = makepdf.render_pdf(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
+    pdf = makepdf.render_pdf(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
                              _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                              _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                              _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                              _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
                              _total_untaxed, _total_sales, _total_return_iva, _total_document);
-    pdfencoded = base64.b64encode(pdf);'''
+
+    emails.sent_email(pdf,xml_sign)
+
+    pdfencoded = base64.b64encode(pdf);
 
     result = documents.save_document(_company_user, _key_mh, xmlencoded, 'creado', datecr, _type_document,
-                                     _receptor['tipo_identificacion'], _receptor['numero_identificacion'],
+                                     _receptor['tipoIdentificacion'], _receptor['numeroIdentificacion'],
                                      _total_document , _total_taxes)
     if result:
         return {'Respuesta Hacienda': 'creado'}

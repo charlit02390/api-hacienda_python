@@ -2,37 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ca298f85-67c2-4532-949c-beaaba6da2c2" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/api-hacienda.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/configuration/globalsettings.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/infrastructure/documents.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/service/api_facturae.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/service/emails.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/service/makepdf.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/service/references.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/Logo_Jack.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/footer.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/header.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/invoice.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/api-hacienda-python.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/api-hacienda-python.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/infrastructure/companies.py" beforeDir="false" afterPath="$PROJECT_DIR$/infrastructure/companies.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/companies.py" beforeDir="false" afterPath="$PROJECT_DIR$/routes/companies.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/invoices.py" beforeDir="false" afterPath="$PROJECT_DIR$/routes/documents.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/routes/references.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/service/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/companies.py" beforeDir="false" afterPath="$PROJECT_DIR$/service/companies.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/fe_enums.py" beforeDir="false" afterPath="$PROJECT_DIR$/service/fe_enums.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/fe_services.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/invoices.py" beforeDir="false" afterPath="$PROJECT_DIR$/service/documents.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/mr_services.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/nc_services.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/nd_services.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/te_services.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/api_facturae.py" beforeDir="false" afterPath="$PROJECT_DIR$/service/api_facturae.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/documents.py" beforeDir="false" afterPath="$PROJECT_DIR$/service/documents.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/emails.py" beforeDir="false" afterPath="$PROJECT_DIR$/service/emails.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/makepdf.py" beforeDir="false" afterPath="$PROJECT_DIR$/service/makepdf.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/invoice.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/invoice.html" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -135,93 +111,6 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/xades/context2.py</url>
-          <line>114</line>
-          <option name="timeStamp" value="13" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/routes/references.py</url>
-          <line>11</line>
-          <option name="timeStamp" value="23" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/utils_mh.py</url>
-          <line>113</line>
-          <option name="timeStamp" value="24" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/infrastructure/mappers/companies.py</url>
-          <line>24</line>
-          <option name="timeStamp" value="27" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/api_facturae.py</url>
-          <line>718</line>
-          <option name="timeStamp" value="57" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/infrastructure/documents.py</url>
-          <line>64</line>
-          <option name="timeStamp" value="59" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/routes/documents.py</url>
-          <line>13</line>
-          <option name="timeStamp" value="64" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/documents.py</url>
-          <line>125</line>
-          <option name="timeStamp" value="66" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/documents.py</url>
-          <line>134</line>
-          <option name="timeStamp" value="71" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/api_facturae.py</url>
-          <line>724</line>
-          <option name="timeStamp" value="78" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/makepdf.py</url>
-          <line>22</line>
-          <option name="timeStamp" value="85" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/makepdf.py</url>
-          <line>18</line>
-          <option name="timeStamp" value="86" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/makepdf.py</url>
-          <line>16</line>
-          <option name="timeStamp" value="87" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/documents.py</url>
-          <line>131</line>
-          <option name="timeStamp" value="88" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/documents.py</url>
-          <line>88</line>
-          <option name="timeStamp" value="89" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/documents.py</url>
-          <line>95</line>
-          <option name="timeStamp" value="91" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/service/documents.py</url>
-          <line>90</line>
-          <option name="timeStamp" value="92" />
-        </line-breakpoint>
-      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
