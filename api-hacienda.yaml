@@ -301,6 +301,23 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+
+    delete:
+      description: deletes a single companie based on the id supplied
+      operationId: routes.companies.route_delete_company
+      parameters:
+        - name: id
+          in: path
+          description: id of the company
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The companie has been deleted
+        500:
+          description: there was an error starting the facial recognition system
+
   /api/documents:
     get:
       tags:

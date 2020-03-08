@@ -26,7 +26,7 @@ def create_company(data, file):
 
     company_exist = companies.verify_company(_company_user)
 
-    if company_exist==False:
+    if not company_exist:
         result = companies.create_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
                                           _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code)
 
@@ -41,9 +41,16 @@ def create_company(data, file):
     else:
         return {'message': 'company already exists'}
 
+
 def get_list_companies(id_company=0):
     if id_company == 0:
         result = {'companies': companies.get_companies()}
     else:
         result = {'company': companies.get_company_data(id_company)}
     return result
+
+
+def delete_company(id_company):
+    result = companies.delete_company_data(id_company)
+    return result
+
