@@ -39,6 +39,24 @@ def save_mh_data(company_user, user_mh, pass_mh, signature, pin_sig, env):
         cursor.close()
         conn.close()
 
+#Verify if a company exist in the data base
+def verify_company(company_user):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_getCompanyInfo', (company_user,))
+        data = cursor.fetchall()
+        if len(data) is not 0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
 
 def get_company_data(company_user):
     try:

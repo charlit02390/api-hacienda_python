@@ -24,18 +24,22 @@ def create_company(data, file):
     _pin = data['pin']
     _env = data['ambiente']
 
-    result = companies.create_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
-                                      _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code)
+    company_exist = companies.verify_company(_company_user)
 
-    result_mh = companies.save_mh_data(_company_user, _user_mh, _pass_mh, _signature, _pin, _env)
+    if company_exist==False:
+        result = companies.create_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
+                                          _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code)
 
-    if result is not True:
-        return result
-    elif result_mh is not True:
-        return result_mh
+        result_mh = companies.save_mh_data(_company_user, _user_mh, _pass_mh, _signature, _pin, _env)
+
+        if result is not True:
+            return result
+        elif result_mh is not True:
+            return result_mh
+        else:
+            return {'message': 'company created successfully!'}
     else:
-        return {'message': 'company created successfully!'}
-
+        return {'message': 'company already exists'}
 
 def get_list_companies(id_company=0):
     if id_company == 0:
