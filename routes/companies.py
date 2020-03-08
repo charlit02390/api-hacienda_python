@@ -25,6 +25,7 @@ def route_update_company():
     return 1
 
 
-def route_delete_company():
-    return 1
+def route_delete_company(id):
+    result = service.delete_company(id)
+    return result
 

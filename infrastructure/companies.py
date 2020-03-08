@@ -40,6 +40,24 @@ def save_mh_data(company_user, user_mh, pass_mh, signature, pin_sig, env):
         conn.close()
 
 
+# Verify if a company exist in the data base
+def verify_company(company_user):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_getCompanyInfo', (company_user,))
+        data = cursor.fetchall()
+        if len(data) is not 0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
 def get_company_data(company_user):
     try:
         conn = mysql.connect()
@@ -47,7 +65,7 @@ def get_company_data(company_user):
         cursor.callproc('sp_getCompanyInfo', (company_user,))
         row_headers = [x[0] for x in cursor.description]
         data = cursor.fetchall()
-        if len( data ) is not 0:
+        if len(data) is not 0:
             conn.commit()
             json_data = []
             for row in data:
@@ -69,7 +87,7 @@ def get_companies():
         cursor.callproc('sp_getCompanies', ())
         row_headers = [x[0] for x in cursor.description]
         data = cursor.fetchall()
-        if len( data ) is not 0:
+        if len(data) is not 0:
             conn.commit()
             json_data = []
             for row in data:
@@ -78,7 +96,7 @@ def get_companies():
         else:
             return {'error': 'Error: Not get information of your company'}
     except Exception as e:
-        return {'error': str( e )}
+        return {'error': str(e)}
     finally:
         cursor.close()
         conn.close()
@@ -94,7 +112,7 @@ def get_sign_data(company_user):
         if len(data) is not 0:
             conn.commit()
             for row in data:
-               signature = dict(zip(row_headers, row))
+                signature = dict(zip(row_headers, row))
             return signature
         else:
             return {'error': 'Error: Not get information of your company'}
@@ -104,3 +122,20 @@ def get_sign_data(company_user):
         cursor.close()
         conn.close()
 
+
+def delete_company_data(company_user):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_deleteCompany', (company_user,))
+        data = cursor.rowcount
+        if data != 0:
+            conn.commit()
+            return {'message': 'The company has been deleted'}
+        else:
+            return {'error': 'The company can not be deleted'}
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
