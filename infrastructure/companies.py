@@ -40,7 +40,44 @@ def save_mh_data(company_user, user_mh, pass_mh, signature, pin_sig, env):
         conn.close()
 
 
-# Verify if a company exist in the data base
+def modify_company(company_user, name, tradename, type_identification, dni, state, county, district, neighbor, address,
+                   phone_code, phone, email, activity_code):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_ModifyCompany', (company_user, name, tradename, type_identification, dni, state, county,
+                                             district, neighbor, address, phone_code, phone, email, activity_code))
+        data = cursor.rowcount
+        if data != 0:
+            conn.commit()
+            return True
+        else:
+            return {'error': 'The company data can not be modify'}
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def modify_mh_data(company_user, user_mh, pass_mh, signature, pin_sig, env):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_modifyMHInfo', (user_mh, pass_mh, signature, pin_sig, company_user, env))
+        data = cursor.rowcount
+        if data != 0:
+            conn.commit()
+            return True
+        else:
+            return {'error': 'The company_mh data can not be modify'}
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
 def verify_company(company_user):
     try:
         conn = mysql.connect()

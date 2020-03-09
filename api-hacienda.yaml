@@ -284,6 +284,23 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+    put:
+      tags:
+        - companies
+      summary: Modify a company.
+      requestBody:
+        required: true
+        content:
+          multipart/from-data:
+            schema:
+              $ref: '#/components/schemas/company'
+      operationId: routes.companies.route_modify_company
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+
   /api/companies/{id}:
     get:
       tags:

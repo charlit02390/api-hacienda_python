@@ -29,3 +29,9 @@ def route_delete_company(id):
     result = service.delete_company(id)
     return result
 
+
+def route_modify_company():
+    file = connexion.request.files['firma']
+    body = connexion.request.form
+    result = service.modify_company(body, file.stream.read())
+    return result
