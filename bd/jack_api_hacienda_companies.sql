@@ -39,7 +39,7 @@ CREATE TABLE `companies` (
   `email` varchar(100) DEFAULT NULL,
   `activity_code` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -48,7 +48,7 @@ CREATE TABLE `companies` (
 
 LOCK TABLES `companies` WRITE;
 /*!40000 ALTER TABLE `companies` DISABLE KEYS */;
-INSERT INTO `companies` VALUES (29,'08089','Jossy Mejia','Jacks','01','207790754','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(31,'0808878','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304');
+INSERT INTO `companies` VALUES (29,'08089','Jossy Mejia','Jacks','01','207790754','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(31,'0808878','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(32,'999','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(33,'998','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(34,'99888','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(35,'8','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(36,'87','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(37,'876','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(38,'87666','Angel','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(39,'12','angelica araya','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304');
 /*!40000 ALTER TABLE `companies` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -61,4 +61,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-09 10:50:16
+-- Dump completed on 2020-03-09 18:49:33

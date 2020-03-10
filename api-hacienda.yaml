@@ -49,6 +49,10 @@ components:
           firma:
             type: string
             format: binary
+          logo:
+            type: string
+            format: binary
+
     document:
       type: object
       properties:

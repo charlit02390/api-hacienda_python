@@ -16,41 +16,32 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `documents`
+-- Table structure for table `users`
 --
 
-DROP TABLE IF EXISTS `documents`;
+DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `documents` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `company_id` int DEFAULT NULL,
-  `key_mh` varchar(50) DEFAULT NULL,
-  `signxml` blob,
-  `answerxml` blob,
-  `status` varchar(80) DEFAULT NULL,
-  `pdfdocument` blob,
-  `isSent` tinyint DEFAULT NULL,
-  `dateanswer` datetime DEFAULT NULL,
-  `datesign` datetime DEFAULT NULL,
-  `document_type` varchar(45) DEFAULT NULL,
-  `dni_type_receiver` varchar(10) DEFAULT NULL,
-  `dni_receiver` varchar(50) DEFAULT NULL,
-  `total_document` float DEFAULT NULL,
-  `total_taxes` float DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_company_id_idx` (`company_id`),
-  CONSTRAINT `FK_company_id` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8;
+CREATE TABLE `users` (
+  `idusers` int NOT NULL AUTO_INCREMENT,
+  `email` varchar(45) NOT NULL,
+  `password` varchar(45) DEFAULT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `idrol` int NOT NULL,
+  PRIMARY KEY (`idusers`),
+  KEY `idrol_fk_idx` (`idrol`),
+  CONSTRAINT `idrol_fk` FOREIGN KEY (`idrol`) REFERENCES `roles` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `documents`
+-- Dumping data for table `users`
 --
 
-LOCK TABLES `documents` WRITE;
-/*!40000 ALTER TABLE `documents` DISABLE KEYS */;
-/*!40000 ALTER TABLE `documents` ENABLE KEYS */;
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (1,'jj@gmail.com','kkk','juan',1),(2,'yy@gmail.com','jjj','jose',2);
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -62,4 +53,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-09 18:49:31
+-- Dump completed on 2020-03-09 18:49:32

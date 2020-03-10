@@ -3,7 +3,7 @@ import base64
 from infrastructure import companies
 
 
-def create_company(data, file):
+def create_company(data, file, logo):
     _company_user = data['id_compania']
     _name = data['nombre_compania']
     _tradename = data['nombre_comercial']
@@ -21,6 +21,7 @@ def create_company(data, file):
     _user_mh = data['usuario_hacienda']
     _pass_mh = data['password_hacienda']
     _signature = base64.b64encode(file)
+    _logo = base64.b64encode(logo)
     _pin = data['pin']
     _env = data['ambiente']
 
@@ -30,7 +31,7 @@ def create_company(data, file):
         result = companies.create_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
                                           _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code)
 
-        result_mh = companies.save_mh_data(_company_user, _user_mh, _pass_mh, _signature, _pin, _env)
+        result_mh = companies.save_mh_data(_company_user, _user_mh, _pass_mh, _signature, _logo, _pin, _env)
 
         if result is not True:
             return result
@@ -55,7 +56,7 @@ def delete_company(id_company):
     return result
 
 
-def modify_company(data, file):
+def modify_company(data, file, logo):
     _company_user = data['id_compania']
     _name = data['nombre_compania']
     _tradename = data['nombre_comercial']
@@ -73,17 +74,16 @@ def modify_company(data, file):
     _user_mh = data['usuario_hacienda']
     _pass_mh = data['password_hacienda']
     _signature = base64.b64encode(file)
+    _logo = base64.b64encode(logo)
     _pin = data['pin']
     _env = data['ambiente']
 
     result = companies.modify_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
                                       _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code)
 
-    result_mh = companies.modify_mh_data(_company_user, _user_mh, _pass_mh, _signature, _pin, _env)
+    result_mh = companies.modify_mh_data(_company_user, _user_mh, _pass_mh, _signature, _logo, _pin, _env)
 
-    if result is not True:
+    if result is not True and result_mh is not True:
         return result
-    elif result_mh is not True:
-        return result_mh
     else:
         return {'message': 'company modify successfully!'}
