@@ -1,4 +1,5 @@
 import json
+import base64
 from extensions import mysql
 
 
@@ -102,6 +103,7 @@ def get_company_data(company_user):
         cursor.callproc('sp_getCompanyInfo', (company_user,))
         row_headers = [x[0] for x in cursor.description]
         data = cursor.fetchall()
+
         if len(data) is not 0:
             conn.commit()
             json_data = []
