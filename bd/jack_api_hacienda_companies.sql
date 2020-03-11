@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 8.0.19, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.17, for macos10.12 (x86_64)
 --
 -- Host: localhost    Database: jack_api_hacienda
 -- ------------------------------------------------------
--- Server version	8.0.19
+-- Server version	8.0.11
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
+/*!40101 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -21,9 +21,9 @@
 
 DROP TABLE IF EXISTS `companies`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `companies` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `company_user` varchar(45) DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL,
   `tradename` varchar(100) DEFAULT NULL,
@@ -34,12 +34,12 @@ CREATE TABLE `companies` (
   `district` varchar(45) DEFAULT NULL,
   `neighborhood` varchar(45) DEFAULT NULL,
   `address` varchar(100) DEFAULT NULL,
-  `code_phone` int DEFAULT NULL,
-  `phone` int DEFAULT NULL,
+  `code_phone` int(11) DEFAULT NULL,
+  `phone` int(11) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
   `activity_code` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -48,7 +48,7 @@ CREATE TABLE `companies` (
 
 LOCK TABLES `companies` WRITE;
 /*!40000 ALTER TABLE `companies` DISABLE KEYS */;
-INSERT INTO `companies` VALUES (29,'08089','Jossy Mejia','Jacks','01','207790754','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(31,'0808878','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(32,'999','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(33,'998','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(34,'99888','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(35,'8','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(36,'87','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(37,'876','Corin Mejia ','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(38,'87666','Angel','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304'),(39,'12','angelica araya','UNED','01','206660666','03','07','01','03','San Rafael',506,70113110,'yoz08@gmail.com','289304');
+INSERT INTO `companies` VALUES (22,'cpf-03-0270-0234','CARLOS ALBERTO DE LA MONGE FIGUEROA','Mecsa','01','302700234','3','07','01','03','San Rafael',506,70113110,'cmonge@jackdevelopers.com','289304'),(23,'cpf-03-0270-0234-prod','CARLOS ALBERTO DE LA MONGE FIGUEROA','Mecsa','01','302700234','03','07','01','03','San Rafael',506,70113110,'cmonge@jackdevelopers.com','289304'),(25,'cpf-03-0270-0567','CARLOS ALBERTO DE LA MONGE FIGUEROA','Mecsa','01','302700234','03','07','01','03','San Rafael',506,70113110,'cmonge@jackdevelopers.com','289304'),(28,'cpf-03-0270-0874','CARLOS ALBERTO DE LA MONGE FIGUEROA','Mecsa','01','302700234','03','07','01','03','San Rafael',506,70113110,'cmonge@jackdevelopers.com','289304');
 /*!40000 ALTER TABLE `companies` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -61,4 +61,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-09 18:49:33
+-- Dump completed on 2020-03-10  1:09:38

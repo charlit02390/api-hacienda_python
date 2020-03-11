@@ -21,11 +21,6 @@ def save_company():
     result = service.create_company(body, file.stream.read(), logo.stream.read())
     return result
 
-
-def route_update_company():
-    return 1
-
-
 def route_delete_company(id):
     result = service.delete_company(id)
     return result
