@@ -250,7 +250,6 @@ IN v_email varchar(100),
 IN v_activity_code varchar(45)
 )
 BEGIN
-
 UPDATE `jack_api_hacienda`.`companies`
 SET
 `name` = v_name,
@@ -404,20 +403,7 @@ v_env
 );
 
 END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `sp_updateDocument` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_updateDocument`(
 v_company_id varchar(45),
@@ -434,19 +420,90 @@ SET
 `dateanswer` = v_date
 WHERE `key_mh` = v_key_mh and `company_id` = (Select id from companies where company_user = v_company_id) ;
 END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2020-03-10  1:09:39
+
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createUser`(
+v_email varchar(45),
+v_password varchar(45),
+v_name varchar(100),
+v_idrol int
+)
+BEGIN
+INSERT INTO `jack_api_hacienda`.`users`
+(
+`email`,
+`password`,
+`name`,
+`idrol`)
+VALUES
+(
+v_email,
+v_password,
+v_name,
+v_idrol
+);
+END;; 
+
+drop procedure if exists `sp_getUserInfo`
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfo`(
+v_email varchar(45))
+BEGIN
+
+#select u.idusers,u.name,u.email,r.value rol, c.company_user IDCompany, c.tradename Tradename
+#from users u 
+#inner join roles r on u.idrol = r.id
+#inner join users_companies uc on u.idusers = uc.iduser
+#inner join companies c on uc.idcompany = c.id
+#where u.email = v_email;
+
+select u.idusers,u.name,u.email,r.value rol
+from users u 
+inner join roles r on u.idrol = r.id
+where u.email = v_email;
+
+END ;;
+
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfoCompanies`(
+v_email varchar(45))
+BEGIN
+select u.idusers,c.company_user IDCompany, c.tradename Tradename
+from users u 
+inner join users_companies uc on u.idusers = uc.iduser
+inner join companies c on uc.idcompany = c.id
+where u.email = v_email;
+END ;;
+
+drop procedure if exists `sp_deleteUser`
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteUser`(
+v_email varchar(45))
+BEGIN
+	Delete from users_companies where iduser = (select idusers from users where email = v_email);
+	Delete from users where email = v_email;
+END ;;
+
+drop procedure if exists `sp_ModifyUser`
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ModifyUser`(
+v_email varchar(45),
+v_password varchar(45),
+v_name varchar(100),
+v_idrol int
+)
+BEGIN
+UPDATE `jack_api_hacienda`.`users`
+SET
+`email` = v_email,
+`password` = v_password,
+`name` = v_name,
+`idrol` = v_idrol
+where `email` = v_email;
+END ;;
+
+
+use `jack_api_hacienda`;
+select * from users_companies;

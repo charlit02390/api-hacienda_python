@@ -1,7 +1,7 @@
 mysql:
     host: localhost
     user: root
-    passwd: root
+    passwd: Zorropelon88
     db: jack_api_hacienda
 email:
     host: smtp.gmail.com

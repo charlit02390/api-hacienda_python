@@ -261,6 +261,26 @@ components:
               type: string
             sucursal:
               type: string
+    user:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+            name:
+              type: string
+            idrol:
+              type: integer
+            idcompanies:
+              type: array
+              properties:
+                id:
+                  type: integer
+
 paths:
   /api/companies:
     get:
@@ -326,7 +346,7 @@ paths:
     delete:
       tags:
         - companies
-      description: deletes a single companie based on the id supplied
+      description: deletes a single company based on the id supplied
       operationId: routes.companies.route_delete_company
       parameters:
         - name: id
@@ -337,7 +357,7 @@ paths:
             type: string
       responses:
         200:
-          description: The companie has been deleted
+          description: The company has been deleted
         500:
           description: there was an error starting the facial recognition system
 
@@ -433,7 +453,75 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+  /api/users:
+    post:
+      tags:
+        - references
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user'
+      operationId: routes.users.create_new_user
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+    put:
+      tags:
+      - users
+      summary: Modify a user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user'
+      operationId: routes.users.route_modify_user
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
 
+  /api/users/{id}:
+    delete:
+      tags:
+      - users
+      description: deletes a single user based on the id supplied
+      operationId: routes.users.route_delete_user
+      parameters:
+      - name: id
+        in: path
+        description: id of the user
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: The user has been deleted
+        500:
+          description: there was an error starting the facial recognition system
+    get:
+      tags:
+      - users
+      description: get information of a single user based on the id supplied
+      operationId: routes.users.route_get_user_byid
+      parameters:
+      - name: id
+        in: path
+        description: id of the user
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: the information was successfully displayed
+        500:
+          description: there was an error starting the facial recognition system
 tags:
   - name: companies
     description: Everything about your Companies
