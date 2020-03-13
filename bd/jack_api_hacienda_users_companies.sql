@@ -31,7 +31,7 @@ CREATE TABLE `users_companies` (
   KEY `idcompany_fk_idx` (`idcompany`),
   CONSTRAINT `idcompany_fk` FOREIGN KEY (`idcompany`) REFERENCES `companies` (`id`),
   CONSTRAINT `iduser_fk` FOREIGN KEY (`iduser`) REFERENCES `users` (`idusers`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -40,7 +40,7 @@ CREATE TABLE `users_companies` (
 
 LOCK TABLES `users_companies` WRITE;
 /*!40000 ALTER TABLE `users_companies` DISABLE KEYS */;
-INSERT INTO `users_companies` VALUES (5,1,29),(6,2,31);
+INSERT INTO `users_companies` VALUES (10,8,29),(11,9,29),(12,10,29),(13,11,29),(14,13,29),(15,14,34),(16,15,34),(17,15,29),(18,16,34),(19,16,29),(20,17,31),(21,17,29),(25,18,35),(30,19,31),(31,19,29);
 /*!40000 ALTER TABLE `users_companies` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -53,4 +53,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-09 18:49:34
+-- Dump completed on 2020-03-13  1:03:32

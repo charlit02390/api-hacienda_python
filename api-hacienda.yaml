@@ -52,6 +52,8 @@ components:
           logo:
             type: string
             format: binary
+          expiration_date:
+            type: string
 
     document:
       type: object
@@ -280,7 +282,16 @@ components:
               properties:
                 id:
                   type: integer
-
+    user_companies:
+      type: object
+      properties:
+        email:
+          type: string
+        idcompanies:
+          type: array
+          properties:
+            id:
+              type: integer
 paths:
   /api/companies:
     get:
@@ -486,7 +497,33 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
-
+    get:
+      tags:
+      - users
+      summary: Get the information of all users
+      operationId: routes.users.route_list_users
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+  /api/users/companies:
+    delete:
+      tags:
+      - users
+      summary: Delete user companies.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user_companies'
+      operationId: routes.users.route_delete_user_companies
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
   /api/users/{id}:
     delete:
       tags:

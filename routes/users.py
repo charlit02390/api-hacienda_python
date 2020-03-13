@@ -24,6 +24,12 @@ def route_delete_user(id):
     return result
 
 
+def route_delete_user_companies():
+    body = json.loads(connexion.request.data)
+    result = service.delete_user_companies(body['data'])
+    return result
+
+
 def route_modify_user():
     body = json.loads(connexion.request.data)
     result = service.modify_user(body['data'])

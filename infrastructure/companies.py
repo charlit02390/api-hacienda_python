@@ -23,11 +23,12 @@ def create_company(company_user, name, tradename, type_identification, dni, stat
         conn.close()
 
 
-def save_mh_data(company_user, user_mh, pass_mh, signature, logo, pin_sig, env):
+def save_mh_data(company_user, user_mh, pass_mh, signature, logo, pin_sig, env,expiration_date):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_saveMHInfo', (user_mh, pass_mh, signature, logo, pin_sig, company_user, env))
+        cursor.callproc('sp_saveMHInfo', (user_mh, pass_mh, signature, logo,
+                                          pin_sig, company_user, env, expiration_date))
         data = cursor.fetchall()
         if len(data) is 0:
             conn.commit()
@@ -61,11 +62,12 @@ def modify_company(company_user, name, tradename, type_identification, dni, stat
         conn.close()
 
 
-def modify_mh_data(company_user, user_mh, pass_mh, signature, logo, pin_sig, env):
+def modify_mh_data(company_user, user_mh, pass_mh, signature, logo, pin_sig, env,expiration_date):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_modifyMHInfo', (user_mh, pass_mh, signature, logo, pin_sig, company_user, env))
+        cursor.callproc('sp_modifyMHInfo', (user_mh, pass_mh, signature, logo,
+                                            pin_sig, company_user, env, expiration_date))
         data = cursor.rowcount
         if data != 0:
             conn.commit()

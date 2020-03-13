@@ -2,12 +2,11 @@ import json
 from extensions import mysql
 
 
-# todo: guardar las compañias
-def save_user(email, password, name, idrol, idcompanies):
+def save_user(id_user, password, name, idrol):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_createUser', (email, password, name, idrol))
+        cursor.callproc('sp_createUser', (id_user, password, name, idrol))
         data = cursor.fetchall()
         if len(data) is 0:
             conn.commit()
@@ -21,12 +20,54 @@ def save_user(email, password, name, idrol, idcompanies):
         conn.close()
 
 
-# TODO: armar JSON
-def get_user_data(user_email):
+def save_user_company(id_user,idcompany):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_getUserInfo', (user_email,))
+        cursor.callproc('sp_createUser_Company', (id_user,idcompany))
+        data = cursor.fetchall()
+        if len(data) is 0:
+            conn.commit()
+            return {'message': 'user and data created successfully '}
+        else:
+            return {'error': str(data[0])}
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def get_user_data(id_user):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_getUserInfo', (id_user,))
+        row_headers = [x[0] for x in cursor.description]
+        data = cursor.fetchall()
+
+        if len(data) is not 0:
+            conn.commit()
+            json_data = []
+            for row in data:
+                json_data.append(dict(zip(row_headers, row)))
+            companies = {'companies': get_user_company_data(id_user)}
+            json_data[0].update(companies)
+            return json_data
+        else:
+            return {'error': 'Error: Not get information of the user'}
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def get_user_company_data(id_user):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_getUserInfoCompanies', (id_user,))
         row_headers = [x[0] for x in cursor.description]
         data = cursor.fetchall()
 
@@ -45,19 +86,18 @@ def get_user_data(user_email):
         conn.close()
 
 
-# TODO: Modificar codigo
-def get_user():
+def get_users():
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_getCompanies', ())
-        row_headers = [x[0] for x in cursor.description]
+        cursor.callproc('sp_getUserEmail', ())
         data = cursor.fetchall()
         if len(data) is not 0:
             conn.commit()
             json_data = []
             for row in data:
-                json_data.append(dict(zip(row_headers, row)))
+                result = {'user': get_user_data(row)}
+                json_data.append(result)
             return json_data
         else:
             return {'error': 'Error: Not get information of your company'}
@@ -67,16 +107,16 @@ def get_user():
         cursor.close()
         conn.close()
 
-#todo: modificar sp problema?
-def modify_user(email, password, name, idrol, idcompanies):
+
+def modify_user(id_user, password, name, idrol):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_ModifyUser', (email, password, name, idrol))
+        cursor.callproc('sp_ModifyUser', (id_user, password, name, idrol))
         data = cursor.rowcount
         if data != 0:
             conn.commit()
-            return {'message': 'The user has been modify'}
+            return {'message': 'User data modify'}
         else:
             return {'error': 'The user can not be modify'}
     except Exception as e:
@@ -86,17 +126,69 @@ def modify_user(email, password, name, idrol, idcompanies):
         conn.close()
 
 
-def delete_user_data(user_id):
+def verify_email(id_user):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_deleteUser', (user_id,))
+        cursor.callproc('sp_getUserInfo', (id_user,))
+        data = cursor.fetchall()
+        if len(data) is not 0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def verify_user_company(id_user,idcompany):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_getUserCompany_info', (id_user,idcompany,))
+        data = cursor.fetchall()
+        if len(data) is not 0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def delete_user_data(id_user):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_deleteUser', (id_user,))
         data = cursor.rowcount
         if data != 0:
             conn.commit()
             return {'message': 'The user has been deleted'}
         else:
             return {'error': 'The user can not be deleted'}
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def delete_user_company(id_user,idcompany):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_deleteUserCompany', (id_user, idcompany,))
+        data = cursor.rowcount
+        if data != 0:
+            conn.commit()
+            return True
+        else:
+            return {'error': 'The user company can not be deleted'}
     except Exception as e:
         return {'error': str(e)}
     finally:
