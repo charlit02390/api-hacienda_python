@@ -9,6 +9,9 @@ import time
 from . import fe_enums
 from . import utils
 from infrastructure import companies
+from OpenSSL import crypto
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
 
 try:
@@ -455,3 +458,14 @@ def send_message(inv, date_cr, token, env):
         return {'status': response.status_code, 'text': response.headers.get( 'X-Error-Cause', 'Unknown' )}
     else:
         return {'status': response.status_code, 'text': response.text}
+
+
+def p12_expiration_date(p12file,password):
+
+    try:
+        pkcs12 = crypto.load_pkcs12(p12file, password)
+        data = crypto.dump_certificate(crypto.FILETYPE_PEM, pkcs12.get_certificate())
+        cert = x509.load_pem_x509_certificate(data, default_backend())
+        return cert.not_valid_after
+    except Exception as e:
+        return {'error': str(e)}

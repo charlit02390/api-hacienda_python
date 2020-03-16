@@ -1,5 +1,6 @@
 import json
 import base64
+from service import utils_mh
 from infrastructure import companies
 
 
@@ -24,7 +25,8 @@ def create_company(data, file, logo):
     _logo = base64.b64encode(logo)
     _pin = data['pin']
     _env = data['ambiente']
-    _expiration_date = data['expiration_date']
+    _signature_key = data['firma_key']
+    _expiration_date = utils_mh.p12_expiration_date(file, _signature_key)
 
     company_exist = companies.verify_company(_company_user)
 
@@ -79,12 +81,14 @@ def modify_company(data, file, logo):
     _logo = base64.b64encode(logo)
     _pin = data['pin']
     _env = data['ambiente']
-    _expiration_date = data['expiration_date']
+    _signature_key = data['firma_key']
+    _expiration_date = utils_mh.p12_expiration_date(file, _signature_key)
 
     result = companies.modify_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
                                       _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code)
 
-    result_mh = companies.modify_mh_data(_company_user, _user_mh, _pass_mh, _signature, _logo, _pin, _env,_expiration_date)
+    result_mh = companies.modify_mh_data(_company_user, _user_mh, _pass_mh, _signature, _logo,
+                                         _pin, _env,_expiration_date)
 
     if result is not True and result_mh is not True:
         return result
