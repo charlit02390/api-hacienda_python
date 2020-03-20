@@ -84,6 +84,48 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_createSmtpData` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createSmtpData`(
+v_host varchar(45),
+v_user varchar(45),
+v_password varchar(45),
+v_port varchar(45),
+v_encrypt_type varchar(45),
+v_id_company varchar(45))
+BEGIN
+INSERT INTO `jack_api_hacienda`.`companies_smtp`
+(
+`host`,
+`user`,
+`password`,
+`port`,
+`encrypt_type`,
+`id_company`
+)
+VALUES
+(
+v_host,
+v_user,
+v_password,
+v_port,
+v_encrypt_type,
+(Select id from companies where company_user = v_id_company)
+);
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_createUser` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -166,6 +208,26 @@ v_company_id varchar(45))
 BEGIN
 	Delete from companies_mh where company_api = (select id from companies where company_user = v_company_id);
 	Delete from companies where company_user = v_company_id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_deleteCompanySmtp` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteCompanySmtp`(
+v_company_id varchar(45))
+BEGIN
+	Delete from companies_smtp where id_company = (SELECT c.id from companies c where c.company_user = v_company_id);
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -258,6 +320,32 @@ Select c.*, mh.user_mh, mh.pass_mh, mh.pin_sig, mh.env
 		on mh.company_api = c.id 
 	where   c.company_user  = v_company_id;
 
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_getCompanySmtpInfo` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getCompanySmtpInfo`(
+v_company_id varchar(45))
+BEGIN
+
+Select c.company_user, csmtp.host, csmtp.user, csmtp.password, csmtp.port, csmtp.encrypt_type
+	from companies_smtp csmtp 
+    inner join companies c
+		on c.id = csmtp.id_company
+	where   c.company_user  = v_company_id;
+    
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -392,9 +480,22 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfo`(
 v_email varchar(45))
 BEGIN
 
+#select u.idusers,u.name,u.email,r.value rol, c.company_user IDCompany, c.tradename Tradename
+#from users u 
+#inner join roles r on u.idrol = r.id
+#inner join users_companies uc on u.idusers = uc.iduser
+#inner join companies c on uc.idcompany = c.id
+#where u.email = v_email;
+
 select u.idusers,u.name,u.email,r.value rol
 from users u 
 inner join roles r on u.idrol = r.id
+where u.email = v_email;
+
+select u.idusers,c.company_user IDCompany, c.tradename Tradename
+from users u 
+inner join users_companies uc on u.idusers = uc.iduser
+inner join companies c on uc.idcompany = c.id
 where u.email = v_email;
 
 END ;;
@@ -471,6 +572,38 @@ SET
 `email` = v_email,
 `activity_code` = v_activity_code
 where `company_user` = v_company_user;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_ModifyCompanySmtp` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ModifyCompanySmtp`(
+v_host varchar(45),
+v_user varchar(45),
+v_password varchar(45),
+v_port varchar(45),
+v_encrypt_type varchar(45),
+v_id_company varchar(45) )
+BEGIN
+UPDATE `jack_api_hacienda`.`companies_smtp`
+SET
+`host` = v_host,
+`user` = v_user,
+`password` = v_password,
+`port` = v_port,
+`encrypt_type` = v_encrypt_type
+where `id_company` = (Select id from companies c where c.company_user = v_id_company);
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -687,4 +820,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-13  1:03:32
+-- Dump completed on 2020-03-19 21:31:25
