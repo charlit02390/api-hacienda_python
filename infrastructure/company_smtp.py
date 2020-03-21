@@ -6,7 +6,8 @@ def save_company_smtp(host, password, user, port, encrypt_type, id_company):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_createSmtpData', (host, password, user, port, encrypt_type, id_company))
+        cursor.callproc('sp_createSmtpData', (host, user, password,
+                                              port, encrypt_type, id_company))
         data = cursor.fetchall()
         if len(data) is 0:
             conn.commit()

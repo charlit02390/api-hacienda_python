@@ -307,6 +307,23 @@ components:
               type: string
             encrypt_type:
               type: string
+    email:
+      type: object
+      properties:
+        receivers:
+          type: array
+          items:
+            type: string
+        header:
+          type: string
+        message:
+          type: string
+        file1:
+          type: string
+          format: binary
+        file2:
+          type: string
+          format: binary
 paths:
   /api/companies:
     get:
@@ -655,6 +672,31 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+  /api/email/{id}:
+    post:
+      tags:
+      - email data
+      summary: Send a email
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/email'
+      operationId: routes.email.route_send_email
+      parameters:
+      - name: id
+        in: path
+        description: sender company ID
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+
 tags:
   - name: companies
     description: Everything about your Companies
