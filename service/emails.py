@@ -13,7 +13,7 @@ def sent_email(pdf,signxml):
     subject = "An email with attachment from Python"
     body = "This is an email with attachment sent from Python"
     sender_email = cfg['email']['user']
-    receiver_email = "yozi0808@gmail.com"
+    receiver_email = "charlit02390@gmail.com"
     password = cfg['email']['password']
 
     # Create a multipart message and set headers
