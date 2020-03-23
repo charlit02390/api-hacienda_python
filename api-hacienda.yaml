@@ -291,6 +291,39 @@ components:
           properties:
             id:
               type: integer
+    companies_smtp:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            host:
+              type: string
+            user:
+              type: string
+            password:
+              type: string
+            port:
+              type: string
+            encrypt_type:
+              type: string
+    email:
+      type: object
+      properties:
+        receivers:
+          type: array
+          items:
+            type: string
+        header:
+          type: string
+        message:
+          type: string
+        file1:
+          type: string
+          format: binary
+        file2:
+          type: string
+          format: binary
 paths:
   /api/companies:
     get:
@@ -312,7 +345,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/company'
-      operationId: routes.companies.save_company
+      operationId: routes.companies.route_save_company
       responses:
         200:
           description: Everything is ok
@@ -558,6 +591,112 @@ paths:
           description: the information was successfully displayed
         500:
           description: there was an error starting the facial recognition system
+  /api/companies/{id}/smtp:
+    post:
+      tags:
+      - smtp data
+      summary: Create a new smtp data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/companies_smtp'
+      operationId: routes.company_smtp.route_save_company_smtp
+      parameters:
+      - name: id
+        in: path
+        description: Company ID
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+    get:
+      tags:
+      - smtp data
+      description: get information of a single company and it smtp data based on the id supplied
+      operationId: routes.company_smtp.route_get_company_smtp
+      parameters:
+      - name: id
+        in: path
+        description: id of the company
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: the information was successfully displayed
+        500:
+          description: there was an error starting the facial recognition system
+    delete:
+      tags:
+      - smtp data
+      description: delete information of a single company and it smtp data based on the id supplied
+      operationId: routes.company_smtp.route_delete_company_smtp
+      parameters:
+      - name: id
+        in: path
+        description: id of the company
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: the information was successfully displayed
+        500:
+          description: there was an error starting the facial recognition system
+    put:
+      tags:
+      - smtp data
+      summary: Modify a smtp data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/companies_smtp'
+      operationId: routes.company_smtp.route_modify_company_smtp
+      parameters:
+      - name: id
+        in: path
+        description: Company ID
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+  /api/email/{id}:
+    post:
+      tags:
+      - email data
+      summary: Send a email
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/email'
+      operationId: routes.email.route_send_email
+      parameters:
+      - name: id
+        in: path
+        description: sender company ID
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+
 tags:
   - name: companies
     description: Everything about your Companies

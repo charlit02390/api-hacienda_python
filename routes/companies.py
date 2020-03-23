@@ -1,6 +1,5 @@
 
 import connexion
-
 from service import companies as service
 
 
@@ -14,7 +13,7 @@ def route_get_company_byid(id):
     return result
 
 
-def save_company():
+def route_save_company():
     file = connexion.request.files['firma']
     logo = connexion.request.files['logo']
     body = connexion.request.form
