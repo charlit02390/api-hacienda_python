@@ -16,32 +16,36 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `users_companies`
+-- Table structure for table `document_taxes`
 --
 
-DROP TABLE IF EXISTS `users_companies`;
+DROP TABLE IF EXISTS `document_taxes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `users_companies` (
+CREATE TABLE `document_taxes` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `iduser` int NOT NULL,
-  `idcompany` int NOT NULL,
+  `id_document` int NOT NULL,
+  `id_line` int NOT NULL,
+  `rate_code` varchar(45) DEFAULT NULL,
+  `code` varchar(45) DEFAULT NULL,
+  `rate` varchar(45) DEFAULT NULL,
+  `ammount` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `iduser_fk_idx` (`iduser`),
-  KEY `idcompany_fk_idx` (`idcompany`),
-  CONSTRAINT `idcompany_fk` FOREIGN KEY (`idcompany`) REFERENCES `companies` (`id`),
-  CONSTRAINT `iduser_fk` FOREIGN KEY (`iduser`) REFERENCES `users` (`idusers`)
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `id_document_taxes_fk_idx` (`id_document`),
+  KEY `id_line_taxe_fk_idx` (`id_line`),
+  CONSTRAINT `id_document_taxes_fk` FOREIGN KEY (`id_document`) REFERENCES `documents` (`id`),
+  CONSTRAINT `id_line_taxe_fk` FOREIGN KEY (`id_line`) REFERENCES `document_line` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `users_companies`
+-- Dumping data for table `document_taxes`
 --
 
-LOCK TABLES `users_companies` WRITE;
-/*!40000 ALTER TABLE `users_companies` DISABLE KEYS */;
-INSERT INTO `users_companies` VALUES (10,8,29),(11,9,29),(12,10,29),(13,11,29),(14,13,29),(15,14,34),(16,15,34),(17,15,29),(18,16,34),(19,16,29),(20,17,31),(21,17,29),(25,18,35),(35,21,31),(36,21,35),(37,21,29),(38,21,33);
-/*!40000 ALTER TABLE `users_companies` ENABLE KEYS */;
+LOCK TABLES `document_taxes` WRITE;
+/*!40000 ALTER TABLE `document_taxes` DISABLE KEYS */;
+INSERT INTO `document_taxes` VALUES (1,46,8,'08','01','13.00','119.64680'),(2,46,8,'07','02','1333.00','129.64680');
+/*!40000 ALTER TABLE `document_taxes` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -53,4 +57,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-23 21:01:53
+-- Dump completed on 2020-03-23 21:01:52

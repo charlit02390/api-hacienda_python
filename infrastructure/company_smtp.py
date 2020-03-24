@@ -2,7 +2,7 @@ import json
 from extensions import mysql
 
 
-def save_company_smtp(host, password, user, port, encrypt_type, id_company):
+def save_company_smtp(host, user, password, port, encrypt_type, id_company):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()

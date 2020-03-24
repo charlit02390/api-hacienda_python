@@ -27,34 +27,16 @@ def send_email(receiver, header, message, file1, file2,
         message.attach(MIMEText(body, "plain"))
 
         # Open PDF file in binary mode
+        if name_file1 != "":
+            part = create_email_files(file1, name_file1)
+            message.attach(part)
 
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(file1)
-
-        # Encode file in ASCII characters to send by email
-        encoders.encode_base64(part)
-
-        # Add header as key/value pair to attachment part
-        part.add_header(
-            "Content-Disposition",
-            f"attachment; filename= " + name_file1
-        )
-
-        part2 = MIMEBase("application", "octet-stream")
-        part2.set_payload(file2)
-
-        # Encode file in ASCII characters to send by email
-        encoders.encode_base64(part2)
-
-        # Add header as key/value pair to attachment part
-        part2.add_header(
-            "Content-Disposition",
-            f"attachment; filename= " + name_file2
-        )
+        if name_file2 != "":
+            part2 = create_email_files(file2, name_file2)
+            message.attach(part2)
 
         # Add attachment to message and convert message to string
-        message.attach(part)
-        message.attach(part2)
+
         text = message.as_string()
 
         # Log in to server using secure context and send email
@@ -67,3 +49,18 @@ def send_email(receiver, header, message, file1, file2,
 
     except Exception as e:
         return {'error': str(e)}
+
+
+def create_email_files(file, filename):
+    part = MIMEBase("application", "octet-stream")
+    part.set_payload(file)
+
+    # Encode file in ASCII characters to send by email
+    encoders.encode_base64(part)
+
+    # Add header as key/value pair to attachment part
+    part.add_header(
+        "Content-Disposition",
+        f"attachment; filename= " + filename
+    )
+    return part

@@ -16,7 +16,7 @@ def save_company_smtp(data, id_company):
 
     if company_exist:
         if not company_smtp_exist:
-            result = company_smtp.save_company_smtp(_host, _password, _user, _port, _encrypt_type, id_company)
+            result = company_smtp.save_company_smtp(_host, _user, _password, _port, _encrypt_type, id_company)
             if result:
                 return {'message': 'smtp data saved successfully'}
             else:

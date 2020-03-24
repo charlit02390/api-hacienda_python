@@ -96,3 +96,41 @@ def update_document(company_id, key_mh, answer_xml, status, date):
     finally:
         cursor.close()
         conn.close()
+
+
+def save_document_line_info(id_company, line_number, quantity
+                            , unity, detail, unit_price, net_tax, total_line):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_createDocumentLineInfo', (id_company, line_number, quantity
+                                                      , unity, detail, unit_price, net_tax, total_line))
+        data = cursor.fetchall()
+        if len(data) is 0:
+            conn.commit()
+            return True
+        else:
+            return json.dumps({'error': str(data[0])})
+    except Exception as e:
+        return json.dumps({'error': str(e)})
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def save_document_line_taxes(id_company, line_number, rate_code, code, rate, amount):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_createDocumentTaxInfo', (id_company, line_number, rate_code, code, rate, amount))
+        data = cursor.fetchall()
+        if len(data) is 0:
+            conn.commit()
+            return True
+        else:
+            return json.dumps({'error': str(data[0])})
+    except Exception as e:
+        return json.dumps({'error': str(e)})
+    finally:
+        cursor.close()
+        conn.close()

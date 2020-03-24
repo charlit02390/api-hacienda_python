@@ -51,7 +51,7 @@ def create_document(data):
 
     xml = api_facturae.gen_xml_v43(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
                                    _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
-                                   _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
+                                  _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                                    _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                                    _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
                                    _total_untaxed, _total_sales, _total_return_iva, _total_document)
@@ -77,12 +77,41 @@ def create_document(data):
     pdfencoded = base64.b64encode(pdf);
 
     result = documents.save_document(_company_user, _key_mh, xmlencoded, 'creado', datecr, _type_document,
-                                     _receptor['tipoIdentificacion'], _receptor['numeroIdentificacion'],
-                                     _total_document , _total_taxes)
+                                    _receptor['tipoIdentificacion'], _receptor['numeroIdentificacion'],
+                                    _total_document , _total_taxes)
+
+    _id_company = company_data[0]['id']
+    result = save_document_lines(_lines, _id_company)
+
     if result:
         return {'Respuesta Hacienda': 'creado'}
     else:
         return {'Error in Database': 'Found a problem when tried to save the document'}
+
+
+def save_document_lines(lines, id_company):
+    _lines = lines[0]
+    _line_number = _lines['numero']
+    _quantity = _lines['cantidad']
+    _unity = _lines['unidad']
+    _detail = _lines['detalle']
+    _unit_price = _lines['precioUnitario']
+    _net_tax = _lines['impuestoNeto']
+    _total_line = _lines['totalLinea']
+
+    result = documents.save_document_line_info(id_company, _line_number, _quantity
+                                               , _unity, _detail, _unit_price, _net_tax, _total_line)
+
+    if result:
+        _taxes = _lines['impuesto']
+        for _tax in _taxes:
+            _rate_code = _tax['codigoTarifa']
+            _code = _tax['codigo']
+            _rate = _tax['tarifa']
+            _amount = _tax['monto']
+            result = documents.save_document_line_taxes(id_company, _line_number, _rate_code, _code, _rate, _amount)
+
+    return result
 
 
 def validate_documents():
@@ -97,7 +126,8 @@ def validate_document(company_user, key_mh):
     token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
                                                 company_data[0]['env'])
 
-    response_json = api_facturae.send_xml_fe(company_data[0], document_data[0], key_mh, token_m_h, date, document_data[0]['signxml'],
+    response_json = api_facturae.send_xml_fe(company_data[0], document_data[0], key_mh, token_m_h, date,
+                                             document_data[0]['signxml'],
                                              company_data[0]['env'])
 
     response_status = response_json.get('status')
@@ -133,7 +163,8 @@ def consult_document(company_user, key_mh):
     token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
                                                 company_data[0]['env'])
 
-    response_json = api_facturae.consulta_documentos(key_mh, company_data[0]['env'], token_m_h, date, document_data[0]['document_type'])
+    response_json = api_facturae.consulta_documentos(key_mh, company_data[0]['env'], token_m_h, date,
+                                                     document_data[0]['document_type'])
 
     response_status = response_json.get('ind-estado')
     response_text = response_json.get('respuesta-xml')
