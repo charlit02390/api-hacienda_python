@@ -102,32 +102,39 @@ v_unity varchar(45),
 v_detail varchar(45),
 v_unit_price varchar(45),
 v_net_tax varchar(45),
-v_total_line varchar(45))
+v_total_line varchar(45),
+v_key_mh varchar(50))
 BEGIN
-INSERT INTO `jack_api_hacienda`.`document_line`
-(
-`id_company`,
-`id_document`,
-`line_number`,
-`quantity`,
-`unity`,
-`detail`,
-`unit_price`,
-`net_tax`,
-`total_line`
-)
-VALUES
-(
-v_id_company,
-(Select id from documents where company_id = v_id_company),
-v_line_number,
-v_quantity,
-v_unity,
-v_detail,
-v_unit_price,
-v_net_tax,
-v_total_line
-);
+DECLARE v_document_id int;
+SET v_document_id = (Select id from documents where key_mh = v_key_mh);
+IF not exists ( select id from document_line where id_company = v_id_company and
+				id_document = v_document_id and
+                line_number = v_line_number) then
+	INSERT INTO `jack_api_hacienda`.`document_line`
+	(
+	`id_company`,
+	`id_document`,
+	`line_number`,
+	`quantity`,
+	`unity`,
+	`detail`,
+	`unit_price`,
+	`net_tax`,
+	`total_line`
+	)
+	VALUES
+	(
+	v_id_company,
+	v_document_id,
+	v_line_number,
+	v_quantity,
+	v_unity,
+	v_detail,
+	v_unit_price,
+	v_net_tax,
+	v_total_line
+	);
+END IF;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -150,26 +157,33 @@ v_line_number varchar(45),
 v_rate_code varchar(45),
 v_code varchar(45),
 v_rate varchar(45),
-v_ammount varchar(45))
+v_ammount varchar(45),
+v_key_mh varchar(50))
 BEGIN
-INSERT INTO `jack_api_hacienda`.`document_taxes`
-(
-`id_document`,
-`id_line`,
-`rate_code`,
-`code`,
-`rate`,
-`ammount`
-)
-VALUES
-(
-(Select id from documents where company_id = v_id_company),
-(Select id from document_line where id_company = v_id_company),
-v_rate_code,
-v_code,
-v_rate,
-v_ammount
-);
+DECLARE v_document_id int; DECLARE v_document_line_id int;
+SET v_document_id = (Select id from documents where key_mh = v_key_mh);
+SET v_document_line_id = (Select id from document_line where line_number = v_line_number and id_document = v_document_id);
+IF not exists (select id from document_taxes where id_document = v_document_id and
+				id_line = v_document_line_id and code = v_code) THEN
+	INSERT INTO `jack_api_hacienda`.`document_taxes`
+	(
+	`id_document`,
+	`id_line`,
+	`rate_code`,
+	`code`,
+	`rate`,
+	`ammount`
+	)
+	VALUES
+	(
+	v_document_id,
+	v_document_line_id,
+	v_rate_code,
+	v_code,
+	v_rate,
+	v_ammount
+	);
+END IF;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -772,11 +786,11 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_saveDocument`(
 v_company_id varchar(45),
@@ -789,36 +803,43 @@ v_dni_type varchar(10),
 v_dni varchar(50),
 v_total_document float,
 v_total_taxes float,
-v_pdf blob
+v_pdf blob,
+v_email varchar(45),
+v_email_costs varchar(45)
 )
 BEGIN
-INSERT INTO `jack_api_hacienda`.`documents`
-(
-`company_id`,
-`key_mh`,
-`signxml`,
-`status`,
-`datesign`,
-`document_type`,
-`dni_type_receiver`,
-`dni_receiver`,
-`total_document`,
-`total_taxes`,
-`pdfdocument`)
-VALUES
-(
-(Select id from companies where company_user = v_company_id),
-v_key_mh,
-v_signxml,
-v_status,
-v_date,
-v_document_type,
-v_dni_type,
-v_dni,
-v_total_document,
-v_total_taxes,
-v_pdf);
-
+IF not exists (select id from documents where key_mh = v_key_mh) then
+	INSERT INTO `jack_api_hacienda`.`documents`
+	(
+	`company_id`,
+	`key_mh`,
+	`signxml`,
+	`status`,
+	`datesign`,
+	`document_type`,
+	`dni_type_receiver`,
+	`dni_receiver`,
+	`total_document`,
+	`total_taxes`,
+	`pdfdocument`,
+	`email`,
+	`email_costs`)
+	VALUES
+	(
+	(Select id from companies where company_user = v_company_id),
+	v_key_mh,
+	v_signxml,
+	v_status,
+	v_date,
+	v_document_type,
+	v_dni_type,
+	v_dni,
+	v_total_document,
+	v_total_taxes,
+	v_pdf,
+	v_email,
+	v_email_costs);
+END IF;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -912,4 +933,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-23 21:01:54
+-- Dump completed on 2020-03-26  0:21:08
