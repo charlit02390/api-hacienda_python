@@ -38,10 +38,12 @@ CREATE TABLE `documents` (
   `dni_receiver` varchar(50) DEFAULT NULL,
   `total_document` float DEFAULT NULL,
   `total_taxes` float DEFAULT NULL,
+  `email` varchar(45) DEFAULT NULL,
+  `email_costs` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_company_id_idx` (`company_id`),
   CONSTRAINT `FK_company_id` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -50,6 +52,7 @@ CREATE TABLE `documents` (
 
 LOCK TABLES `documents` WRITE;
 /*!40000 ALTER TABLE `documents` DISABLE KEYS */;
+INSERT INTO `documents` VALUES (76,32,'5069010a0000001011s84573172',NULL,NULL,'creado',NULL,NULL,NULL,'2020-03-25 23:46:18','FE','01','114470760',1040.01,119.647,'cmonge@jackdevelopers.com','hfcrod@gmail.com'),(77,32,'5069010a0a000001011s84573172',NULL,NULL,'creado',NULL,NULL,NULL,'2020-03-25 23:47:06','FE','01','114470760',1040.01,119.647,'cmonge@jackdevelopers.com','hfcrod@gmail.com'),(78,32,'50690s10a0a000001011s84573172',NULL,NULL,'creado',NULL,NULL,NULL,'2020-03-25 23:54:14','FE','01','114470760',1040.01,119.647,'cmonge@jackdevelopers.com','hfcrod@gmail.com'),(79,32,'50690s10a0a000s001011s84573172',NULL,NULL,'creado',NULL,NULL,NULL,'2020-03-26 00:00:17','FE','01','114470760',1040.01,119.647,'cmonge@jackdevelopers.com','hfcrod@gmail.com');
 /*!40000 ALTER TABLE `documents` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -62,4 +65,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-19 21:31:23
+-- Dump completed on 2020-03-26  0:21:06

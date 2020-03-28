@@ -33,7 +33,7 @@ CREATE TABLE `companies_smtp` (
   PRIMARY KEY (`id`),
   KEY `id_company_fk_idx` (`id_company`),
   CONSTRAINT `id_company_fk` FOREIGN KEY (`id_company`) REFERENCES `companies` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +42,7 @@ CREATE TABLE `companies_smtp` (
 
 LOCK TABLES `companies_smtp` WRITE;
 /*!40000 ALTER TABLE `companies_smtp` DISABLE KEYS */;
-INSERT INTO `companies_smtp` VALUES (4,'Cmtp.gmail.com','JDack1351#','acmonge@jackdevelopers.com','a587','aTLS',33);
+INSERT INTO `companies_smtp` VALUES (4,'Cmtp.gmail.com','JDack1351#','acmonge@jackdevelopers.com','a587','aTLS',33),(8,'smtp.gmail.com','cmonge@jackdevelopers.com','Jack1351#','587','TLS',32);
 /*!40000 ALTER TABLE `companies_smtp` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -55,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-19 21:31:24
+-- Dump completed on 2020-03-26  0:21:08

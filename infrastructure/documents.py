@@ -61,14 +61,14 @@ def get_documents(state):
 
 
 def save_document(company_id, key_mh, sign_xml, status, date, document_type, receiver_type, receiver_dni,
-                  total_document, total_taxed, pdf=None):
+                  total_document, total_taxed, pdf, email, email_costs):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_saveDocument', (company_id, key_mh, sign_xml, status, date, document_type,receiver_type,
-                                            receiver_dni, total_document, total_taxed, pdf))
-        data = cursor.fetchall()
-        if len(data) is 0:
+                                            receiver_dni, total_document, total_taxed, pdf, email, email_costs))
+        data = cursor.rowcount
+        if data != 0:
             conn.commit()
             return True
         else:
@@ -85,6 +85,45 @@ def update_document(company_id, key_mh, answer_xml, status, date):
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_updateDocument', (company_id, key_mh, answer_xml, status, date))
+        data = cursor.fetchall()
+        if len(data) is 0:
+            conn.commit()
+            return True
+        else:
+            return json.dumps({'error': str(data[0])})
+    except Exception as e:
+        return json.dumps({'error': str(e)})
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def save_document_line_info(id_company, line_number, quantity, unity
+                            , detail, unit_price, net_tax, total_line, key_mh):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_createDocumentLineInfo', (id_company, line_number, quantity, unity
+                                                      , detail, unit_price, net_tax, total_line, key_mh))
+        data = cursor.rowcount
+        if data != 0:
+            conn.commit()
+            return True
+        else:
+            return json.dumps({'error': str(data[0])})
+    except Exception as e:
+        return json.dumps({'error': str(e)})
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def save_document_line_taxes(id_company, line_number, rate_code, code, rate, amount, key_mh):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_createDocumentTaxInfo', (id_company, line_number, rate_code
+                                                     , code, rate, amount, key_mh))
         data = cursor.fetchall()
         if len(data) is 0:
             conn.commit()
