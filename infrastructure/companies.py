@@ -23,7 +23,7 @@ def create_company(company_user, name, tradename, type_identification, dni, stat
         conn.close()
 
 
-def save_mh_data(company_user, user_mh, pass_mh, signature, logo, pin_sig, env,expiration_date):
+def save_mh_data(company_user, user_mh, pass_mh, signature, logo, pin_sig, env, expiration_date):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
@@ -163,6 +163,26 @@ def get_sign_data(company_user):
         cursor.close()
         conn.close()
 
+
+def get_logo_data(company_user):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_getLogoCompany', (company_user,))
+        row_headers = [x[0] for x in cursor.description]
+        data = cursor.fetchall()
+        if len(data) is not 0:
+            conn.commit()
+            for row in data:
+                logo = dict(zip(row_headers, row))
+            return logo
+        else:
+            return {'error': 'Error: Not get information of your company'}
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
 
 def delete_company_data(company_user):
     try:
