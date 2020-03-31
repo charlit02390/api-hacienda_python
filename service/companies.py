@@ -25,8 +25,7 @@ def create_company(data, file, logo):
     _logo = base64.b64encode(logo)
     _pin = data['pin']
     _env = data['ambiente']
-    _signature_key = data['firma_key']
-    _expiration_date = utils_mh.p12_expiration_date(file, _signature_key)
+    _expiration_date = utils_mh.p12_expiration_date(file, _pin)
 
     company_exist = companies.verify_company(_company_user)
 

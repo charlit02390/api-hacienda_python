@@ -90,14 +90,14 @@ def get_users():
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
-        cursor.callproc('sp_getUserEmail', ())
+        cursor.callproc('sp_getUsers', ())
+        row_headers = [x[0] for x in cursor.description]
         data = cursor.fetchall()
         if len(data) is not 0:
             conn.commit()
             json_data = []
             for row in data:
-                result = {'user': get_user_data(row)}
-                json_data.append(result)
+                json_data.append(dict(zip(row_headers, row)))
             return json_data
         else:
             return {'error': 'Error: Not get information of your company'}

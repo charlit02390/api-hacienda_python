@@ -28,7 +28,7 @@ def save_company_smtp(data, id_company):
 
 
 def get_company_smtp(id_company):
-    result = {'user': company_smtp.get_company_smtp(id_company)}
+    result = {'smtp': company_smtp.get_company_smtp(id_company)}
     return result
 
 
