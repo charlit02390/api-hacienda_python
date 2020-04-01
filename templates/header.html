@@ -16,25 +16,17 @@
             width:100%;
             background-color:#00BBB6
         }
-        .invoice-header{
-            width:100%;
-            font-size: small;
-            border-style:solid;
-            border-width:2px;
-            border-color:#00BBB6;
-            content: "";
-            clear: both;
-            display: table;
-        }
-        .div_header{
-            width:50%;
-            float:left;
+
+
+        .image{
+            max-width:250px;
+            max-height:150px;
         }
 
 
     </style>
     <div class="header-logo">
-
+    <img src="data:;base64,{{ logo }}" class="image"/>
     </div>
     <div class="header-box">
         <div class="title">
@@ -47,23 +39,5 @@
         Tel&eacutefono: {{company.phone}}<br/>
         Correo: {{company.email}}<br/>
         Direcci&oacuten: {{company.address}}<br/>
-    </div>
-    <div class="invoice-header">
-        <div class="div_header">
-            <b>Consecutivo:</b> {{consecutive}}<br/>
-            <b>Clave Num&eacuterica:</b> {{key_mh}}<br/>
-            <b>Receptor:</b> {{receiver.nombre}}<br/>
-            <b>{{receiver.tipo_identificacion}}:</b>{{receiver.numero_identificacion}}<br/>
-            <b>Tel&eacutefono:</b> {{receiver.telefono}}<br/>
-            <b>Correo:</b> {{receiver.correo}}<br/>
-            <b>Direcci&oacuten:</b> {{receiver.otrasSenas}}<br/>
-        </div>
-        <div class="div_header">
-            <b>Fecha:</b>{{date}}<br/>
-            <b>Medio de Pago:</b> {{payment_method.codigo}}<br/>
-            <b>Condici&oacuten de Venta:</b> {{sale_condition}}<br/>
-            <b>Moneda:</b> {{currency.tipo_moneda}}<br/>
-            <b>Act. Economica:</b> {{activity_code}}<br/>
-        </div>
     </div>
 </head>

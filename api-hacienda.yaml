@@ -52,8 +52,6 @@ components:
           logo:
             type: string
             format: binary
-          firma_key:
-            type: string
     document:
       type: object
       properties:
@@ -499,7 +497,7 @@ paths:
   /api/users:
     post:
       tags:
-        - references
+        - users
       summary: Create a new user
       requestBody:
         required: true

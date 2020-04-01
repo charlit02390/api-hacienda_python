@@ -67,7 +67,7 @@ def create_document(data):
     xmlencoded = base64.b64encode(xml_sign)
 
     _logo = companies.get_logo_data(_company_user)
-    _logo = base64.b64decode(_logo['logo'])
+    _logo = _logo['logo'].decode('utf-8')
     pdf = makepdf.render_pdf(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
                              _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                              _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
