@@ -32,3 +32,4 @@ def route_modify_company():
     body = connexion.request.form
     result = service.modify_company(body, file.stream.read(), logo.stream.read())
     return result
+

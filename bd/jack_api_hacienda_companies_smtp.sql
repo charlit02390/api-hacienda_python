@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.19, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.18, for Win64 (x86_64)
 --
 -- Host: localhost    Database: jack_api_hacienda
 -- ------------------------------------------------------
--- Server version	8.0.19
+-- Server version	8.0.18
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -23,20 +23,29 @@ DROP TABLE IF EXISTS `companies_smtp`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `companies_smtp` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `host` varchar(45) NOT NULL,
   `user` varchar(45) NOT NULL,
   `password` varchar(45) NOT NULL,
   `port` varchar(45) NOT NULL,
   `encrypt_type` varchar(45) NOT NULL,
-  `id_company` int NOT NULL,
+  `id_company` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `id_company_fk_idx` (`id_company`),
   CONSTRAINT `id_company_fk` FOREIGN KEY (`id_company`) REFERENCES `companies` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Dumping data for table `companies_smtp`
+--
 
+LOCK TABLES `companies_smtp` WRITE;
+/*!40000 ALTER TABLE `companies_smtp` DISABLE KEYS */;
+INSERT INTO `companies_smtp` VALUES (4,'Cmtp.gmail.com','JDack1351#','acmonge@jackdevelopers.com','a587','aTLS',33),(8,'smtp.gmail.com','cmonge@jackdevelopers.com','Jack1351#','587','TLS',32);
+/*!40000 ALTER TABLE `companies_smtp` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
@@ -46,4 +55,4 @@ CREATE TABLE `companies_smtp` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-28 22:14:35
+-- Dump completed on 2020-04-02  0:33:36
