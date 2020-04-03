@@ -31,7 +31,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`idusers`),
   KEY `idrol_fk_idx` (`idrol`),
   CONSTRAINT `idrol_fk` FOREIGN KEY (`idrol`) REFERENCES `roles` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -40,7 +40,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'jj@gmail.com','kkk','juan',1),(4,'yaaay@gmail.com','123cadasac','Jose Mejia Vargas',1),(5,'ya1aay@gmail.com','123cadasac','Jose Mejia Vargas',1),(6,'ya11aay@gmail.com','123cadasac','Josse Mejia Vargas',1),(8,'lw@gmail.com','123cadasac','Josse Mejia Vargas',1),(9,'lw2@gmail.com','123cadasac','Josse Mejia Vargas',1),(10,'lw23@gmail.com','123cadasac','Josse Mejia Vargas',1),(11,'ff3@gmail.com','123cadasac','Josse Mejia Vargas',1),(12,'ff3@gmail.com','123cadasac','Josse Mejia Vargas',1),(13,'ffw3@gmail.com','123cadasac','Josse Mejia Vargas',1),(14,'aa@gmail.com','7','aa',1),(15,'fffff@gmail.com','123cadasac','Josse Mejia Vargas',1),(16,'f8f@gmail.com','7','aa',1),(17,'f8@gmail.com','1111','caca Mejia Vargas',2),(18,'uu@gmail.com','1111','caca Mejia Vargas',2),(19,'f28@gmail.com','123cac','Juan Mejia Vargas',1),(21,'jja@gmail.com','1234','Juancho Mejia',1),(22,'JJ2aaa2@gmail.com','123cac','PRUEB Mejia Vargas',1);
+INSERT INTO `users` VALUES (4,'yaaay@gmail.com','123cadasac','Jose Mejia Vargas',1),(5,'ya1aay@gmail.com','123cadasac','Jose Mejia Vargas',1),(6,'ya11aay@gmail.com','123cadasac','Josse Mejia Vargas',1),(9,'lw2@gmail.com','123cadasac','Josse Mejia Vargas',1),(10,'lw23@gmail.com','123cadasac','Josse Mejia Vargas',1),(11,'ff3@gmail.com','123cadasac','Josse Mejia Vargas',1),(12,'ff3@gmail.com','123cadasac','Josse Mejia Vargas',1),(13,'ffw3@gmail.com','123cadasac','Josse Mejia Vargas',1),(14,'aa@gmail.com','7','aa',1),(15,'fffff@gmail.com','123cadasac','Josse Mejia Vargas',1),(16,'f8f@gmail.com','7','aa',1),(17,'f8@gmail.com','1111','caca Mejia Vargas',2),(18,'uu@gmail.com','1111','caca Mejia Vargas',2),(19,'f28@gmail.com','123cac','Juan Mejia Vargas',1),(21,'jja@gmail.com','1234','Juancho Mejia',1),(22,'JJ2aaa2@gmail.com','123cac','PRUEB Mejia Vargas',1),(23,'covco@gmail.com','123cac','PRUEB Mejia Vargas',1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -53,4 +53,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-04-02  0:33:34
+-- Dump completed on 2020-04-03 14:25:27
