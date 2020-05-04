@@ -8,6 +8,7 @@ import base64
 from infrastructure import companies
 from infrastructure import documents
 
+
 def create_document(data):
     _company_user = data['nombre_usuario']
     _type_document = fe_enums.TipoDocumentoApi[data['tipo']]
@@ -68,20 +69,20 @@ def create_document(data):
 
     _logo = companies.get_logo_data(_company_user)
     _logo = _logo['logo'].decode('utf-8')
-    pdf = makepdf.render_pdf(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
+    pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive, datecr.strftime("%Y-%m-%d %H:%M:%S"), _sale_condition,
                              _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                              _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                              _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                              _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
                              _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo);
 
-    emails.sent_email(pdf, xml_sign)
+    #emails.sent_email(pdf, xml_sign)
 
     pdfencoded = base64.b64encode(pdf);
 
     result = documents.save_document(_company_user, _key_mh, xmlencoded, 'creado', datecr, _type_document,
                                      _receptor['tipoIdentificacion'], _receptor['numeroIdentificacion'],
-                                     _total_document, _total_taxes, pdf, _email, _email_costs)
+                                     _total_document, _total_taxes, pdfencoded, _email, _email_costs)
 
     _id_company = company_data[0]['id']
 

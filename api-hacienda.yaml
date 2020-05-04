@@ -365,7 +365,6 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
-
   /api/companies/{id}:
     get:
       tags:
@@ -383,7 +382,6 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
-
     delete:
       tags:
         - companies
@@ -401,7 +399,6 @@ paths:
           description: The company has been deleted
         500:
           description: there was an error starting the facial recognition system
-
   /api/documents:
     get:
       tags:

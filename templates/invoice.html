@@ -1,30 +1,34 @@
 <style>
+    body{
+        padding-top:100px;
+    }
      .body-invoice{
             font-size: small;
             border-style:solid;
             border-width:2px;
-            border-color:#00BBB6;
+            border-color:gray;
             width: 100%;
             heigth:100%;
         }
         table{
             border-style:solid;
             border-width:1px;
-            border-color:#00BBB6;
+            border-color:gray;
         }
-        .footer{
-            clear: both;
-            position: relative;
-            left: 0;
-            bottom: 0;
-            width: 99%;
-            border-style:solid;
-            border-width:2px;
-            border-color:#00BBB6;
-            heigth-min:100px;
+        footer {
+           position: fixed;
+           left: 0;
+           bottom: 0;
+           width: 100%;
+           text-align: center;
+        }
+        .footer-div{
+           border-style:solid;
+           border-width:2px;
+           border-color:gray;
         }
         table, td {
-            border: 1px solid #00BBB6;
+            border: 1px solid gray;
         }
         th{
             text-align: left;
@@ -44,7 +48,7 @@
         }
         td#td02{
             border: 1px solid white;
-            border-top: 2px solid #00BBB6;
+            border-top: 2px solid gray;
             font-weight: bold;
             font-size: 20;
         }
@@ -53,7 +57,7 @@
             font-size: small;
             border-style:solid;
             border-width:2px;
-            border-color:#00BBB6;
+            border-color:gray;
             content: "";
             clear: both;
             display: table;
@@ -61,6 +65,10 @@
         .div_header{
             width:50%;
             float:left;
+        }
+        .headertable{
+            background-color: black;
+            color:white;
         }
 </style>
 <br/>
@@ -70,7 +78,7 @@
             <b>Consecutivo:</b> {{consecutive}}<br/>
             <b>Clave Num&eacuterica:</b> {{key_mh}}<br/>
             <b>Receptor:</b> {{receiver.nombre}}<br/>
-            <b>{{receiver.tipo_identificacion}}:</b>{{receiver.numero_identificacion}}<br/>
+            <b>C&eacutedula {{receiver.tipo_identificacion}}:</b>{{receiver.numero_identificacion}}<br/>
             <b>Tel&eacutefono:</b> {{receiver.telefono}}<br/>
             <b>Correo:</b> {{receiver.correo}}<br/>
             <b>Direcci&oacuten:</b> {{receiver.otrasSenas}}<br/>
@@ -85,25 +93,24 @@
     </div>
     <div class="body-invoice">
         <table style="width:100%">
-            <thead>
-                <th>Código</th>
+            <thead class="headertable">
+                <th>Producto</th>
                 <th>Cantidad</th>
-                <th>Descripción del producto</th>
-                <th>I.V.A   </th>
+                <th>Precio</th>
+                <th>Impuestos</th>
                 <th>Total   </th>
             </thead>
-            {%for i in range(0,45) %}
+            <tbody>
             {%for line in lines %}
             <tr>
-                    <td>{{line.numero}}</td>
-                    <td>{{line.cantidad}}</td>
                     <td>{{line.detalle}}</td>
+                    <td>{{line.cantidad}}</td>
+                    <td>{{line.precioUnitario}}</td>
                     <td>{{line.impuestoNeto}}</td>
-                    <td>{{line.totalLinea}}</td>
-            {%endfor%}
+                    <td>{{line.subtotal}}</td>
             </tr>
             {%endfor%}
-            <tbody>
+
             </tbody>
         </table>
     </div>
@@ -137,11 +144,12 @@
             </tr>
         </table>
     </div>
-    <div class="footer">
-        <div>
-            <b>Observaciones:</b>
-        </div>
-        <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
-    </div>
 </body>
+<footer>
+        <div class="footer-div">
+            <b>Observaciones:</b>
+            <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
+        </div>
+
+    </footer>
 </html>

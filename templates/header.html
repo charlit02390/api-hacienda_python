@@ -3,41 +3,58 @@
 <head>
     <style>
         .header-box{
-            font-size: small;
-            width:50%;
+            width:33%;
             float:right;
             text-align:center
         }
+        .header-company{
+            width:33%;
+            float:right;
+        }
         .header-logo{
-            width:50%;
+            width:33%;
             float:left;
         }
         .title{
             width:100%;
-            background-color:#00BBB6
+            background-color:gray
         }
-
-
+        .headertable{
+            background-color: black;
+            color:white;
+        }
         .image{
+            text-align:center
             max-width:250px;
             max-height:150px;
         }
-
-
     </style>
     <div class="header-logo">
-    <img src="data:;base64,{{ logo }}" class="image"/>
+        <img src="data:;base64,{{ logo }}" class="image"/>
     </div>
+
     <div class="header-box">
-        <div class="title">
-            <h3>
-              {{type}}
-            </h3>
+        <h3>
+          {{type}}
+        </br>
+            {{consecutive}}
+        </h3>
+        <div align="center">
+            <table>
+                <thead class="headertable">
+                    <th>FECHA</th>
+                </thead>
+                <tbody>
+                    <td>{{date}}</td>
+                </tbody>
+            </table>
         </div>
-        <h3>{{company.name}}</h3>
-        {{company.type_identification}}:{{company.identification_dni}}<br/>
+    </div>
+     <div class="header-company">
+        <h2>{{company.name}}</h2>
+        C&eacutedula {{type_iden_company}}:{{company.identification_dni}}<br/>
+        Direcci&oacuten: {{company.address}}<br/>
         Tel&eacutefono: {{company.phone}}<br/>
         Correo: {{company.email}}<br/>
-        Direcci&oacuten: {{company.address}}<br/>
     </div>
 </head>
