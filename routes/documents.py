@@ -10,15 +10,14 @@ def create_documents():
     return result
 
 
-def consult_document_company(company_id,key):
-    result = service.consult_document(company_id, key)
+def processing_documents():
+    body = json.loads(connexion.request.data)
+    result = service.processing_documents(body['data']['id_compania'], body['data']['clave'],
+                                          body['data']['es_consulta'])
     return result
 
 
-def validate_document_company(company_id,key):
-    result = service.validate_document(company_id, key)
+def get_documents_report():
+    body = json.loads(connexion.request.data)
+    result = service.document_report(body['data']['id_compania'], body['data']['tipo_documento'])
     return result
-
-
-def consult_documents():
-    return "Entro";

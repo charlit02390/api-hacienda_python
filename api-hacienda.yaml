@@ -244,6 +244,18 @@ components:
                   type: string
                 otro_contenido:
                   type: string
+    mh_validations:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id_compania:
+              type: string
+            clave:
+              type: string
+            es_consulta:
+              type: boolean
     key:
       type: object
       properties:
@@ -405,8 +417,37 @@ paths:
     get:
       tags:
         - documents
-      summary: Processing all documents in state procesando
-      operationId: routes.documents.consult_documents
+      summary: get documents by company and type
+      operationId: routes.documents.get_documents_report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+             properties:
+               data:
+                 type: object
+                 properties:
+                   id_compania:
+                     type: string
+                   tipo_documento:
+                     type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+    patch:
+      tags:
+        - documents
+      summary: Processing documents in hacienda
+      operationId: routes.documents.processing_documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/mh_validations'
       responses:
         200:
           description: Everything is ok
@@ -423,54 +464,6 @@ paths:
             schema:
               $ref: '#/components/schemas/document'
       operationId: routes.documents.create_documents
-      responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
-  /api/documents/consult/{company_id}/{key}:
-    get:
-      tags:
-        - documents
-      summary: Consult a document in MH
-      operationId: routes.documents.consult_document_company
-      parameters:
-        - name: company_id
-          in: path
-          description: Company ID
-          required: true
-          schema:
-            type: string
-        - name: key
-          in: path
-          description: key of MH
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
-  /api/documents/validate/{company_id}/{key}:
-    get:
-      tags:
-        - documents
-      summary: Consult a document in MH
-      operationId: routes.documents.validate_document_company
-      parameters:
-        - name: company_id
-          in: path
-          description: Company ID
-          required: true
-          schema:
-            type: string
-        - name: key
-          in: path
-          description: key of MH
-          required: true
-          schema:
-            type: string
       responses:
         200:
           description: Everything is ok

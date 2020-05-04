@@ -24,11 +24,10 @@
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 use jack_api_hacienda;
-drop procedure sp_createCompany;
+
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createCompany`(
 IN v_company_user varchar(45) ,
@@ -96,7 +95,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -153,7 +151,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -202,7 +199,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -244,7 +240,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -280,7 +275,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -311,7 +305,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -332,7 +325,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -352,7 +344,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -373,7 +364,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -403,8 +393,8 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getCompanies`()
 BEGIN
 Select c.*, mh.user_mh, mh.pass_mh, mh.pin_sig, mh.env
-	from companies  c 
-    left join companies_mh mh 
+	from companies  c
+    left join companies_mh mh
 		on mh.company_api = c.id ;
 END ;;
 DELIMITER ;
@@ -427,9 +417,9 @@ v_company_id varchar(45))
 BEGIN
 
 Select c.*, mh.user_mh, mh.pass_mh, mh.pin_sig, mh.env
-	from companies  c 
-    left join companies_mh mh 
-		on mh.company_api = c.id 
+	from companies  c
+    left join companies_mh mh
+		on mh.company_api = c.id
 	where   c.company_user  = v_company_id;
 
 END ;;
@@ -444,7 +434,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -453,11 +442,11 @@ v_company_id varchar(45))
 BEGIN
 
 Select c.company_user, csmtp.host, csmtp.user, csmtp.password, csmtp.port, csmtp.encrypt_type
-	from companies_smtp csmtp 
+	from companies_smtp csmtp
     inner join companies c
 		on c.id = csmtp.id_company
 	where   c.company_user  = v_company_id;
-    
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -490,7 +479,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -498,7 +486,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getLogoCompany`(
 v_company_id varchar(45))
 BEGIN
 	Select mh.logo
-	from companies_mh mh 
+	from companies_mh mh
     inner join companies c on c.id = mh.company_api
 	where   c.company_user  = v_company_id;
 
@@ -522,10 +510,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getMHInfo`(
 v_company_id varchar(45))
 BEGIN
 
-Select c.identification_dni, mh.user_mh, mh.pass_mh, mh.signature, mh.pin_sig, mh.env 
-	from companies  c 
-    inner join companies_mh mh 
-		on mh.company_api = c.id 
+Select c.identification_dni, mh.user_mh, mh.pass_mh, mh.signature, mh.pin_sig, mh.env
+	from companies  c
+    inner join companies_mh mh
+		on mh.company_api = c.id
 	where   c.company_user  = v_company_id;
 
 END ;;
@@ -548,7 +536,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getSignCompany`(
 v_company_id varchar(45))
 BEGIN
 	Select mh.signature
-	from companies_mh mh 
+	from companies_mh mh
     inner join companies c on c.id = mh.company_api
 	where   c.company_user  = v_company_id;
 
@@ -564,7 +552,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -575,7 +562,7 @@ IN v_idcompany int
 BEGIN
 SELECT uc.*
 FROM users_companies uc inner join users u on idusers = iduser
-WHERE v_idcompany = uc.idcompany and v_email = u.email; 
+WHERE v_idcompany = uc.idcompany and v_email = u.email;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -588,7 +575,6 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -616,7 +602,7 @@ v_email varchar(45))
 BEGIN
 
 select u.idusers,u.name,u.email,r.id rol
-from users u 
+from users u
 inner join roles r on u.idrol = r.id
 where u.email = v_email;
 
@@ -639,7 +625,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfoCompanies`(
 v_email varchar(45))
 BEGIN
 select c.id internalid, c.company_user idcompany, c.tradename tradename
-from users u 
+from users u
 inner join users_companies uc on u.idusers = uc.iduser
 inner join companies c on uc.idcompany = c.id
 where u.email = v_email;
@@ -690,7 +676,7 @@ SET
 `neighborhood` = v_neighborhood,
 `address` = v_address,
 `code_phone` = v_code_phone,
-`phone`= v_phone,users
+`phone`= v_phone,
 `email` = v_email,
 `activity_code` = v_activity_code,
 `is_active` = v_is_active

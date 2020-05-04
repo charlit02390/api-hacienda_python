@@ -76,6 +76,7 @@ def create_document(data):
                              _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
                              _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo);
 
+    #Prueba de creacion de correo
     #emails.sent_email(pdf, xml_sign)
 
     pdfencoded = base64.b64encode(pdf);
@@ -184,3 +185,15 @@ def consult_document(company_user, key_mh):
         return {'Respuesta Hacienda': response_status, 'xml-respuesta': response_text}
     else:
         return {'Error in Database': 'Found a problem when tried to save the document'}
+
+
+def processing_documents(company_user, key_mh, is_consult):
+    if is_consult:
+        consult_document(company_user, key_mh)
+    else:
+        validate_document(company_user, key_mh)
+
+
+def document_report(company_user, document_type):
+    result = documents.get_documentsreport(company_user,document_type)
+    return {'documents': result}
