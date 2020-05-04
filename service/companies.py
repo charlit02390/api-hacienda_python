@@ -25,13 +25,15 @@ def create_company(data, file, logo):
     _logo = base64.b64encode(logo)
     _pin = data['pin']
     _env = data['ambiente']
+    _is_active = data['estado']
     _expiration_date = utils_mh.p12_expiration_date(file, _pin)
 
     company_exist = companies.verify_company(_company_user)
 
     if not company_exist:
         result = companies.create_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
-                                          _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code)
+                                          _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code
+                                          , _is_active)
 
         result_mh = companies.save_mh_data(_company_user, _user_mh, _pass_mh, _signature, _logo,
                                            _pin, _env, _expiration_date)
@@ -80,11 +82,12 @@ def modify_company(data, file, logo):
     _logo = base64.b64encode(logo)
     _pin = data['pin']
     _env = data['ambiente']
-    _signature_key = data['firma_key']
-    _expiration_date = utils_mh.p12_expiration_date(file, _signature_key)
+    _is_active = data['estado']
+    _expiration_date = utils_mh.p12_expiration_date(file, _pin)
 
     result = companies.modify_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
-                                      _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code)
+                                      _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code
+                                      , _is_active)
 
     result_mh = companies.modify_mh_data(_company_user, _user_mh, _pass_mh, _signature, _logo,
                                          _pin, _env,_expiration_date)

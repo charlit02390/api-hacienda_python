@@ -27,6 +27,8 @@
 /*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+use jack_api_hacienda;
+drop procedure sp_createCompany;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createCompany`(
 IN v_company_user varchar(45) ,
@@ -42,7 +44,8 @@ IN v_address varchar(100),
 IN v_code_phone int,
 IN v_phone int,
 IN v_email varchar(100),
-IN v_activity_code varchar(45)
+IN v_activity_code varchar(45),
+IN v_is_active tinyint(4)
 )
 BEGIN
 
@@ -61,7 +64,9 @@ INSERT INTO `jack_api_hacienda`.`companies`
 `code_phone`,
 `phone`,
 `email`,
-`activity_code`)
+`activity_code`,
+`is_active`
+)
 VALUES
 (v_company_user ,
 v_name,
@@ -76,9 +81,10 @@ v_address ,
 v_code_phone,
 v_phone ,
 v_email,
-v_activity_code);
+v_activity_code,
+v_is_active);
 
-END ;;
+END ;;companiescompanies
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -609,22 +615,9 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfo`(
 v_email varchar(45))
 BEGIN
 
-#select u.idusers,u.name,u.email,r.value rol, c.company_user IDCompany, c.tradename Tradename
-#from users u 
-#inner join roles r on u.idrol = r.id
-#inner join users_companies uc on u.idusers = uc.iduser
-#inner join companies c on uc.idcompany = c.id
-#where u.email = v_email;
-
-select u.idusers,u.name,u.email,r.value rol
+select u.idusers,u.name,u.email,r.id rol
 from users u 
 inner join roles r on u.idrol = r.id
-where u.email = v_email;
-
-select u.idusers,c.company_user IDCompany, c.tradename Tradename
-from users u 
-inner join users_companies uc on u.idusers = uc.iduser
-inner join companies c on uc.idcompany = c.id
 where u.email = v_email;
 
 END ;;
@@ -645,7 +638,7 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfoCompanies`(
 v_email varchar(45))
 BEGIN
-select c.company_user idcompany, c.tradename tradename
+select c.id internalid, c.company_user idcompany, c.tradename tradename
 from users u 
 inner join users_companies uc on u.idusers = uc.iduser
 inner join companies c on uc.idcompany = c.id
@@ -664,6 +657,7 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ModifyCompany`(
 IN v_company_user varchar(45) ,
@@ -679,7 +673,8 @@ IN v_address varchar(100),
 IN v_code_phone int,
 IN v_phone int,
 IN v_email varchar(100),
-IN v_activity_code varchar(45)
+IN v_activity_code varchar(45),
+IN v_is_active tinyint(4)
 )
 BEGIN
 
@@ -695,9 +690,10 @@ SET
 `neighborhood` = v_neighborhood,
 `address` = v_address,
 `code_phone` = v_code_phone,
-`phone`= v_phone,
+`phone`= v_phone,users
 `email` = v_email,
-`activity_code` = v_activity_code
+`activity_code` = v_activity_code,
+`is_active` = v_is_active
 where `company_user` = v_company_user;
 END ;;
 DELIMITER ;
@@ -871,6 +867,7 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_saveMHInfo`(
 v_user_mh varchar(100),
@@ -880,7 +877,8 @@ v_logo longblob,
 v_pin_sig varchar(4),
 v_company_api varchar(45),
 v_env varchar(45),
-v_expiration_date datetime)
+v_expiration_date varchar(45)
+)
 BEGIN
 INSERT INTO `jack_api_hacienda`.`companies_mh`
 (
