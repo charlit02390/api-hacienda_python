@@ -52,6 +52,8 @@ components:
           logo:
             type: string
             format: binary
+          estado:
+            type: string
     document:
       type: object
       properties:

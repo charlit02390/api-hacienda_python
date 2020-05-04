@@ -4,12 +4,13 @@ from extensions import mysql
 
 
 def create_company(company_user, name, tradename, type_identification, dni, state, county, district, neighbor, address,
-                   phone_code, phone, email, activity_code):
+                   phone_code, phone, email, activity_code, is_active):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_createCompany', (company_user, name, tradename, type_identification, dni, state, county,
-                                             district, neighbor, address, phone_code, phone, email, activity_code))
+                                             district, neighbor, address, phone_code, phone, email, activity_code
+                                             , is_active))
         data = cursor.fetchall()
         if len(data) is 0:
             conn.commit()
@@ -43,12 +44,13 @@ def save_mh_data(company_user, user_mh, pass_mh, signature, logo, pin_sig, env, 
 
 
 def modify_company(company_user, name, tradename, type_identification, dni, state, county, district, neighbor, address,
-                   phone_code, phone, email, activity_code):
+                   phone_code, phone, email, activity_code, is_active):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_ModifyCompany', (company_user, name, tradename, type_identification, dni, state, county,
-                                             district, neighbor, address, phone_code, phone, email, activity_code))
+                                             district, neighbor, address, phone_code, phone, email, activity_code
+                                             , is_active))
         data = cursor.rowcount
         if data != 0:
             conn.commit()
