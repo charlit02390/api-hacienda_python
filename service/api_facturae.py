@@ -358,8 +358,8 @@ def gen_xml_mr_43(clave, cedula_emisor, fecha_emision, id_mensaje,
 
 def company_xml(sb, issuing_company, document_type):
     if document_type == 'FEC':
-        vat = re.sub('[^0-9]', '', issuing_company['numero_identificacion'])
-        if not issuing_company['tipo_identificacion']:
+        vat = re.sub('[^0-9]', '', issuing_company['numeroIdentificacion'])
+        if not issuing_company['tipoIdentificacion']:
             if len(vat) == 9:  # cedula fisica
                 id_code = '01'
             elif len(vat) == 10:  # cedula juridica
@@ -369,7 +369,7 @@ def company_xml(sb, issuing_company, document_type):
             else:
                 id_code = '05'
         else:
-            id_code = issuing_company['tipo_identificacion']
+            id_code = issuing_company['tipoIdentificacion']
 
         if issuing_company.get('nombre'):
             sb.Append('<Emisor>')
@@ -378,7 +378,7 @@ def company_xml(sb, issuing_company, document_type):
             if document_type == 'FEE':
                 if issuing_company.vat:
                     sb.Append('<IdentificacionExtranjero>' + issuing_company[
-                        'numero_identificacion'] + '</IdentificacionExtranjero>')
+                        'numeroIdentificacion'] + '</IdentificacionExtranjero>')
             else:
                 sb.Append('<Identificacion>')
                 sb.Append('<Tipo>' + id_code + '</Tipo>')
@@ -565,15 +565,14 @@ def lines_xml(sb, lines, document_type, receiver_company):
                 if document_type != 'FEE':
                     if b.get('exoneracion'):
                         sb.Append('<Exoneracion>')
-                        sb.Append('<TipoDocumento>' + receiver_company.type_exoneration.code + '</TipoDocumento>')
-                        sb.Append('<NumeroDocumento>' + receiver_company.exoneration_number + '</NumeroDocumento>')
-                        sb.Append('<NombreInstitucion>' + receiver_company.institution_name + '</NombreInstitucion>')
-                        sb.Append('<FechaEmision>' + str(
-                            receiver_company.date_issue) + 'T00:00:00-06:00' + '</FechaEmision>')
+                        sb.Append('<TipoDocumento>' + b['exoneracion']['Tipodocumento'] + '</TipoDocumento>')
+                        sb.Append('<NumeroDocumento>' + b['exoneracion']['NumeroDocumento'] + '</NumeroDocumento>')
+                        sb.Append('<NombreInstitucion>' + b['exoneracion']['NombreInstitucion'] + '</NombreInstitucion>')
+                        sb.Append('<FechaEmision>' + b['exoneracion']['FechaEmision'] + '</FechaEmision>')
                         sb.Append('<PorcentajeExoneracion>' + str(
-                            b['exoneracion']['porcentajeCompra']) + '</PorcentajeExoneracion>')
+                            b['exoneracion']['porcentajeExoneracion']) + '</PorcentajeExoneracion>')
                         sb.Append(
-                            '<MontoExoneracion>' + str(b['exoneracion']['montoImpuesto']) + '</MontoExoneracion>')
+                            '<MontoExoneracion>' + str(b['exoneracion']['montoExoneracion']) + '</MontoExoneracion>')
                         sb.Append('</Exoneracion>')
 
                 sb.Append('</Impuesto>')
@@ -589,30 +588,30 @@ def other_charges(sb, otrosCargos):
     sb.Append('<OtrosCargos>')
     for otro_cargo in otrosCargos:
         sb.Append('<TipoDocumento>' +
-                  otrosCargos[otro_cargo]['TipoDocumento'] +
+                  otrosCargos[otro_cargo]['tipoDocumento'] +
                   '</TipoDocumento>')
 
-        if otrosCargos[otro_cargo].get('NumeroIdentidadTercero'):
+        if otrosCargos[otro_cargo].get('numeroIdentidadTercero'):
             sb.Append('<NumeroIdentidadTercero>' +
-                      str(otrosCargos[otro_cargo]['NumeroIdentidadTercero']) +
+                      str(otrosCargos[otro_cargo]['numeroIdentidadTercero']) +
                       '</NumeroIdentidadTercero>')
 
-        if otrosCargos[otro_cargo].get('NombreTercero'):
+        if otrosCargos[otro_cargo].get('nombreTercero'):
             sb.Append('<NombreTercero>' +
-                      otrosCargos[otro_cargo]['NombreTercero'] +
+                      otrosCargos[otro_cargo]['nombreTercero'] +
                       '</NombreTercero>')
 
         sb.Append('<Detalle>' +
-                  otrosCargos[otro_cargo]['Detalle'] +
+                  otrosCargos[otro_cargo]['detalle'] +
                   '</Detalle>')
 
-        if otrosCargos[otro_cargo].get('Porcentaje'):
+        if otrosCargos[otro_cargo].get('porcentaje'):
             sb.Append('<Porcentaje>' +
-                      str(otrosCargos[otro_cargo]['Porcentaje']) +
+                      str(otrosCargos[otro_cargo]['porcentaje']) +
                       '</Porcentaje>')
 
         sb.Append('<MontoCargo>' +
-                  str(otrosCargos[otro_cargo]['MontoCargo']) +
+                  str(otrosCargos[otro_cargo]['montoCargo']) +
                   '</MontoCargo>')
     sb.Append('</OtrosCargos>')
 
@@ -697,16 +696,16 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
 
     if referencia:
         sb.Append('<InformacionReferencia>')
-        sb.Append('<TipoDoc>' + str(referencia) + '</TipoDoc>')
-        sb.Append('<Numero>' + str(referencia) + '</Numero>')
-        sb.Append('<FechaEmision>' + referencia + '</FechaEmision>')
-        sb.Append('<Codigo>' + str(referencia) + '</Codigo>')
-        sb.Append('<Razon>' + referencia + '</Razon>')
+        sb.Append('<TipoDoc>' + str(referencia['tipoDocumento']) + '</TipoDoc>')
+        sb.Append('<Numero>' + str(referencia['numeroReferencia']) + '</Numero>')
+        sb.Append('<FechaEmision>' + referencia['fecha'] + '</FechaEmision>')
+        sb.Append('<Codigo>' + str(referencia['codigo']) + '</Codigo>')
+        sb.Append('<Razon>' + str(referencia['razon']) + '</Razon>')
         sb.Append('</InformacionReferencia>')
 
     if invoice_comments:
         sb.Append('<Otros>')
-        sb.Append('<OtroTexto> Gracias por su compra </OtroTexto>')
+        sb.Append('<OtroTexto>'+str(invoice_comments['otroTexto'])+' </OtroTexto>')
         sb.Append('</Otros>')
 
     sb.Append('</' + fe_enums.tagName[document_type] + '>')
@@ -722,8 +721,6 @@ def send_xml_fe(_company, _receptor, _key_mh, token, date, xml, env):
     # establecer el ambiente al cual me voy a conectar
     endpoint = fe_enums.UrlHaciendaRecepcion[env]
 
-    xml_base64 = xml.decode('utf-8')
-
     data = {'clave': _key_mh,
             'fecha': date,
             'emisor': {
@@ -734,7 +731,7 @@ def send_xml_fe(_company, _receptor, _key_mh, token, date, xml, env):
                 'tipoIdentificacion': _receptor['dni_type_receiver'],
                 'numeroIdentificacion': _receptor['dni_receiver']
             },
-            'comprobanteXml': xml_base64
+            'comprobanteXml': xml
             }
 
     json_hacienda = json.dumps(data)

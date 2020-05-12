@@ -6,12 +6,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-def send_email(receiver, header, message, file1, file2,
+def send_email(receiver, subject, body, file1, file2, file3,
                host, sender, password, port, encrypt_type,
-               name_file1, name_file2):
+               name_file1, name_file2, name_file3):
     try:
-        subject = header
-        body = message
         sender_email = sender
         receiver_email = receiver
         password = password
@@ -34,6 +32,10 @@ def send_email(receiver, header, message, file1, file2,
         if name_file2 != "":
             part2 = create_email_files(file2, name_file2)
             message.attach(part2)
+
+        if name_file3 != "":
+            part3 = create_email_files(file3, name_file3)
+            message.attach(part3)
 
         # Add attachment to message and convert message to string
 

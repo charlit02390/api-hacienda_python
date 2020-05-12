@@ -4,17 +4,10 @@
     }
      .body-invoice{
             font-size: small;
-            border-style:solid;
-            border-width:2px;
-            border-color:gray;
             width: 100%;
             heigth:100%;
         }
-        table{
-            border-style:solid;
-            border-width:1px;
-            border-color:gray;
-        }
+
         footer {
            position: fixed;
            left: 0;
@@ -22,42 +15,15 @@
            width: 100%;
            text-align: center;
         }
-        .footer-div{
-           border-style:solid;
-           border-width:2px;
-           border-color:gray;
-        }
-        table, td {
-            border: 1px solid gray;
-        }
-        th{
-            text-align: left;
-        }
+
         .body-invoice-total{
             font-size: small;
             width: 100%;
             heigth:100%;
         }
-        table#t01 {
-            width: 40%;
-            border: 1px solid white;
-        }
-        td#td01{
-            border: 1px solid white;
-
-        }
-        td#td02{
-            border: 1px solid white;
-            border-top: 2px solid gray;
-            font-weight: bold;
-            font-size: 20;
-        }
         .invoice-header{
             width:100%;
             font-size: small;
-            border-style:solid;
-            border-width:2px;
-            border-color:gray;
             content: "";
             clear: both;
             display: table;
@@ -70,14 +36,22 @@
             background-color: black;
             color:white;
         }
+        table{
+            font-size: small;
+        }
+        .title{
+         width:100%;
+         color:white;
+         text-align:center;
+         background-color:black;
+        }
 </style>
 <br/>
 <body>
     <div class="invoice-header">
+        <div class="title">Informaci&oacuten del cliente</div>
         <div class="div_header">
-            <b>Consecutivo:</b> {{consecutive}}<br/>
-            <b>Clave Num&eacuterica:</b> {{key_mh}}<br/>
-            <b>Receptor:</b> {{receiver.nombre}}<br/>
+            <b>Cliente:</b> {{receiver.nombre}}<br/>
             <b>C&eacutedula {{receiver.tipo_identificacion}}:</b>{{receiver.numero_identificacion}}<br/>
             <b>Tel&eacutefono:</b> {{receiver.telefono}}<br/>
             <b>Correo:</b> {{receiver.correo}}<br/>
@@ -92,6 +66,7 @@
         </div>
     </div>
     <div class="body-invoice">
+         <div class="title">Detalle de Compra</div>
         <table style="width:100%">
             <thead class="headertable">
                 <th>Producto</th>
@@ -147,6 +122,7 @@
 </body>
 <footer>
         <div class="footer-div">
+            <b>Clave del Comprobante:</b> {{key_mh}}<br/>
             <b>Observaciones:</b>
             <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
         </div>

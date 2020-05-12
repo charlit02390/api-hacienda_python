@@ -82,9 +82,15 @@ def get_documentsreport(company_id, document_type):
         conn.close()
 
 
-def save_document(company_id, key_mh, sign_xml, status, date, document_type, receiver_type, receiver_dni,
+def save_document(company_id, key_mh, sign_xml, status, date, document_type, receiver,
                   total_document, total_taxed, pdf, email, email_costs):
     try:
+        if receiver is not None:
+            receiver_type = receiver['tipoIdentificacion']
+            receiver_dni = receiver['numeroIdentificacion']
+        else:
+            receiver_type = None
+            receiver_dni = None
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_saveDocument', (company_id, key_mh, sign_xml, status, date, document_type,receiver_type,
