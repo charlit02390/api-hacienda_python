@@ -1,12 +1,11 @@
-import json
 from . import api_facturae
 from . import fe_enums
 from . import makepdf
-from . import emails
 import base64
 
 from infrastructure import companies
 from infrastructure import documents
+
 
 def create_document(data):
     _company_user = data['nombre_usuario']
@@ -20,9 +19,14 @@ def create_document(data):
     datecr = api_facturae.get_time_hacienda(True)
     _activity_code = data['codigoActividad']
     _other_phone = data['otro_telefono']
-    _receptor = data['receptor']
-    _email = _receptor['correo']
-    _email_costs = _receptor['correo_gastos']
+    if data.get('receptor'):
+        _receptor = data['receptor']
+        _email = _receptor['correo']
+        _email_costs = _receptor['correo_gastos']
+    else:
+        _receptor = None
+        _email = None
+        _email_costs = None
     _sale_condition = data['condicionVenta']
     _credit_term = data['plazoCredito']
     _payment_methods = data['medioPago']
@@ -68,20 +72,20 @@ def create_document(data):
 
     _logo = companies.get_logo_data(_company_user)
     _logo = _logo['logo'].decode('utf-8')
-    pdf = makepdf.render_pdf(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
+    pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive, datecr.strftime("%Y-%m-%d %H:%M:%S"), _sale_condition,
                              _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                              _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                              _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                              _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
                              _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo);
 
-    emails.sent_email(pdf, xml_sign)
+    #Prueba de creacion de correo
+    #emails.sent_email(pdf, xml_sign)
 
     pdfencoded = base64.b64encode(pdf);
 
     result = documents.save_document(_company_user, _key_mh, xmlencoded, 'creado', datecr, _type_document,
-                                     _receptor['tipoIdentificacion'], _receptor['numeroIdentificacion'],
-                                     _total_document, _total_taxes, pdf, _email, _email_costs)
+                                     _receptor, _total_document, _total_taxes, pdfencoded, _email, _email_costs)
 
     _id_company = company_data[0]['id']
 
@@ -106,7 +110,7 @@ def save_document_lines(lines, id_company, key_mh):
 
         result = documents.save_document_line_info(id_company, _line_number, _quantity, _unity
                                                    , _detail, _unit_price, _net_tax, _total_line, key_mh)
-        if result is True:
+        if result is True and _line.get('impuesto'):
             result = save_document_taxes(_line, id_company, _line_number, key_mh)
 
     return result
@@ -131,12 +135,13 @@ def validate_documents():
 def validate_document(company_user, key_mh):
     document_data = documents.get_document(key_mh)
     company_data = companies.get_company_data(company_user)
-    date = api_facturae.get_time_hacienda(False)
+    date_cr= api_facturae.get_time_hacienda(False)
+    date = api_facturae.get_time_hacienda(True)
 
     token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
                                                 company_data[0]['env'])
 
-    response_json = api_facturae.send_xml_fe(company_data[0], document_data[0], key_mh, token_m_h, date,
+    response_json = api_facturae.send_xml_fe(company_data[0], document_data[0], key_mh, token_m_h, date_cr,
                                              document_data[0]['signxml'],
                                              company_data[0]['env'])
 
@@ -183,3 +188,17 @@ def consult_document(company_user, key_mh):
         return {'Respuesta Hacienda': response_status, 'xml-respuesta': response_text}
     else:
         return {'Error in Database': 'Found a problem when tried to save the document'}
+
+
+def processing_documents(company_user, key_mh, is_consult):
+    if is_consult:
+        result = consult_document(company_user, key_mh)
+    else:
+        result = validate_document(company_user, key_mh)
+    return result
+
+
+def document_report(company_user, document_type):
+    result = documents.get_documentsreport(company_user, document_type)
+    return {'documents': result}
+
