@@ -9,7 +9,7 @@ cfg = globalsettings.cfg
 
 
 def sent_email_fe(data):
-    smtp_data = company_smtp.get_company_smtp(data['company_id'])
+    smtp_data = company_smtp.get_company_smtp(data['company_user'])
 
     if smtp_data.get('host'):
         host = smtp_data[0]['host']

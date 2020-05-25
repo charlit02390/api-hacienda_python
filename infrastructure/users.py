@@ -194,3 +194,24 @@ def delete_user_company(id_user,idcompany):
     finally:
         cursor.close()
         conn.close()
+
+
+def check_user(email, password):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.callproc('sp_CheckUser', (email, password,))
+        row_headers = [x[0] for x in cursor.description]
+        data = cursor.fetchall()
+        if len(data) is not 0:
+            conn.commit()
+            json_data = []
+            for row in data:
+                json_data.append(dict(zip(row_headers, row)))
+            return json_data
+    except Exception as e:
+        return {'error': str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+

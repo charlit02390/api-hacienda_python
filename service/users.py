@@ -1,5 +1,14 @@
 import json
+import time
+from configuration import globalsettings
+import six
+from werkzeug.exceptions import Unauthorized
+
 from infrastructure import users
+
+from jose import jwt, JWTError
+
+cfg = globalsettings.cfg
 
 
 def create_user(data):
@@ -69,3 +78,36 @@ def delete_user_companies(data):
         return {'message': 'The user company has been deleted'}
     else:
         return {'error': 'The user company can not be deleted'}
+
+
+def login(email, password):
+    user_check = users.check_user(email, password)
+    if user_check is not None:
+        token = generate_token(email)
+        return {'token': token,
+                'user': user_check}
+    else:
+        return {'error': 'the credentials are not correct please check the email or password'}
+
+
+def generate_token(email):
+    timestamp = _current_timestamp()
+    payload = {
+        "iss": cfg['jwt_issuer'],
+        "iat": int(timestamp),
+        "exp": int(timestamp + cfg['jwt_lifetime_seconds']),
+        "sub": str(email),
+    }
+
+    return jwt.encode(payload, cfg['jwt_secret'], algorithm=cfg['jwt_algorithm'])
+
+
+def decode_token(token):
+    try:
+        return jwt.decode(token, cfg['jwt_secret'], algorithms=cfg['jwt_algorithm'])
+    except JWTError as e:
+        six.raise_from(Unauthorized, e)
+
+
+def _current_timestamp() -> int:
+    return int(time.time())

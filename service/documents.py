@@ -1,8 +1,10 @@
 from . import api_facturae
 from . import fe_enums
 from . import makepdf
+
 import base64
 
+from service import emails
 from infrastructure import companies
 from infrastructure import documents
 
@@ -184,6 +186,8 @@ def consult_document(company_user, key_mh):
     response_status = response_json.get('ind-estado')
     response_text = response_json.get('respuesta-xml')
     result = documents.update_document(company_user, key_mh, response_text, response_status, date)
+    if response_status == 'aceptado':
+        emails.sent_email_fe(document_data[0])
     if result:
         return {'Respuesta Hacienda': response_status, 'xml-respuesta': response_text}
     else:

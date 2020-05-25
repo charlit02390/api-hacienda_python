@@ -2,10 +2,21 @@ openapi: 3.0.0
 info:
   title: API Hacienda
   description: REST API for the Haciend project
-  version: 0.0.1
+  version: 1.0.0
 servers:
   - url: https://localhost:3005
 components:
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-bearerInfoFunc: service.users.decode_token
+    api_key:
+      type: apiKey
+      name: X-Api-Key
+      in: header
+      x-apikeyInfoFunc: service.utils.api_key_auth
   schemas:
     company:
       type: object
@@ -356,6 +367,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     post:
       tags:
         - companies
@@ -372,6 +386,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     put:
       tags:
         - companies
@@ -388,6 +405,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
   /api/companies/{id}:
     get:
       tags:
@@ -405,6 +425,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     delete:
       tags:
         - companies
@@ -422,6 +445,9 @@ paths:
           description: The company has been deleted
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
   /api/documents:
     get:
       tags:
@@ -446,6 +472,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
+        - api_key: []
     patch:
       tags:
         - documents
@@ -462,6 +491,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
     post:
       tags:
         - documents
@@ -478,6 +509,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
   /api/references/key:
     post:
       tags:
@@ -493,8 +526,13 @@ paths:
       responses:
         200:
           description: Everything is ok
+        401:
+          description: UnAuthorized Token please renew again
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
   /api/users:
     post:
       tags:
@@ -512,6 +550,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     put:
       tags:
       - users
@@ -528,6 +569,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     get:
       tags:
       - users
@@ -538,6 +582,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
   /api/users/companies:
     delete:
       tags:
@@ -555,6 +602,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
   /api/users/{id}:
     delete:
       tags:
@@ -573,6 +623,9 @@ paths:
           description: The user has been deleted
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     get:
       tags:
       - users
@@ -590,6 +643,9 @@ paths:
           description: the information was successfully displayed
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
   /api/companies/{id}/smtp:
     post:
       tags:
@@ -614,6 +670,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     get:
       tags:
       - smtp data
@@ -631,6 +690,9 @@ paths:
           description: the information was successfully displayed
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     delete:
       tags:
       - smtp data
@@ -648,6 +710,9 @@ paths:
           description: the information was successfully displayed
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     put:
       tags:
       - smtp data
@@ -671,6 +736,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
   /api/email:
     post:
       tags:
@@ -688,6 +756,9 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
     get:
       tags:
       - Sent Email
@@ -702,9 +773,48 @@ paths:
       responses:
         200:
           description: Everything is ok
+          content:
+            'application/json':
+              schema:
+                type: string
+        401:
+          description: UnAuthorized Token please renew again
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
+        - jwt: []
+  /api/auth/{email}/{password}:
+    get:
+      tags:
+      - Auth
+      summary: Login into API
+      operationId: routes.users.login
+      parameters:
+      - name: email
+        description: User unique identifier
+        in: path
+        required: true
+        example: cmonge@jackdevelopers.com
+        schema:
+          type: string
+      - name: password
+        description: User unique identifier
+        in: path
+        required: true
+        example: 12
+        schema:
+          type: string
 
+      responses:
+        '200':
+          description: JWT token
+          content:
+            'application/json':
+              schema:
+                type: string
+      security:
+        - api_key: []
 tags:
   - name: companies
     description: Everything about your Companies

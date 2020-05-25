@@ -2,7 +2,18 @@
 import base64
 import datetime
 import pytz
+from connexion.exceptions import OAuthProblem
+from configuration import globalsettings
+
 from io import BytesIO as StringIO
+
+cfg = globalsettings.cfg
+
+TOKEN_DB = {
+    cfg['api_key']: {
+        'uid': 100
+    }
+}
 
 try:
     from lxml import etree
@@ -64,3 +75,10 @@ def get_time_hacienda(format='N'):
 
 def parse_xml(name):
     return etree.parse( name ).getroot()
+
+
+def api_key_auth(token, required_scopes=None):
+    info = TOKEN_DB.get(token, None)
+    if not info:
+        raise OAuthProblem('Invalid token')
+    return info

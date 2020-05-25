@@ -9,20 +9,25 @@
             max-height:150px;
         }
     </style>
-    <div>
-        <div style="float:right;">
-            <!--<img src="bf52044c1cbcdcad8124cebf4660ebda73e22cbbr1-808-808v2_uhq.jpg" class="image">-->
-            <img src="data:;base64,{{ logo }}" class="image"/>
-        </div>
-
-        <div style="float:left">
-            <h3>{{type}}</h3>
-            <h4>No. {{consecutive}}</h4>
-            <p>{{company.name}}<br/>
-            C&eacutedula {{type_iden_company}}:{{company.identification_dni}}<br/>
-            Tel&eacutefono: {{company.phone}}<br/>
-            Correo eletr&oacutenico: {{company.email}}<br/>
-                Direcci&oacuten: {{company.address}}<br/></p>
-        </div>
-    </div>
+    <table style="width: 100%; font-size: small;">
+        <tr>
+            <td>
+                <div>
+                    <h3>{{type}}</h3>
+                    <h4>No. {{consecutive}}</h4>
+                    <p>{{company.name}}<br/>
+                    C&eacutedula {{type_iden_company}}:{{company.identification_dni}}<br/>
+                    Tel&eacutefono: {{company.phone}}<br/>
+                    Correo eletr&oacutenico: {{company.email}}<br/>
+                        Direcci&oacuten: {{company.address}}<br/></p>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <img src="data:;base64,{{ logo }}" class="image"/>
+                    <!--<img src="Logo_Espacio.jpg" class="image">-->
+                </div>
+            </td>
+        </tr>
+    </table>
 </head>
