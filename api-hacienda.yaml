@@ -368,7 +368,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     post:
       tags:
@@ -387,7 +386,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     put:
       tags:
@@ -406,7 +404,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
   /api/companies/{id}:
     get:
@@ -426,7 +423,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     delete:
       tags:
@@ -446,7 +442,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
   /api/documents:
     get:
@@ -474,7 +469,6 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
-        - api_key: []
     patch:
       tags:
         - documents
@@ -531,7 +525,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
   /api/users:
     post:
@@ -551,7 +544,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     put:
       tags:
@@ -570,7 +562,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     get:
       tags:
@@ -583,7 +574,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
   /api/users/companies:
     delete:
@@ -603,7 +593,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
   /api/users/{id}:
     delete:
@@ -624,7 +613,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     get:
       tags:
@@ -644,7 +632,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
   /api/companies/{id}/smtp:
     post:
@@ -671,7 +658,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     get:
       tags:
@@ -691,7 +677,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     delete:
       tags:
@@ -711,7 +696,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     put:
       tags:
@@ -737,7 +721,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
   /api/email:
     post:
@@ -757,7 +740,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
     get:
       tags:
@@ -782,7 +764,6 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - api_key: []
         - jwt: []
   /api/auth/{email}/{password}:
     get:
