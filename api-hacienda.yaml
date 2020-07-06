@@ -6,6 +6,21 @@ info:
 servers:
   - url: https://localhost:3005
 components:
+  responses:
+    404NoMatches:
+      description: No matches found for the requested query
+  requestBodies:
+    search:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              query:
+                type: string
+            required:
+            - query
   securitySchemes:
     jwt:
       type: http
@@ -356,6 +371,58 @@ components:
           type: string
         key_mh:
           type: string
+    rspns_cabys:
+      type: object
+      properties:
+        cabys:
+          type: array
+          items:
+            type: object
+            properties:
+              codigo:
+                type: string
+              descripcion:
+                type: string
+              impuesto:
+                type: number
+      required:
+        - cabys 
+    rspns_sac:
+      type: object
+      properties:
+        cabysxsac:
+          type: array
+          items:
+            type: object
+            properties:
+              codigocabys:
+                type: string
+              codigosac:
+                type: string
+              descripcabys:
+                type: string
+      required:
+        - cabysxsac
+    rspns_med:
+      type: object
+      properties:
+        medicamentos:
+          type: array
+          items:
+            type: object
+            properties:
+              codigocabys:
+                type: string
+              principioms:
+                type: string
+              codigoatc:
+                type: string
+              principioatc:
+                type: string
+              descripcion:
+                type: string
+      required:
+        - medicamentos
 paths:
   /api/companies:
     get:
@@ -794,6 +861,96 @@ paths:
             'application/json':
               schema:
                 type: string
+      security:
+        - api_key: []
+  /cabys/meds:
+    get:
+      tags:
+        - cabys
+      summary: Performs a search on the medicaments collection returning matches for the requested query.
+      operationId: routes.cabys.search_meds
+      # this body could be a query parameter instead...?
+      # parameters:
+      # - name: search
+      #   in: query
+      #   schema:
+      #     type: string
+      requestBody:
+        $ref: '#/components/requestBodies/search'
+      responses:
+        200:
+          description: Matches found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rspns_med'
+        404:
+          $ref: '#/components/responses/404NoMatches'
+      security:
+        - api_key: []
+  /cabys/sacs:
+    get:
+      tags:
+        - cabys
+      summary: Finds the specified SAC code(s) using the given Cabys code from the CabysXSac collection.
+      operationId: routes.cabys.find_sacs_by_cabys
+      # again... this body could be a query parameter, maybe...
+      # parameters:
+      # - name: cabys
+      #   in: query
+      #   schema:
+      #     type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cabys:
+                  type: string
+              required:
+              - cabys
+      responses:
+        200:
+          description: Matches found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rspns_sac'
+        400:
+          $ref: '#/components/responses/404NoMatches'
+      security:
+        - api_key: []
+  /cabys/goods:
+    get:
+      tags:
+        - cabys
+      summary: Performs a search on the cabys collection returning matches for the requested query.
+      operationId: routes.cabys.search_cabys
+      # once more, this body could be a query paramter... prolly... heck, it's even used more than just once, so it could be placed in components:
+      # components:
+      #   parameters:
+      #     param_search:
+      #       name: search
+      #       in: query
+      #       schema:
+      #         type: string
+      # just call it here:
+      # parameters:
+      # - $ref: '#/components/parameters/param_search'
+      # but, whatever, already made a requestBody component, so might as well use it
+      requestBody:
+        $ref: '#/components/requestBodies/search'
+      responses:
+        200:
+          description: Matches found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rspns_cabys'
+        404:
+          $ref: '#/components/responses/404NoMatches'
       security:
         - api_key: []
 tags:
