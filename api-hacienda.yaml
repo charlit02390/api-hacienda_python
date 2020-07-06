@@ -15,12 +15,12 @@ components:
       content:
         application/json:
           schema:
+            type: object
             properties:
-              data:
-                type: object
-                properties:
-                  query:
-                    type: string 
+              query:
+                type: string
+            required:
+            - query
   securitySchemes:
     jwt:
       type: http
@@ -905,12 +905,12 @@ paths:
         content:
           application/json:
             schema:
+              type: object
               properties:
-                data:
-                  type: object
-                  properties:
-                    cabys:
-                      type: string
+                cabys:
+                  type: string
+              required:
+              - cabys
       responses:
         200:
           description: Matches found
