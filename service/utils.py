@@ -82,3 +82,60 @@ def api_key_auth(token, required_scopes=None):
     if not info:
         raise OAuthProblem('Invalid token')
     return info
+
+
+def buildResponseData(result: dict, defaultbody = list, warningmsg: str = None, errormsg: str = None) -> dict:
+    """
+    Builds data for a response from the given result.
+    
+    If the result passes validation, it's set as 'body'.
+    Optionally, receives a list or dict type for a default body; and, warning and/or error messages to be set.
+
+    :param result: dict - A dictionary with possible data for the response body.
+    :param defaultbody: [optional] type(list|dict) - The type for list or dict that will be used as default empty body.
+    :param warningmsg: [optional] str - A warning message to be displayed if a warning was triggered.
+    :param errormsg: [optional] str - An error message to be displayed if an error was raised.
+    :returns: dict - A dictionary with data to be used to generate a proper response.
+    :raises TypeError: If the defaultbody parameters is not of type(list) or type(dict)
+    """
+    if defaultbody is not list and defaultbody is not dict:
+        raise TypeError('defaultbody argument must be a list or dict type')
+
+    response = {'status' : 200, 'body' : defaultbody()}
+
+    # Error happened? Set error message and status code
+    if '_error' in result:
+        response['error'] = errormsg or result['_error']
+        response['status'] = 500
+
+    # Warning prompted? Set a nice message
+    elif '_warning' in result:
+        response['message'] = warningmsg or result['_warning']
+
+    # All good? Valid body, therefore set it
+    else:
+        response['body'] = result
+
+    return response
+
+
+def prepareResponse(mainpropertyname: str, data: dict) -> dict:
+    """
+    Prepares a response to be sent with the received data.
+
+    :param mainpropertyname: str - The name of the property that will hold the response's body.
+    :param data: dict - The dictionary with data to build the response.
+    :returns: dict - A dictionary with keys:
+        'mainpropertyname' : The main body for the response.
+        ['error'] : If an error was raised, this will contain an error message.
+        ['message'] : If a warning was emitted, this will contain a warning or information message.
+    """
+    response = {mainpropertyname : data['body']}
+
+    if 'error' in data:
+        response['error'] = data['error']
+
+    if 'message' in data:
+        response['message'] = data['message']
+
+    return response

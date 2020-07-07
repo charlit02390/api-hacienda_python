@@ -128,3 +128,4 @@ dmypy.json
 
 # Visual Studio trash
 .vs/
+/bd/regcivil/data/registrocivil_data.txt
