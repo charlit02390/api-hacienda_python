@@ -101,12 +101,12 @@ def buildResponseData(result: dict, defaultbody = list, warningmsg: str = None, 
     if defaultbody is not list and defaultbody is not dict:
         raise TypeError('defaultbody argument must be a list or dict type')
 
-    response = {'status' : 200, 'body' : defaultbody()}
+    response = {'httpstatus' : 200, 'body' : defaultbody()}
 
     # Error happened? Set error message and status code
     if '_error' in result:
         response['error'] = errormsg or result['_error']
-        response['status'] = 500
+        response['httpstatus'] = 500
 
     # Warning prompted? Set a nice message
     elif '_warning' in result:
@@ -127,15 +127,21 @@ def prepareResponse(mainpropertyname: str, data: dict) -> dict:
     :param data: dict - The dictionary with data to build the response.
     :returns: dict - A dictionary with keys:
         'mainpropertyname' : The main body for the response.
+        'status' : An status code for the operation. To be propertly determined. For now:
+            0 = All good.
+            1 = No data found.
+            20 = Error.
+        {scraped, but might be used later...?}
         ['error'] : If an error was raised, this will contain an error message.
         ['message'] : If a warning was emitted, this will contain a warning or information message.
     """
-    response = {mainpropertyname : data['body']}
-
-    if 'error' in data:
-        response['error'] = data['error']
+    response = {'status' : '0', mainpropertyname : data['body']}
 
     if 'message' in data:
-        response['message'] = data['message']
+        response['status'] = '1' # data['message']
+
+    if 'error' in data:
+        response['status'] = '20' # data['error']
+
 
     return response

@@ -11,7 +11,7 @@ def get_person(id: str) -> dict:
 
     :param id: str - An 'id' string representing the unique identification to find.
     :returns: dict - A dictionary with keys:
-        'status' : an http response status code
+        'httpstatus' : an http response status code
         'data' : data for the response's body
         ['error'] : An optional error message if an exception/error occurred
         ['message'] : An optional message for additional information

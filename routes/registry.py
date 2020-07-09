@@ -13,4 +13,4 @@ def route_get_person(id):
     """
     data = service.get_person(id)
     response = utils.prepareResponse('persona', data)
-    return response, data['status']
+    return response, data['httpstatus']

@@ -23,7 +23,7 @@ _MIN_LENGTH = 3
 # Takes a "query" string and formats (not right now...) it to be used as a pattern for searching.
 # Then, dispatches it to the correct function based on "where"...
 def search(data, where):
-    response = {'status' : 204, 'body' : None }
+    response = {'httpstatus' : 204, 'body' : None }
     # I think I'm already checking this in the yaml, but might as well...
     if 'query' in data:
         _query = data['query'].strip()
@@ -35,7 +35,7 @@ def search(data, where):
             response = utils.buildResponseData(result, warningmsg='No matches were found for the query "' + _query + '".')
 
     else:
-        response = {'status' : 400, 'body' : [], 'error':'Error: there was no query specified in the request\'s body.'}
+        response = {'httpstatus' : 400, 'body' : [], 'error':'Error: there was no query specified in the request\'s body.'}
 
 
     return response
@@ -43,7 +43,7 @@ def search(data, where):
 
 # Finds (? should just be Get, prolly... dunno... whatvs) an identifier in the requested place/collection/infrastructure function... I don't know...
 def find(data, where):
-    response = {'status' : 200, 'body' : None}
+    response = {'httpstatus' : 200, 'body' : None}
     # Better safe than sorry...?
     if 'cabys' in data:
         _code = data['cabys'].strip()
@@ -52,7 +52,7 @@ def find(data, where):
         response = utils.buildResponseData(result, warningmsg='The requested Cabys code "' + _code + '" was not found.')
 
     else:
-        response = {'status' : 400, 'body' : [] , 'error':'Error: there was no Cabys code specified in the request\'s body.'}
+        response = {'httpstatus' : 400, 'body' : [] , 'error':'Error: there was no Cabys code specified in the request\'s body.'}
 
 
     return response

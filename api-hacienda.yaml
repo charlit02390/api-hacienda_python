@@ -374,6 +374,8 @@ components:
     rspns_cabys:
       type: object
       properties:
+        status:
+          type: string
         cabys:
           type: array
           items:
@@ -386,10 +388,13 @@ components:
               impuesto:
                 type: number
       required:
+        - status
         - cabys 
     rspns_sac:
       type: object
       properties:
+        status:
+          type: string
         cabysxsac:
           type: array
           items:
@@ -402,10 +407,13 @@ components:
               descripcabys:
                 type: string
       required:
+        - status
         - cabysxsac
     rspns_med:
       type: object
       properties:
+        status:
+          type: string
         medicamentos:
           type: array
           items:
@@ -422,10 +430,13 @@ components:
               descripcion:
                 type: string
       required:
+        - status
         - medicamentos
     rspns_person:
       type: object
       properties:
+        status:
+          type: string
         persona:
           type: object
           properties:
@@ -442,6 +453,7 @@ components:
             apellido2:
               type: string
       required:
+        - status
         - persona
 paths:
   /api/companies:
