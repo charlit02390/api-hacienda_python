@@ -50,9 +50,9 @@ CREATE TABLE `cabysxsac`
 DROP TABLE IF EXISTS `medicamento`;
 CREATE TABLE `medicamento` (
 	`cabyscodigo`	VARCHAR(15),
-	`msprincipio`	VARCHAR(20)		DEFAULT NULL,
-	`atccodigo`		VARCHAR(10),
-	`atcprincipio`	VARCHAR(15),
-	`descripcion`	VARCHAR(100)
+	`msprincipio`	VARCHAR(700)		DEFAULT NULL,
+	`atccodigo`		VARCHAR(15),
+	`atcprincipio`	VARCHAR(200),
+	`descripcion`	VARCHAR(200)
 );
 -- ---------------------------

@@ -374,6 +374,8 @@ components:
     rspns_cabys:
       type: object
       properties:
+        status:
+          type: string
         cabys:
           type: array
           items:
@@ -386,10 +388,13 @@ components:
               impuesto:
                 type: number
       required:
+        - status
         - cabys 
     rspns_sac:
       type: object
       properties:
+        status:
+          type: string
         cabysxsac:
           type: array
           items:
@@ -402,10 +407,13 @@ components:
               descripcabys:
                 type: string
       required:
+        - status
         - cabysxsac
     rspns_med:
       type: object
       properties:
+        status:
+          type: string
         medicamentos:
           type: array
           items:
@@ -422,7 +430,31 @@ components:
               descripcion:
                 type: string
       required:
+        - status
         - medicamentos
+    rspns_person:
+      type: object
+      properties:
+        status:
+          type: string
+        persona:
+          type: object
+          properties:
+            cedula:
+              type: string
+            ubicacion:
+              type: string
+            expiracion:
+              type: string
+            nombre:
+              type: string
+            apellido1:
+              type: string
+            apellido2:
+              type: string
+      required:
+        - status
+        - persona
 paths:
   /api/companies:
     get:
@@ -951,6 +983,30 @@ paths:
                 $ref: '#/components/schemas/rspns_cabys'
         404:
           $ref: '#/components/responses/404NoMatches'
+      security:
+        - api_key: []
+  /registry/persons/{id}:
+    get:
+      tags:
+      - registry
+      summary: Obtains the specified person from the registry collection.
+      operationId: routes.registry.route_get_person
+      parameters:
+        - name: id
+          in: path
+          description: The ID number for the person to get info from.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Person found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rspns_person'
+        404:
+          description: Person not found
       security:
         - api_key: []
 tags:
