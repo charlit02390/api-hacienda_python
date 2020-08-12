@@ -2,10 +2,36 @@ openapi: 3.0.0
 info:
   title: API Hacienda
   description: REST API for the Haciend project
-  version: 0.0.1
+  version: 1.0.0
 servers:
   - url: https://localhost:3005
 components:
+  responses:
+    404NoMatches:
+      description: No matches found for the requested query
+  requestBodies:
+    search:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              query:
+                type: string
+            required:
+            - query
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-bearerInfoFunc: service.users.decode_token
+    api_key:
+      type: apiKey
+      name: X-Api-Key
+      in: header
+      x-apikeyInfoFunc: service.utils.api_key_auth
   schemas:
     company:
       type: object
@@ -244,6 +270,18 @@ components:
                   type: string
                 otro_contenido:
                   type: string
+    mh_validations:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id_compania:
+              type: string
+            clave:
+              type: string
+            es_consulta:
+              type: boolean
     key:
       type: object
       properties:
@@ -314,9 +352,11 @@ components:
           type: array
           items:
             type: string
-        header:
+        company_id:
           type: string
-        message:
+        subject:
+          type: string
+        body:
           type: string
         file1:
           type: string
@@ -324,6 +364,97 @@ components:
         file2:
           type: string
           format: binary
+    email_mh:
+      type: object
+      properties:
+        company_id:
+          type: string
+        key_mh:
+          type: string
+    rspns_cabys:
+      type: object
+      properties:
+        status:
+          type: string
+        cabys:
+          type: array
+          items:
+            type: object
+            properties:
+              codigo:
+                type: string
+              descripcion:
+                type: string
+              impuesto:
+                type: number
+      required:
+        - status
+        - cabys 
+    rspns_sac:
+      type: object
+      properties:
+        status:
+          type: string
+        cabysxsac:
+          type: array
+          items:
+            type: object
+            properties:
+              codigocabys:
+                type: string
+              codigosac:
+                type: string
+              descripcabys:
+                type: string
+      required:
+        - status
+        - cabysxsac
+    rspns_med:
+      type: object
+      properties:
+        status:
+          type: string
+        medicamentos:
+          type: array
+          items:
+            type: object
+            properties:
+              codigocabys:
+                type: string
+              principioms:
+                type: string
+              codigoatc:
+                type: string
+              principioatc:
+                type: string
+              descripcion:
+                type: string
+      required:
+        - status
+        - medicamentos
+    rspns_person:
+      type: object
+      properties:
+        status:
+          type: string
+        persona:
+          type: object
+          properties:
+            cedula:
+              type: string
+            ubicacion:
+              type: string
+            expiracion:
+              type: string
+            nombre:
+              type: string
+            apellido1:
+              type: string
+            apellido2:
+              type: string
+      required:
+        - status
+        - persona
 paths:
   /api/companies:
     get:
@@ -335,6 +466,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
     post:
       tags:
         - companies
@@ -351,6 +484,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
     put:
       tags:
         - companies
@@ -367,7 +502,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
-
+      security:
+        - jwt: []
   /api/companies/{id}:
     get:
       tags:
@@ -385,7 +521,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
-
+      security:
+        - jwt: []
     delete:
       tags:
         - companies
@@ -403,18 +540,52 @@ paths:
           description: The company has been deleted
         500:
           description: there was an error starting the facial recognition system
-
+      security:
+        - jwt: []
   /api/documents:
     get:
       tags:
         - documents
-      summary: Processing all documents in state procesando
-      operationId: routes.documents.consult_documents
+      summary: get documents by company and type
+      operationId: routes.documents.get_documents_report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+             properties:
+               data:
+                 type: object
+                 properties:
+                   id_compania:
+                     type: string
+                   tipo_documento:
+                     type: string
       responses:
         200:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
+    patch:
+      tags:
+        - documents
+      summary: Processing documents in hacienda
+      operationId: routes.documents.processing_documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/mh_validations'
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
     post:
       tags:
         - documents
@@ -431,54 +602,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
-  /api/documents/consult/{company_id}/{key}:
-    get:
-      tags:
-        - documents
-      summary: Consult a document in MH
-      operationId: routes.documents.consult_document_company
-      parameters:
-        - name: company_id
-          in: path
-          description: Company ID
-          required: true
-          schema:
-            type: string
-        - name: key
-          in: path
-          description: key of MH
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
-  /api/documents/validate/{company_id}/{key}:
-    get:
-      tags:
-        - documents
-      summary: Consult a document in MH
-      operationId: routes.documents.validate_document_company
-      parameters:
-        - name: company_id
-          in: path
-          description: Company ID
-          required: true
-          schema:
-            type: string
-        - name: key
-          in: path
-          description: key of MH
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+      security:
+        - api_key: []
   /api/references/key:
     post:
       tags:
@@ -494,8 +619,12 @@ paths:
       responses:
         200:
           description: Everything is ok
+        401:
+          description: UnAuthorized Token please renew again
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
   /api/users:
     post:
       tags:
@@ -513,6 +642,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
     put:
       tags:
       - users
@@ -529,6 +660,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
     get:
       tags:
       - users
@@ -539,6 +672,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
   /api/users/companies:
     delete:
       tags:
@@ -556,6 +691,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
   /api/users/{id}:
     delete:
       tags:
@@ -574,6 +711,8 @@ paths:
           description: The user has been deleted
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
     get:
       tags:
       - users
@@ -591,6 +730,8 @@ paths:
           description: the information was successfully displayed
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
   /api/companies/{id}/smtp:
     post:
       tags:
@@ -615,6 +756,8 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
     get:
       tags:
       - smtp data
@@ -632,6 +775,8 @@ paths:
           description: the information was successfully displayed
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
     delete:
       tags:
       - smtp data
@@ -649,6 +794,8 @@ paths:
           description: the information was successfully displayed
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
     put:
       tags:
       - smtp data
@@ -672,11 +819,13 @@ paths:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
-  /api/email/{id}:
+      security:
+        - jwt: []
+  /api/email:
     post:
       tags:
-      - email data
-      summary: Send a email
+      - Sent Email
+      summary: Send a custom email
       requestBody:
         required: true
         content:
@@ -684,19 +833,182 @@ paths:
             schema:
               $ref: '#/components/schemas/email'
       operationId: routes.email.route_send_email
-      parameters:
-      - name: id
-        in: path
-        description: sender company ID
-        required: true
-        schema:
-          type: string
       responses:
         200:
           description: Everything is ok
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
+    get:
+      tags:
+      - Sent Email
+      summary: Send a email with the information of the document (FE,NC,etc)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/email_mh'
+      operationId: routes.email.send_email_fe
+      responses:
+        200:
+          description: Everything is ok
+          content:
+            'application/json':
+              schema:
+                type: string
+        401:
+          description: UnAuthorized Token please renew again
+        500:
+          description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
+  /api/auth/{email}/{password}:
+    get:
+      tags:
+      - Auth
+      summary: Login into API
+      operationId: routes.users.login
+      parameters:
+      - name: email
+        description: User unique identifier
+        in: path
+        required: true
+        example: cmonge@jackdevelopers.com
+        schema:
+          type: string
+      - name: password
+        description: User unique identifier
+        in: path
+        required: true
+        example: 12
+        schema:
+          type: string
 
+      responses:
+        '200':
+          description: JWT token
+          content:
+            'application/json':
+              schema:
+                type: string
+      security:
+        - api_key: []
+  /cabys/meds:
+    get:
+      tags:
+        - cabys
+      summary: Performs a search on the medicaments collection returning matches for the requested query.
+      operationId: routes.cabys.search_meds
+      # this body could be a query parameter instead...?
+      # parameters:
+      # - name: search
+      #   in: query
+      #   schema:
+      #     type: string
+      requestBody:
+        $ref: '#/components/requestBodies/search'
+      responses:
+        200:
+          description: Matches found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rspns_med'
+        404:
+          $ref: '#/components/responses/404NoMatches'
+      security:
+        - api_key: []
+  /cabys/sacs:
+    get:
+      tags:
+        - cabys
+      summary: Finds the specified SAC code(s) using the given Cabys code from the CabysXSac collection.
+      operationId: routes.cabys.find_sacs_by_cabys
+      # again... this body could be a query parameter, maybe...
+      # parameters:
+      # - name: cabys
+      #   in: query
+      #   schema:
+      #     type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cabys:
+                  type: string
+              required:
+              - cabys
+      responses:
+        200:
+          description: Matches found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rspns_sac'
+        400:
+          $ref: '#/components/responses/404NoMatches'
+      security:
+        - api_key: []
+  /cabys/goods:
+    get:
+      tags:
+        - cabys
+      summary: Performs a search on the cabys collection returning matches for the requested query.
+      operationId: routes.cabys.search_cabys
+      # once more, this body could be a query paramter... prolly... heck, it's even used more than just once, so it could be placed in components:
+      # components:
+      #   parameters:
+      #     param_search:
+      #       name: search
+      #       in: query
+      #       schema:
+      #         type: string
+      # just call it here:
+      # parameters:
+      # - $ref: '#/components/parameters/param_search'
+      # but, whatever, already made a requestBody component, so might as well use it
+      requestBody:
+        $ref: '#/components/requestBodies/search'
+      responses:
+        200:
+          description: Matches found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rspns_cabys'
+        404:
+          $ref: '#/components/responses/404NoMatches'
+      security:
+        - api_key: []
+  /registry/persons/{id}:
+    get:
+      tags:
+      - registry
+      summary: Obtains the specified person from the registry collection.
+      operationId: routes.registry.route_get_person
+      parameters:
+        - name: id
+          in: path
+          description: The ID number for the person to get info from.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Person found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rspns_person'
+        404:
+          description: Person not found
+      security:
+        - api_key: []
 tags:
   - name: companies
     description: Everything about your Companies

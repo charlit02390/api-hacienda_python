@@ -9,3 +9,8 @@ email:
     type: TLS
     user: cmonge@jackdevelopers.com
     password:
+jwt_issuer: 'com.jackdevelopers.connexion'
+jwt_secret: 'Hernan-API'
+jwt_lifetime_seconds: 600
+jwt_algorithm: 'HS256'
+api_key: '61fe6e29-06ea-434b-bc2a-eae5b557eb45'

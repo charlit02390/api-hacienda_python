@@ -1,59 +1,26 @@
 <style>
      .body-invoice{
             font-size: small;
-            border-style:solid;
-            border-width:2px;
-            border-color:#00BBB6;
             width: 100%;
             heigth:100%;
         }
-        table{
-            border-style:solid;
-            border-width:1px;
-            border-color:#00BBB6;
+
+        footer {
+           position: fixed;
+           left: 0;
+           bottom: 0;
+           width: 100%;
+           text-align: center;
         }
-        .footer{
-            clear: both;
-            position: relative;
-            left: 0;
-            bottom: 0;
-            width: 99%;
-            border-style:solid;
-            border-width:2px;
-            border-color:#00BBB6;
-            heigth-min:100px;
-        }
-        table, td {
-            border: 1px solid #00BBB6;
-        }
-        th{
-            text-align: left;
-        }
+
         .body-invoice-total{
             font-size: small;
             width: 100%;
             heigth:100%;
         }
-        table#t01 {
-            width: 40%;
-            border: 1px solid white;
-        }
-        td#td01{
-            border: 1px solid white;
-
-        }
-        td#td02{
-            border: 1px solid white;
-            border-top: 2px solid #00BBB6;
-            font-weight: bold;
-            font-size: 20;
-        }
         .invoice-header{
             width:100%;
             font-size: small;
-            border-style:solid;
-            border-width:2px;
-            border-color:#00BBB6;
             content: "";
             clear: both;
             display: table;
@@ -62,15 +29,27 @@
             width:50%;
             float:left;
         }
+        .headertable{
+            background-color: black;
+            color:white;
+        }
+        table{
+            font-size: small;
+        }
+        .title{
+         width:100%;
+         color:white;
+         text-align:center;
+         background-color:black;
+        }
 </style>
 <br/>
 <body>
     <div class="invoice-header">
+        <div class="title">Informaci&oacuten del cliente</div>
         <div class="div_header">
-            <b>Consecutivo:</b> {{consecutive}}<br/>
-            <b>Clave Num&eacuterica:</b> {{key_mh}}<br/>
-            <b>Receptor:</b> {{receiver.nombre}}<br/>
-            <b>{{receiver.tipo_identificacion}}:</b>{{receiver.numero_identificacion}}<br/>
+            <b>Cliente:</b> {{receiver.nombre}}<br/>
+            <b>C&eacutedula {{receiver.tipo_identificacion}}:</b>{{receiver.numero_identificacion}}<br/>
             <b>Tel&eacutefono:</b> {{receiver.telefono}}<br/>
             <b>Correo:</b> {{receiver.correo}}<br/>
             <b>Direcci&oacuten:</b> {{receiver.otrasSenas}}<br/>
@@ -79,31 +58,35 @@
             <b>Fecha:</b>{{date}}<br/>
             <b>Medio de Pago:</b> {{payment_method.codigo}}<br/>
             <b>Condici&oacuten de Venta:</b> {{sale_condition}}<br/>
-            <b>Moneda:</b> {{currency.tipo_moneda}}<br/>
+            <b>Moneda:</b> {{currency.tipoMoneda}}<br/>
             <b>Act. Economica:</b> {{activity_code}}<br/>
         </div>
     </div>
     <div class="body-invoice">
+         <div class="title">Detalle de Compra</div>
         <table style="width:100%">
-            <thead>
-                <th>Código</th>
+            <thead class="headertable">
+                <th>Codigo</th>
+                <th>Producto</th>
                 <th>Cantidad</th>
-                <th>Descripción del producto</th>
-                <th>I.V.A   </th>
+                <th>Precio</th>
+                <th>Impuestos</th>
                 <th>Total   </th>
             </thead>
-            {%for i in range(0,45) %}
+            <tbody>
             {%for line in lines %}
             <tr>
-                    <td>{{line.numero}}</td>
-                    <td>{{line.cantidad}}</td>
+                    {%for codigos in line.codigo_comercial %}
+                    <td>{{codigos.codigo}}</td>
+                    {%endfor%}
                     <td>{{line.detalle}}</td>
+                    <td>{{line.cantidad}}</td>
+                    <td>{{line.precioUnitario}}</td>
                     <td>{{line.impuestoNeto}}</td>
-                    <td>{{line.totalLinea}}</td>
-            {%endfor%}
+                    <td>{{line.subtotal}}</td>
             </tr>
             {%endfor%}
-            <tbody>
+
             </tbody>
         </table>
     </div>
@@ -112,36 +95,32 @@
                align="right">
             <thead>
                 <th style="color:white">Etiqueta</th>
-                <th style="color:white">simbolo_moneda</th>
                 <th style="color:white">monto</th>
             </thead>
             <tr>
                 <td id="td01">Sub Total:</td>
-                <td id="td01">₡</td>
-                <td id="td01">{{total_sales}}</td>
+                <td id="td01">{{currencySymbol}} {{total_sales}}</td>
             </tr>
             <tr>
                 <td id="td01">Descuento:</td>
-                <td id="td01">₡</td>
-                <td id="td01">{{total_discounts}}</td>
+                <td id="td01">{{currencySymbol}} {{total_discounts}}</td>
             </tr>
             <tr>
                 <td id="td01">IVA:</td>
-                <td id="td01">₡</td>
-                <td id="td01">{{total_taxes}}</td>
+                <td id="td01">{{currencySymbol}} {{total_taxes}}</td>
             </tr>
             <tr>
                 <td id="td02">Total Factura:</td>
-                <td id="td02">₡</td>
-                <td id="td02">{{total_document}}</td>
+                <td id="td02">{{currencySymbol}} {{total_document}} {{total_document_words}}</td>
             </tr>
         </table>
     </div>
-    <div class="footer">
-        <div>
-            <b>Observaciones:</b>
-        </div>
-        <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
-    </div>
 </body>
+<footer>
+        <div class="footer-div">
+            <b>Observaciones:</b>
+            <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
+        </div>
+
+    </footer>
 </html>

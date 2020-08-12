@@ -85,3 +85,22 @@ tagName = {
     'FEC': 'FacturaElectronicaCompra',  # Factura Electrónica de Compra
     'FEE': 'FacturaElectronicaExportacion',  # Factura Electrónica de Exportación
 }
+
+tagNamePDF = {
+    'FE': 'Factura Electronica',  # Factura Electrónica
+    'ND': 'Nota Debito Electronica',  # Nota de Débito
+    'NC': 'Nota Credito Electronica',  # Nota de Crédito
+    'TE': 'Tiquete Electronico',  # Tiquete Electrónico
+    'FEC': 'Factura Electronica Compra',  # Factura Electrónica de Compra
+    'FEE': 'Factura Electronica Exportacion',  # Factura Electrónica de Exportación
+}
+
+tipoCedulaPDF = {
+    '01': 'fisico',
+    '02': 'juridico',
+    '03': 'dimex',
+    '04': 'nite',
+    '05': 'extranjero',
+}
+
+currencies = {'USD': '$', 'CRC': '₡', 'EUR': '€'}

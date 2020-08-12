@@ -2,42 +2,33 @@
 <html lang="en">
 <head>
     <style>
-        .header-box{
-            font-size: small;
-            width:50%;
-            float:right;
-            text-align:center
-        }
-        .header-logo{
-            width:50%;
-            float:left;
-        }
-        .title{
-            width:100%;
-            background-color:#00BBB6
-        }
-
-
         .image{
-            max-width:250px;
+            margin-top:0px;
+            margin-right:0px;
+            max-width:150px;
             max-height:150px;
         }
-
-
     </style>
-    <div class="header-logo">
-    <img src="data:;base64,{{ logo }}" class="image"/>
-    </div>
-    <div class="header-box">
-        <div class="title">
-            <h3>
-              {{type}}
-            </h3>
-        </div>
-        <h3>{{company.name}}</h3>
-        {{company.type_identification}}:{{company.identification_dni}}<br/>
-        Tel&eacutefono: {{company.phone}}<br/>
-        Correo: {{company.email}}<br/>
-        Direcci&oacuten: {{company.address}}<br/>
-    </div>
+    <table style="width: 100%; font-size: small;">
+        <tr>
+            <td>
+                <div>
+                    <h3>{{type}}</h3>
+                    <h4>N&uacutemero. {{consecutive}}</h4>
+                    <h5>Clave del Comprobante: {{key_mh}}</h5>
+                    <p>{{company.name}}<br/>
+                    C&eacutedula {{type_iden_company}}:{{company.identification_dni}}<br/>
+                    Tel&eacutefono: {{company.phone}}<br/>
+                    Correo eletr&oacutenico: {{company.email}}<br/>
+                        Direcci&oacuten: {{company.address}}<br/></p>
+              </div>
+            </td>
+            <td>
+                <div>
+                    <img src="data:;base64,{{ logo }}" class="image"/>
+                    <!--<img src="Logo_Espacio.jpg" class="image">-->
+                </div>
+            </td>
+        </tr>
+    </table>
 </head>

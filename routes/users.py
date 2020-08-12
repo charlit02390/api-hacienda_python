@@ -34,3 +34,9 @@ def route_modify_user():
     body = json.loads(connexion.request.data)
     result = service.modify_user(body['data'])
     return result
+
+
+def login(email, password):
+    result = service.login(email, password)
+    return result
+
