@@ -208,7 +208,7 @@ def document_report(company_user, document_type):
     return {'documents': result}
 
 
-def consult_vouchers(company_user, key_mh, emisor, receptor, offset, limit):
+def consult_vouchers(company_user, emisor, receptor, offset, limit):
     company_data = companies.get_company_data(company_user)
     token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
                                                 company_data[0]['env'])
@@ -224,7 +224,7 @@ def consult_vouchers(company_user, key_mh, emisor, receptor, offset, limit):
         return {'Error': 'Unauthorized'}
 
 
-def consult_voucher_byid(company_user, key_mh, clave):
+def consult_voucher_byid(company_user, clave):
     company_data = companies.get_company_data(company_user)
     token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
                                                 company_data[0]['env'])
@@ -233,7 +233,7 @@ def consult_voucher_byid(company_user, key_mh, clave):
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
-
+    print(response_text)
     if response_status == 200:
         return_message = {'Comprobante ': response_text}
         return return_message

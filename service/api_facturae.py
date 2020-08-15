@@ -717,12 +717,14 @@ def get_vouchers(token, emisor, receptor, offset, limit):
     headers = {'Authorization': 'Bearer' + token}
     endpoint = fe_enums.UrlHaciendaComprobantes['api-vouchers']
 
-    endpoint = endpoint+emisor+receptor
+
+    #TODO: falta el manejo de crear el endpoint
+    endpoint = endpoint
 
     try:
         #  enviando solicitud get y guardando la respuesta como un objeto json
         response = requests.request(
-            "GET", endpoint, headers=headers)  #TODO: Es necesario el header?
+            "GET", endpoint, headers=headers)
 
         # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
         if response.status_code != 200 or response.status_code != 206:
