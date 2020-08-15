@@ -12,6 +12,11 @@ UrlHaciendaRecepcion = {
     'api-prod': 'https://api.comprobanteselectronicos.go.cr/recepcion/v1/recepcion/',
 }
 
+UrlHaciendaComprobantes = {
+    'api-vouchers': 'https://api.comprobanteselectronicos.go.cr/recepcion/v1/comprobantes',
+    'api-voucher': 'https://api.comprobanteselectronicos.go.cr/recepcion/v1/comprobantes/',
+}
+
 TipoCedula = {  # no se está usando !!
     'Fisico': 'fisico',
     'Juridico': 'juridico',
