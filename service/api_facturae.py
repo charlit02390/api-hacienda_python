@@ -713,18 +713,17 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     return sb
 
 
-def get_vouchers(token, emisor, receptor, offset, limit):
+def get_vouchers(token, parameters):
     headers = {'Authorization': 'Bearer' + token}
     endpoint = fe_enums.UrlHaciendaComprobantes['api-vouchers']
 
-
-    #TODO: falta el manejo de crear el endpoint
     endpoint = endpoint
 
     try:
         #  enviando solicitud get y guardando la respuesta como un objeto json
         response = requests.request(
-            "GET", endpoint, headers=headers)
+            "GET", endpoint, headers=headers, params=parameters)
+        print(response.url)
 
         # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
         if response.status_code != 200 or response.status_code != 206:
@@ -752,8 +751,7 @@ def get_voucher_byid(clave, token):
     try:
         #  enviando solicitud get y guardando la respuesta como un objeto json
         response = requests.request(
-            "GET", endpoint, headers=headers)  # TODO: Es necesario el header?
-        print(response)
+            "GET", endpoint, headers=headers)
         # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
         if response.status_code != 200:
             error_caused_by = response.headers.get(

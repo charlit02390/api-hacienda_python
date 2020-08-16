@@ -1034,6 +1034,17 @@ paths:
           name: offset
           schema:
             type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id_compania:
+                      type: string
       responses:
         200:
           description: vouchers found
@@ -1053,6 +1064,17 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id_compania:
+                      type: string
       responses:
         200:
           description: voucher found

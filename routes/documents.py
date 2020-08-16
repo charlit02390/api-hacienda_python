@@ -24,12 +24,12 @@ def get_documents_report():
 
 
 def route_get_vouchers(emisor=None, receptor=None, offset=None, limit=None):
-    #TODO: El primer none son body['data']['id_compania']
-    result = service.consult_vouchers(None, emisor, receptor, offset, limit)
+    body = json.loads(connexion.request.data)
+    result = service.consult_vouchers(body['data']['id_compania'], emisor, receptor, offset, limit)
     return result
 
 
 def route_get_voucher_byid(clave):
-    # TODO: El primer none son body['data']['id_compania']
-    result = service.consult_voucher_byid(None, clave)
+    body = json.loads(connexion.request.data)
+    result = service.consult_voucher_byid(body['data']['id_compania'], clave)
     return result

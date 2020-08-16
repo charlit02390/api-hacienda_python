@@ -211,8 +211,19 @@ def document_report(company_user, document_type):
 def consult_vouchers(company_user, emisor, receptor, offset, limit):
     company_data = companies.get_company_data(company_user)
     token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
-                                                company_data[0]['env'])
-    response_json = api_facturae.get_vouchers(token_m_h, emisor, receptor, offset, limit)
+                                                 company_data[0]['env'])
+
+    parameters = {}
+    if emisor is not None:
+        parameters['emisor'] = emisor
+    if receptor is not None:
+        parameters['receptor'] = receptor
+    if offset is not None:
+        parameters['offset'] = offset
+    if limit is not None:
+        parameters['limit'] = limit
+
+    response_json = api_facturae.get_vouchers(token_m_h, parameters)
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
@@ -233,7 +244,6 @@ def consult_voucher_byid(company_user, clave):
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
-    print(response_text)
     if response_status == 200:
         return_message = {'Comprobante ': response_text}
         return return_message
