@@ -12,6 +12,8 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
                 total_descuento, lines, otrosCargos, invoice_comments, referencia, payment_methods, plazo_credito,
                 moneda, total_taxed, total_exone, total_untaxed, total_sales, total_return_iva, total_document, logo):
 
+    css = ['templates/bootstrap.min.css']
+
     main_content = render_template("invoice.html", key_mh=key_mh, lines=lines, total_document=total_document
                                    , total_taxes=total_impuestos, total_discounts=total_descuento
                                    , total_sales=total_sales, receiver=receptor, payment_method=payment_methods
@@ -21,7 +23,7 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     }
     add_pdf_header(options, company_data[0], document_type, consecutive, date, logo)
     try:
-        pdf = pdfkit.from_string(main_content, False, options=options)
+        pdf = pdfkit.from_string(main_content, False, css=css, options=options)
     finally:
         os.remove(options['--header-html'])
     return pdf
