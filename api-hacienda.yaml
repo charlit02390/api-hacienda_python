@@ -1009,6 +1009,77 @@ paths:
           description: Person not found
       security:
         - api_key: []
+  /comprobantes:
+    get:
+      tags:
+        - vouchers
+      summary: Obtains a collection of vouchers.
+      operationId: routes.documents.route_get_vouchers
+      parameters:
+        - in: query
+          name: emisor
+          schema:
+            type: string
+        - in: query
+          name: receptor
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id_compania:
+                      type: string
+      responses:
+        200:
+          description: vouchers found
+        206:
+          description: vouchers found
+        404:
+          description: vouchers not found
+  /comprobantes/{clave}:
+    get:
+      tags:
+      - voucher
+      summary: Obtains a single voucher.
+      operationId: routes.documents.route_get_voucher_byid
+      parameters:
+        - in: path
+          name: clave
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id_compania:
+                      type: string
+      responses:
+        200:
+          description: voucher found
+        404:
+          description: voucher not found
+      security:
+        - api_key: []
 tags:
   - name: companies
     description: Everything about your Companies

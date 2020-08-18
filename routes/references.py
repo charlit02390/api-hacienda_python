@@ -1,6 +1,10 @@
 import connexion
 import json
+
+from flask import request
+
 from service import references as service
+
 
 def generated_key():
     body = json.loads(connexion.request.data)

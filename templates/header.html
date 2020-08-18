@@ -5,27 +5,33 @@
         .image{
             margin-top:20px;
             margin-right:20px;
+            position: absolute;
+            top:0;
+            right:0;
+            z-index:-1;
+            margin-top:0px;
+            margin-right:0px;
             max-width:150px;
             max-height:150px;
         }
     </style>
-    <table style="width: 100%; font-size: small;">
+     <table style="width: 100%; font-size: small;">
         <tr>
             <td>
                 <div>
                     <h3>{{type}}</h3>
-                    <h4>No. {{consecutive}}</h4>
+                    <h4>N&uacutemero. {{consecutive}}</h4>
+                    <h5>Clave del Comprobante: {{key_mh}}</h5>
                     <p>{{company.name}}<br/>
                     C&eacutedula {{type_iden_company}}:{{company.identification_dni}}<br/>
                     Tel&eacutefono: {{company.phone}}<br/>
                     Correo eletr&oacutenico: {{company.email}}<br/>
                         Direcci&oacuten: {{company.address}}<br/></p>
-                </div>
+              </div>
             </td>
             <td>
                 <div>
                     <img src="data:;base64,{{ logo }}" class="image"/>
-                    <!--<img src="Logo_Espacio.jpg" class="image">-->
                 </div>
             </td>
         </tr>

@@ -58,7 +58,7 @@
             <b>Fecha:</b>{{date}}<br/>
             <b>Medio de Pago:</b> {{payment_method.codigo}}<br/>
             <b>Condici&oacuten de Venta:</b> {{sale_condition}}<br/>
-            <b>Moneda:</b> {{currency.tipo_moneda}}<br/>
+            <b>Moneda:</b> {{currency.tipoMoneda}}<br/>
             <b>Act. Economica:</b> {{activity_code}}<br/>
         </div>
     </div>
@@ -66,6 +66,7 @@
          <div class="title">Detalle de Compra</div>
         <table style="width:100%">
             <thead class="headertable">
+                <th>Codigo</th>
                 <th>Producto</th>
                 <th>Cantidad</th>
                 <th>Precio</th>
@@ -75,6 +76,9 @@
             <tbody>
             {%for line in lines %}
             <tr>
+                    {%for codigos in line.codigo_comercial %}
+                    <td>{{codigos.codigo}}</td>
+                    {%endfor%}
                     <td>{{line.detalle}}</td>
                     <td>{{line.cantidad}}</td>
                     <td>{{line.precioUnitario}}</td>
@@ -95,19 +99,19 @@
             </thead>
             <tr>
                 <td id="td01">Sub Total:</td>
-                <td id="td01">{{total_sales}}</td>
+                <td id="td08">{{currencySymbol}} {{total_sales}}</td>
             </tr>
             <tr>
-                <td id="td01">Descuento:</td>
-                <td id="td01">{{total_discounts}}</td>
+                <td id="td02">Descuento:</td>
+                <td id="td03">{{currencySymbol}} {{total_discounts}}</td>
             </tr>
             <tr>
-                <td id="td01">IVA:</td>
-                <td id="td01">{{total_taxes}}</td>
+                <td id="td04">IVA:</td>
+                <td id="td05">{{currencySymbol}} {{total_taxes}}</td>
             </tr>
             <tr>
-                <td id="td02">Total Factura:</td>
-                <td id="td02">{{total_document}}</td>
+                <td id="td06">Total Factura:</td>
+                <td id="td07">{{currencySymbol}} {{total_document}} {{total_document_words}}</td>
             </tr>
         </table>
     </div>

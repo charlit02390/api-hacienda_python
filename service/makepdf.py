@@ -2,6 +2,7 @@ import os
 import tempfile
 import pdfkit
 from . import fe_enums
+from . import utils
 
 from flask import render_template, make_response
 
@@ -13,11 +14,25 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
                 moneda, total_taxed, total_exone, total_untaxed, total_sales, total_return_iva, total_document, logo):
 
     css = ['templates/bootstrap.min.css']
+    total_impuestos = utils.stringRound(total_impuestos)
+    total_descuento = utils.stringRound(total_descuento)
+    total_sales = utils.stringRound(total_sales)
+    total_document = utils.stringRound(total_document)
+    for line in lines:
+        line['precioUnitario'] = utils.stringRound(line['precioUnitario'])
+        line['impuestoNeto'] = utils.stringRound(line['impuestoNeto'])
+        line['subtotal'] = utils.stringRound(line['subtotal'])
+        line['cantidad'] = utils.stringRound(line['cantidad'])
+
+    simboloMoneda = fe_enums.currencies[moneda['tipoMoneda']]
+
+    total_document_words = utils.numToWord(total_document)
 
     main_content = render_template("invoice.html", key_mh=key_mh, lines=lines, total_document=total_document
                                    , total_taxes=total_impuestos, total_discounts=total_descuento
                                    , total_sales=total_sales, receiver=receptor, payment_method=payment_methods
-                                   , sale_condition=sale_conditions, currency=moneda, activity_code=activity_code)
+                                   , sale_condition=sale_conditions, currency=moneda, currencySymbol=simboloMoneda
+                                   , activity_code=activity_code, total_document_words=total_document_words)
     options = {
         '--encoding': 'utf-8'
     }

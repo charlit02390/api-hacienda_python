@@ -567,7 +567,8 @@ def lines_xml(sb, lines, document_type, receiver_company):
                         sb.Append('<Exoneracion>')
                         sb.Append('<TipoDocumento>' + b['exoneracion']['Tipodocumento'] + '</TipoDocumento>')
                         sb.Append('<NumeroDocumento>' + b['exoneracion']['NumeroDocumento'] + '</NumeroDocumento>')
-                        sb.Append('<NombreInstitucion>' + b['exoneracion']['NombreInstitucion'] + '</NombreInstitucion>')
+                        sb.Append(
+                            '<NombreInstitucion>' + b['exoneracion']['NombreInstitucion'] + '</NombreInstitucion>')
                         sb.Append('<FechaEmision>' + b['exoneracion']['FechaEmision'] + '</FechaEmision>')
                         sb.Append('<PorcentajeExoneracion>' + str(
                             b['exoneracion']['porcentajeExoneracion']) + '</PorcentajeExoneracion>')
@@ -705,12 +706,69 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
 
     if invoice_comments:
         sb.Append('<Otros>')
-        sb.Append('<OtroTexto>'+str(invoice_comments['otroTexto'])+' </OtroTexto>')
+        sb.Append('<OtroTexto>' + str(invoice_comments['otroTexto']) + ' </OtroTexto>')
         sb.Append('</Otros>')
 
     sb.Append('</' + fe_enums.tagName[document_type] + '>')
 
     return sb
+
+
+def get_voucher_byid(clave, token):
+    headers = {'Authorization': 'Bearer' + token}
+    endpoint = fe_enums.UrlHaciendaComprobantes['api-voucher']
+    endpoint = endpoint + clave
+
+    try:
+        #  enviando solicitud get y guardando la respuesta como un objeto json
+        response = requests.request(
+            "GET", endpoint, headers=headers)
+        # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
+        if response.status_code != 200:
+            error_caused_by = response.headers.get(
+                'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
+            error_caused_by += response.headers.get('validation-exception', '')
+            _logger.info('Status: {}, Text {}'.format(
+                response.status_code, error_caused_by))
+
+            return {'status': response.status_code, 'text': error_caused_by}
+        else:
+            # respuesta_hacienda = response.status_code
+            return {'status': response.status_code, 'text': response.reason}
+            # return respuesta_hacienda
+
+    except ImportError:
+        raise Warning('Error consultando el comprobante')
+
+
+def get_vouchers(token, parameters):
+    headers = {'Authorization': 'Bearer' + token}
+    endpoint = fe_enums.UrlHaciendaComprobantes['api-vouchers']
+
+    endpoint = endpoint
+
+    try:
+        #  enviando solicitud get y guardando la respuesta como un objeto json
+        response = requests.request(
+            "GET", endpoint, headers=headers, params=parameters)
+        print(response.url)
+
+        # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
+        if response.status_code != 200 or response.status_code != 206:
+            error_caused_by = response.headers.get(
+                'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
+            error_caused_by += response.headers.get('validation-exception', '')
+            _logger.info('Status: {}, Text {}'.format(
+                response.status_code, error_caused_by))
+
+            return {'status': response.status_code, 'text': error_caused_by}
+        else:
+            # respuesta_hacienda = response.status_code
+            return {'status': response.status_code, 'text': response.reason}
+            # return respuesta_hacienda
+
+    except ImportError:
+        raise Warning('Error consultando los comprobantes')
 
 
 # Funcion para enviar el XML al Ministerio de Hacienda
@@ -973,7 +1031,7 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
         document_type = re.search('FacturaElectronica|NotaCreditoElectronica|NotaDebitoElectronica',
                                   invoice_xml.tag).group(0)
     except Exception as e:
-        return _('This XML file is not XML-compliant. Error: %s') % e
+        return 'This XML file is not XML-compliant. Error: %s' % e
 
     namespaces = invoice_xml.nsmap
     inv_xmlns = namespaces.pop(None)
@@ -1016,7 +1074,7 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
     if partner:
         invoice.partner_id = partner
     else:
-        return _('The provider in the invoice does not exists. Please review it.')
+        return 'The provider in the invoice does not exists. Please review it.'
 
     invoice.account_id = partner.property_account_payable_id
     invoice.payment_term_id = partner.property_supplier_payment_term_id
@@ -1070,8 +1128,8 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
 
                     taxes.append((4, tax.id))
                 else:
-                    return (_('Tax code %s and percentage %s is not registered in the system',
-                              tax_code, tax_amount))
+                    return ('Tax code %s and percentage %s is not registered in the system',
+                             tax_code, tax_amount)
             _logger.debug('MAB - impuestos de linea: %s', taxes)
             invoice_line = invoice.env['account.invoice.line'].create({
                 'name': line.xpath("inv:Detalle", namespaces=namespaces)[0].text,
