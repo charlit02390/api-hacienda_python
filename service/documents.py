@@ -14,7 +14,7 @@ def create_document(data):
     _type_document = fe_enums.TipoDocumentoApi[data['tipo']]
     _situation = data['situacion']
     _consecutive = data['consecutivo']
-    _key_mh = data['clave']
+    _key_mh = data['clavelarga']
     _terminal = data['terminal']
     _branch = data['sucursal']
     _datestr = api_facturae.get_time_hacienda()
