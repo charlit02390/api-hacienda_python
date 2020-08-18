@@ -57,15 +57,14 @@ def create_document(data):
     company_data = companies.get_company_data(_company_user)
 
     xml = api_facturae.gen_xml_v43(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
-                                  _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
-                                  _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
-                                  _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
-                                  _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
-                                  _total_untaxed, _total_sales, _total_return_iva, _total_document)
+                                   _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
+                                   _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
+                                   _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
+                                   _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
+                                   _total_untaxed, _total_sales, _total_return_iva, _total_document)
     xml_to_sign = str(xml)
 
     signature = companies.get_sign_data(_company_user)
-
 
     xml_sign = api_facturae.sign_xml(
         signature['signature'],
@@ -85,7 +84,7 @@ def create_document(data):
     #Prueba de creacion de correo
     #emails.sent_email(pdf, xml_sign)
 
-    pdfencoded = base64.b64encode(pdf)
+    pdfencoded = base64.b64encode(pdf);
 
     result = documents.save_document(_company_user, _key_mh, xmlencoded, 'creado', datecr, _type_document,
                                      _receptor, _total_document, _total_taxes, pdfencoded, _email, _email_costs)
@@ -93,7 +92,7 @@ def create_document(data):
     _id_company = company_data[0]['id']
 
     if result is True:
-         result = save_document_lines(_lines, _id_company, _key_mh)
+        result = save_document_lines(_lines, _id_company, _key_mh)
 
     if result is True:
         return {'Respuesta Hacienda': 'creado'}

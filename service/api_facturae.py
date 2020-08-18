@@ -713,6 +713,33 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     return sb
 
 
+def get_voucher_byid(clave, token):
+    headers = {'Authorization': 'Bearer' + token}
+    endpoint = fe_enums.UrlHaciendaComprobantes['api-voucher']
+    endpoint = endpoint+clave
+
+    try:
+        #  enviando solicitud get y guardando la respuesta como un objeto json
+        response = requests.request(
+            "GET", endpoint, headers=headers)
+        # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
+        if response.status_code != 200:
+            error_caused_by = response.headers.get(
+                'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
+            error_caused_by += response.headers.get('validation-exception', '')
+            _logger.info('Status: {}, Text {}'.format(
+                response.status_code, error_caused_by))
+
+            return {'status': response.status_code, 'text': error_caused_by}
+        else:
+            # respuesta_hacienda = response.status_code
+            return {'status': response.status_code, 'text': response.reason}
+            # return respuesta_hacienda
+
+    except ImportError:
+        raise Warning('Error consultando el comprobante')
+
+
 def get_vouchers(token, parameters):
     headers = {'Authorization': 'Bearer' + token}
     endpoint = fe_enums.UrlHaciendaComprobantes['api-vouchers']
@@ -741,33 +768,6 @@ def get_vouchers(token, parameters):
 
     except ImportError:
         raise Warning('Error consultando los comprobantes')
-
-
-def get_voucher_byid(clave, token):
-    headers = {'Authorization': 'Bearer' + token}
-    endpoint = fe_enums.UrlHaciendaComprobantes['api-voucher']
-    endpoint = endpoint+clave
-
-    try:
-        #  enviando solicitud get y guardando la respuesta como un objeto json
-        response = requests.request(
-            "GET", endpoint, headers=headers)
-        # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
-        if response.status_code != 200:
-            error_caused_by = response.headers.get(
-                'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
-            error_caused_by += response.headers.get('validation-exception', '')
-            _logger.info('Status: {}, Text {}'.format(
-                response.status_code, error_caused_by))
-
-            return {'status': response.status_code, 'text': error_caused_by}
-        else:
-            # respuesta_hacienda = response.status_code
-            return {'status': response.status_code, 'text': response.reason}
-            # return respuesta_hacienda
-
-    except ImportError:
-        raise Warning('Error consultando el comprobante')
 
 
 
