@@ -5,6 +5,8 @@ import pytz
 from connexion.exceptions import OAuthProblem
 from configuration import globalsettings
 
+from num2words import num2words
+
 from io import BytesIO as StringIO
 
 cfg = globalsettings.cfg
@@ -19,6 +21,16 @@ try:
     from lxml import etree
 except ImportError:
     from xml.etree import ElementTree
+
+
+# REPRESENTACION DE NUMERO EN PALABRAS
+def numToWord(n):
+    return num2words(n, lang='es_CO', to='currency')
+
+
+# REDONDEA UN NUMERO FLOAT EN FORMATO STRING
+def stringRound(s):
+    return round(float(s), 2)
 
 
 # CONVIERTE UN STRING A BASE 64
