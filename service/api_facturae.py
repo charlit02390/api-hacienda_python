@@ -543,9 +543,11 @@ def lines_xml(sb, lines, document_type, receiver_company):
                 sb.Append('<Descuento>')
                 sb.Append('<MontoDescuento>' +
                           str(b['monto']) + '</MontoDescuento>')
-                if v.get('descripcion'):
+                # NaturalezaDescuento's text could come from a property called "descripcion" or "descripcionDescuento"
+                desc = b.get('descripcion') or b.get('descripcionDescuento')
+                if desc:
                     sb.Append('<NaturalezaDescuento>' +
-                              v['descripcion'] + '</NaturalezaDescuento>')
+                              desc + '</NaturalezaDescuento>')
                 sb.Append('</Descuento>')
 
         sb.Append('<SubTotal>' + str(v['subtotal']) + '</SubTotal>')
@@ -649,7 +651,25 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
 
     sb.Append('<CondicionVenta>' + sale_conditions + '</CondicionVenta>')
     sb.Append('<PlazoCredito>' + plazo_credito + '</PlazoCredito>')
-    sb.Append('<MedioPago>' + payment_methods[0]['codigo'] + '</MedioPago>')
+
+    # payment_methods could/should be a list, because multiple payment methods can be specified. Consider moving this to a function...
+    # @todo: check if there is at least one payment method, because it's REQUIRED.
+    if isinstance(payment_methods, list):
+        # @todo: move this to... someplace with constants...
+        MAX_PMS = 4
+        count = 0
+        for pm in payment_methods:
+            # @todo: use try excepting for KeyError in case the key 'codigo' doesn't exist, or check with if...in. Raising an exception would prolly be better...
+            sb.Append('<MedioPago>' + pm['codigo'] + '</MedioPago>')
+            # we cannot exceed the max amount of payment methods established by Hacienda (four)
+            # for now, ignore any other payment method past the fourth one. Should we Except here instead?
+            count += 1
+            if count >= MAX_PMS:
+                break
+    else:
+        # awful fallback in case payment_methods isn't a list.
+        # @todo: review what to actually do here... prone to explosions over here
+        sb.Append('<MedioPago>' + payment_methods['codigo'] + '</MedioPago>')
 
     lines_xml(sb, lines, document_type, receiver_company)
 
@@ -777,6 +797,11 @@ def send_xml_fe(_company, _receptor, _key_mh, token, date, xml, env):
 
     # establecer el ambiente al cual me voy a conectar
     endpoint = fe_enums.UrlHaciendaRecepcion[env]
+
+    # xml is coming as bytes: json.dumps cannot serialize bytes by default, so let's try converting it to a string
+    if isinstance(xml, bytes):
+        # assuming this has to already be a b64 encoded byte-like object
+        xml = xml.decode('utf-8');
 
     data = {'clave': _key_mh,
             'fecha': date,

@@ -38,6 +38,10 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     }
     add_pdf_header(options, company_data[0], document_type, consecutive, date, logo)
     try:
+        # wkhtmltopdf is an application required by pdfkit, so it needs to be installed before-hand.
+        # in case the app can't actually find wkhtmltopdf (even when properly registered in PATH):
+        #   config = pdfkit.configuration(wkhtmltopdf='/path/to/wkhtmltopdf/bin/wkhtmltopdf.exe')
+        #   pdf = pdfkit.from_string(main_content, False, css=css, options=options, configuration=config)
         pdf = pdfkit.from_string(main_content, False, css=css, options=options)
     finally:
         os.remove(options['--header-html'])
