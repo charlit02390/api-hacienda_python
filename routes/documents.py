@@ -17,6 +17,13 @@ def processing_documents():
     return result
 
 
+def consult_documents():
+    body = json.loads(connexion.request.data)
+    result = service.consult_document_notdatabase(body['data']['id_compania'], body['data']['clave'],
+                                          body['data']['tipo_documento'])
+    return result
+
+
 def get_documents_report():
     body = json.loads(connexion.request.data)
     result = service.document_report(body['data']['id_compania'], body['data']['tipo_documento'])

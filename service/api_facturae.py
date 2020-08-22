@@ -715,7 +715,7 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
 
 
 def get_voucher_byid(clave, token):
-    headers = {'Authorization': 'Bearer' + token}
+    headers = {'Authorization': 'Bearer ' + token}
     endpoint = fe_enums.UrlHaciendaComprobantes['api-voucher']
     endpoint = endpoint + clave
 
@@ -734,7 +734,7 @@ def get_voucher_byid(clave, token):
             return {'status': response.status_code, 'text': error_caused_by}
         else:
             # respuesta_hacienda = response.status_code
-            return {'status': response.status_code, 'text': response.reason}
+            return {'status': response.status_code, 'text': response.text}
             # return respuesta_hacienda
 
     except ImportError:
@@ -742,11 +742,10 @@ def get_voucher_byid(clave, token):
 
 
 def get_vouchers(token, parameters):
-    headers = {'Authorization': 'Bearer' + token}
+    headers = {'Authorization': 'Bearer ' + token}
     endpoint = fe_enums.UrlHaciendaComprobantes['api-vouchers']
 
     endpoint = endpoint
-
     try:
         #  enviando solicitud get y guardando la respuesta como un objeto json
         response = requests.request(
@@ -754,7 +753,7 @@ def get_vouchers(token, parameters):
         print(response.url)
 
         # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
-        if response.status_code != 200 or response.status_code != 206:
+        if response.status_code < 200 or response.status_code > 206:
             error_caused_by = response.headers.get(
                 'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
             error_caused_by += response.headers.get('validation-exception', '')
@@ -764,7 +763,7 @@ def get_vouchers(token, parameters):
             return {'status': response.status_code, 'text': error_caused_by}
         else:
             # respuesta_hacienda = response.status_code
-            return {'status': response.status_code, 'text': response.reason}
+            return {'status': response.status_code, 'text': json.loads(response.text)}
             # return respuesta_hacienda
 
     except ImportError:

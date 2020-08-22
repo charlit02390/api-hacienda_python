@@ -193,6 +193,24 @@ def consult_document(company_user, key_mh):
     else:
         return {'Error in Database': 'Found a problem when tried to save the document'}
 
+def consult_document_notdatabase(company_user, key_mh, document_type):
+    #document_data = documents.get_document(key_mh)
+    company_data = companies.get_company_data(company_user)
+    date = api_facturae.get_time_hacienda(True)
+
+    token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
+                                                company_data[0]['env'])
+
+    response_json = api_facturae.consulta_documentos(key_mh, company_data[0]['env'], token_m_h, date,
+                                                     document_type)
+
+    response_status = response_json.get('ind-estado')
+    response_text = response_json.get('respuesta-xml')
+    if response_text:
+        return {'Respuesta Hacienda': response_status, 'xml-respuesta': response_text}
+    else:
+        return {'Error in Database': 'Found a problem when tried to save the document'}
+
 
 def processing_documents(company_user, key_mh, is_consult):
     if is_consult:
