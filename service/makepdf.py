@@ -27,8 +27,11 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     simboloMoneda = fe_enums.currencies[moneda['tipoMoneda']]
 
     total_document_words = utils.numToWord(total_document)
+    type_iden_receptor = fe_enums.tipoCedulaPDF[receptor['tipoIdentificacion']]
 
-    main_content = render_template("invoice.html", key_mh=key_mh, lines=lines, total_document=total_document
+    main_content = render_template("invoice.html",
+                                   key_mh=key_mh, company=company_data, lines=lines, total_document=total_document
+                                   , type_iden_receptor=type_iden_receptor
                                    , total_taxes=total_impuestos, total_discounts=total_descuento
                                    , total_sales=total_sales, receiver=receptor, payment_method=payment_methods
                                    , sale_condition=sale_conditions, currency=moneda, currencySymbol=simboloMoneda
@@ -38,10 +41,6 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     }
     add_pdf_header(options, company_data[0], document_type, consecutive, date, logo)
     try:
-        # wkhtmltopdf is an application required by pdfkit, so it needs to be installed before-hand.
-        # in case the app can't actually find wkhtmltopdf (even when properly registered in PATH):
-        #   config = pdfkit.configuration(wkhtmltopdf='/path/to/wkhtmltopdf/bin/wkhtmltopdf.exe')
-        #   pdf = pdfkit.from_string(main_content, False, css=css, options=options, configuration=config)
         pdf = pdfkit.from_string(main_content, False, css=css, options=options)
     finally:
         os.remove(options['--header-html'])

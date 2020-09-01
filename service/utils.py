@@ -25,7 +25,7 @@ except ImportError:
 
 # REPRESENTACION DE NUMERO EN PALABRAS
 def numToWord(n):
-    return num2words(n, lang='es_CO', to='currency')
+    return num2words(n, lang='es') + " colones"
 
 
 # REDONDEA UN NUMERO FLOAT EN FORMATO STRING

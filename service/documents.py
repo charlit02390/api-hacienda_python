@@ -74,7 +74,8 @@ def create_document(data):
 
     _logo = companies.get_logo_data(_company_user)
     _logo = _logo['logo'].decode('utf-8')
-    pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive, datecr.strftime("%Y-%m-%d %H:%M:%S"), _sale_condition,
+    pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
+                             datecr.strftime("%d-%m-%Y"), _sale_condition,
                              _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                              _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                              _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,

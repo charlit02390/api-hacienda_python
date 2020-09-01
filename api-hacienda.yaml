@@ -290,8 +290,6 @@ components:
                   type: string
                 otro_contenido:
                   type: string
-          required:
-            - data
     mh_validations:
       type: object
       properties:
@@ -416,7 +414,7 @@ components:
           type: string
         subject:
           type: string
-        body:
+        content:
           type: string
         file1:
           type: string
@@ -428,7 +426,7 @@ components:
         - receivers
         - company_id
         - subject
-        - boby
+        - content
     email_mh:
       type: object
       properties:
