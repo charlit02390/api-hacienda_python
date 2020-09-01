@@ -101,8 +101,8 @@ tagNamePDF = {
 }
 
 tipoCedulaPDF = {
-    '01': 'fisico',
-    '02': 'juridico',
+    '01': 'fisica',
+    '02': 'juridica',
     '03': 'dimex',
     '04': 'nite',
     '05': 'extranjero',

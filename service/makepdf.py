@@ -13,6 +13,7 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
                 total_descuento, lines, otrosCargos, invoice_comments, referencia, payment_methods, plazo_credito,
                 moneda, total_taxed, total_exone, total_untaxed, total_sales, total_return_iva, total_document, logo):
 
+    css = ['templates/bootstrap.min.css']
     total_impuestos = utils.stringRound(total_impuestos)
     total_descuento = utils.stringRound(total_descuento)
     total_sales = utils.stringRound(total_sales)
@@ -26,8 +27,11 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     simboloMoneda = fe_enums.currencies[moneda['tipoMoneda']]
 
     total_document_words = utils.numToWord(total_document)
+    type_iden_receptor = fe_enums.tipoCedulaPDF[receptor['tipoIdentificacion']]
 
-    main_content = render_template("invoice.html", lines=lines, total_document=total_document
+    main_content = render_template("invoice.html",
+                                   key_mh=key_mh, company=company_data, lines=lines, total_document=total_document
+                                   , type_iden_receptor=type_iden_receptor
                                    , total_taxes=total_impuestos, total_discounts=total_descuento
                                    , total_sales=total_sales, receiver=receptor, payment_method=payment_methods
                                    , sale_condition=sale_conditions, currency=moneda, currencySymbol=simboloMoneda
@@ -35,20 +39,20 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     options = {
         '--encoding': 'utf-8'
     }
-    add_pdf_header(options, company_data[0], key_mh, document_type, consecutive, date, logo)
+    add_pdf_header(options, company_data[0], document_type, consecutive, date, logo)
     try:
-        pdf = pdfkit.from_string(main_content, False, options=options)
+        pdf = pdfkit.from_string(main_content, False, css=css, options=options)
     finally:
         os.remove(options['--header-html'])
     return pdf
 
 
-def add_pdf_header(options, company_data, key_mh, document_type, consecutive, date,  logo):
+def add_pdf_header(options, company_data, document_type, consecutive, date,  logo):
     with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as header:
         options['--header-html'] = header.name
         type_iden_company = fe_enums.tipoCedulaPDF[company_data['type_identification']]
         header.write(
-            render_template("header.html", company=company_data, key_mh=key_mh, type_iden_company=type_iden_company,
+            render_template("header.html", company=company_data, type_iden_company=type_iden_company,
                             type=document_type, consecutive=consecutive, date=date, logo=logo).encode('utf-8')
         )
     return

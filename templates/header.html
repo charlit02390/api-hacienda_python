@@ -2,36 +2,76 @@
 <html lang="en">
 <head>
     <style>
-         .image{
-            position: absolute;
-            top:0;
-            right:0;
-            z-index:-1;
-            margin-top:0px;
-            margin-right:0px;
+        .image{
+            margin-top:20px;
+            margin-right:20px;
             max-width:150px;
             max-height:150px;
         }
+        .container{
+            font-size: 13px;
+        }
     </style>
-    <table style="width: 100%; font-size: small;">
-        <tr>
-            <td>
-                <div>
-                    <h3>{{type}}</h3>
-                    <h4>N&uacutemero. {{consecutive}}</h4>
-                    <h5>Clave del Comprobante: {{key_mh}}</h5>
-                    <p>{{company.name}}<br/>
-                    C&eacutedula {{type_iden_company}}:{{company.identification_dni}}<br/>
-                    Tel&eacutefono: {{company.phone}}<br/>
-                    Correo eletr&oacutenico: {{company.email}}<br/>
-                        Direcci&oacuten: {{company.address}}<br/></p>
-              </div>
-            </td>
-            <td>
-                <div>
+    <div class="container">
+        <table class="table">
+            <tr>
+                <td>
                     <img src="data:;base64,{{ logo }}" class="image"/>
-                </div>
-            </td>
-        </tr>
-    </table>
+                </td>
+                <td>
+                    <table class="table table-sm">
+                        <tr>
+                            <td>
+                                {{company.name}}
+                            </td>
+                            <td>
+                                <b>{{type}}</b></br>
+                                {{consecutive}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                C&eacutedula {{type_iden_company}}:{{company.identification_dni}}
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Tel&eacutefono: {{company.phone}}
+                            </td>
+                            <td>
+                                <b>Fecha:</b>{{date}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+
+                            </td>
+                            <td>
+
+                            </td>
+                        </tr>
+                         <tr>
+                            <td>
+                                Correo electr&oacutenico: {{company.email}}
+                            </td>
+                            <td>
+
+                            </td>
+                        </tr>
+                         <tr>
+                            <td>
+                                Direcci&oacuten: {{company.address}}
+                            </td>
+                            <td>
+
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+        </table>
+    </div>
 </head>

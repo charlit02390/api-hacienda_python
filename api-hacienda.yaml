@@ -36,50 +36,72 @@ components:
     company:
       type: object
       properties:
-          id_compania:
-            type: string
-          codigo_actividad:
-            type: integer
-          otras_senas:
-            type: string
-          cod_telefono:
-            type: string
-          canton:
-            type: string
-          distrito:
-            type: string
-          email:
-            type: string
-          ambiente:
-            type: string
-          cedula:
-            type: string
-          nombre_compania:
-            type: string
-          barrio:
-            type: string
-          password_hacienda:
-            type: string
-          telefono:
-            type: string
-          pin:
-            type: string
-          provincia:
-            type: string
-          nombre_comercial:
-            type: string
-          tipo_identificacion:
-            type: string
-          usuario_hacienda:
-            type: string
-          firma:
-            type: string
-            format: binary
-          logo:
-            type: string
-            format: binary
-          estado:
-            type: string
+        id_compania:
+          type: string
+        codigo_actividad:
+          type: integer
+        otras_senas:
+          type: string
+        cod_telefono:
+          type: string
+        canton:
+          type: string
+        distrito:
+          type: string
+        email:
+          type: string
+        ambiente:
+          type: string
+        cedula:
+          type: string
+        nombre_compania:
+          type: string
+        barrio:
+          type: string
+        password_hacienda:
+          type: string
+        telefono:
+          type: string
+        pin:
+          type: string
+        provincia:
+          type: string
+        nombre_comercial:
+          type: string
+        tipo_identificacion:
+          type: string
+        usuario_hacienda:
+          type: string
+        firma:
+          type: string
+          format: binary
+        logo:
+          type: string
+          format: binary
+        estado:
+          type: string
+      required:
+          - logo
+          - id_compania
+          - codigo_actividad
+          - otras_senas
+          - cod_telefono
+          - canton
+          - distrito
+          - email
+          - ambiente
+          - cedula
+          - nombre_compania
+          - barrio
+          - password_hacienda
+          - telefono
+          - pin
+          - provincia
+          - nombre_comercial
+          - tipo_identificacion
+          - usuario_hacienda
+          - firma
+          - estado
     document:
       type: object
       properties:
@@ -211,7 +233,6 @@ components:
                   type: string
                 tipo_cambio:
                   type: string
-
             total_serv_gravados:
               type: string
             total_serv_exentos:
@@ -257,7 +278,6 @@ components:
                   type: string
                 monto_cargo:
                   type: string
-
             referencia:
               type: object
               properties:
@@ -282,6 +302,12 @@ components:
               type: string
             es_consulta:
               type: boolean
+          required:
+            - id_compania
+            - clave
+            - es_consulta
+      required:
+        - data
     key:
       type: object
       properties:
@@ -300,6 +326,15 @@ components:
               type: string
             sucursal:
               type: string
+          required:
+            - tipo
+            - nombre_usuario
+            - situacion
+            - consecutivo
+            - terminal
+            - sucursal
+      required:
+        - data
     user:
       type: object
       properties:
@@ -319,6 +354,16 @@ components:
               properties:
                 id:
                   type: integer
+              required:
+                - id
+          required:
+            - email
+            - password
+            - name
+            - idrol
+            - idcompanies
+      required:
+        - data
     user_companies:
       type: object
       properties:
@@ -329,6 +374,11 @@ components:
           properties:
             id:
               type: integer
+          required:
+            - id
+      required:
+        - email
+        - idcompanies
     companies_smtp:
       type: object
       properties:
@@ -345,6 +395,14 @@ components:
               type: string
             encrypt_type:
               type: string
+          required:
+            - host
+            - user
+            - password
+            - port
+            - encrypy_type
+      required:
+        - data
     email:
       type: object
       properties:
@@ -356,7 +414,7 @@ components:
           type: string
         subject:
           type: string
-        body:
+        content:
           type: string
         file1:
           type: string
@@ -364,6 +422,11 @@ components:
         file2:
           type: string
           format: binary
+      required:
+        - receivers
+        - company_id
+        - subject
+        - content
     email_mh:
       type: object
       properties:
@@ -371,6 +434,9 @@ components:
           type: string
         key_mh:
           type: string
+      required:
+        - company_id
+        - key_mh
     rspns_cabys:
       type: object
       properties:
@@ -455,8 +521,6 @@ components:
       required:
         - status
         - persona
-
-
 paths:
   /api/companies:
     get:
@@ -544,6 +608,32 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
+  /api/consult:
+    get:
+      tags:
+        - consult
+      summary: get documents by company, key and type
+      operationId: routes.documents.consult_documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id_compania:
+                      type: string
+                    tipo_documento:
+                      type: string
+                    clave:
+                      type: string
+      responses:
+        200:
+          description: Everything is ok
+        500:
+          description: there was an error starting the facial recognition system
   /api/documents:
     get:
       tags:
@@ -1080,8 +1170,8 @@ paths:
           description: voucher found
         404:
           description: voucher not found
-
-
+      security:
+        - api_key: []
 tags:
   - name: companies
     description: Everything about your Companies

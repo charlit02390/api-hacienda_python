@@ -11,3 +11,4 @@ phonenumbers
 flask-mysql==1.4.0
 flask-ext
 python-jose[cryptography]
+num2words

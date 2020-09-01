@@ -1,84 +1,85 @@
-<style>
-     .body-invoice{
-            font-size: small;
-            width: 100%;
-            heigth:100%;
-        }
-
-        footer {
-           position: fixed;
-           left: 0;
-           bottom: 0;
-           width: 100%;
-           text-align: center;
-        }
-
-        .body-invoice-total{
-            font-size: small;
-            width: 100%;
-            heigth:100%;
-        }
-        .invoice-header{
-            width:100%;
-            font-size: small;
-            content: "";
-            clear: both;
-            display: table;
-        }
-        .div_header{
-            width:50%;
-            float:left;
-        }
-        .headertable{
-            background-color: black;
-            color:white;
-        }
-        table{
-            font-size: small;
-        }
-        .title{
-         width:100%;
-         color:white;
-         text-align:center;
-         background-color:black;
-        }
-</style>
-<br/>
 <body>
-    <div class="invoice-header">
-        <div class="title">Informaci&oacuten del cliente</div>
-        <div class="div_header">
-            <b>Cliente:</b> {{receiver.nombre}}<br/>
-            <b>C&eacutedula {{receiver.tipo_identificacion}}:</b>{{receiver.numero_identificacion}}<br/>
-            <b>Tel&eacutefono:</b> {{receiver.telefono}}<br/>
-            <b>Correo:</b> {{receiver.correo}}<br/>
-            <b>Direcci&oacuten:</b> {{receiver.otrasSenas}}<br/>
-        </div>
-        <div class="div_header">
-            <b>Fecha:</b>{{date}}<br/>
-            <b>Medio de Pago:</b> {{payment_method.codigo}}<br/>
-            <b>Condici&oacuten de Venta:</b> {{sale_condition}}<br/>
-            <b>Moneda:</b> {{currency.tipoMoneda}}<br/>
-            <b>Act. Economica:</b> {{activity_code}}<br/>
-        </div>
-    </div>
-    <div class="body-invoice">
-         <div class="title">Detalle de Compra</div>
-        <table style="width:100%">
-            <thead class="headertable">
-                <th>Codigo</th>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Precio</th>
-                <th>Impuestos</th>
-                <th>Total   </th>
+<style>
+        .container{
+            font-size: 13px;
+        }
+        .table{
+            font-size: 13px;
+        }
+    </style>
+</br>
+    <div class="container">
+        <table class="table table-sm">
+             <tr>
+                <td>
+                    <b>Clave del Comprobante:</b>
+                </td>
+                <td colspan="4">
+                    {{key_mh}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Cliente:</b>
+                </td>
+                <td colspan="4">
+                    {{receiver.nombre}}
+                </td>
+            </tr>
+            <tr>
+                <td> <b>C&eacutedula {{type_iden_receptor}}:</b> </td>
+                <td colspan="2">
+                    {{receiver.numeroIdentificacion}}
+                </td>
+                <td> <b>Condici&oacuten de Venta:</b> </td>
+                <td>
+                   {{sale_condition}}
+                </td>
+            </tr>
+            <tr>
+                <td> <b>Tel&eacutefono:</b> </td>
+                <td colspan="2">
+                     {{receiver.telefono}}
+                </td>
+                <td> <b>Medio de Pago:</b> </td>
+                <td>
+                   {{payment_method.codigo}}
+                </td>
+            </tr>
+            <tr>
+                <td> <b>Correo:</b> </td>
+                <td colspan="2">
+                     {{receiver.correo}}
+                </td>
+                <td> <b>Moneda:</b> </td>
+                <td>
+                  {{currency.tipoMoneda}}
+                </td>
+            </tr>
+            <tr>
+                <td> <b>Direcci&oacuten:</b> </td>
+                <td colspan="2">
+                    {{receiver.otrasSenas}}
+                </td>
+                <td> <b>Act. Economica:</b> </td>
+                <td>
+                  {{activity_code}}
+                </td>
+            </tr>
+        </table>
+        <table class="table table-sm table-striped">
+            <thead class="thead-dark">
+                <th scope="col">C&oacutedigo</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Cantidad</th>
+                <th scope="col">Precio</th>
+                <th scope="col">Impuestos</th>
+                <th scope="col">Total</th>
             </thead>
             <tbody>
             {%for line in lines %}
             <tr>
-                    {%for codigos in line.codigo_comercial %}
-                    <td>{{codigos.codigo}}</td>
-                    {%endfor%}
+                    <td scope="row">{{line.codigo_comercial}}</td>
                     <td>{{line.detalle}}</td>
                     <td>{{line.cantidad}}</td>
                     <td>{{line.precioUnitario}}</td>
@@ -89,38 +90,44 @@
 
             </tbody>
         </table>
-    </div>
-    <div class="body-invoice-total">
-        <table id="t01"
-               align="right">
-            <thead>
-                <th style="color:white">Etiqueta</th>
-                <th style="color:white">monto</th>
-            </thead>
+        <div style="text-align: center"><p> ****** Ultima Linea *******</p></div>
+        <table class="table table-sm">
             <tr>
-                <td id="td01">Sub Total:</td>
-                <td id="td01">{{currencySymbol}} {{total_sales}}</td>
+                <td>
+                    {{total_document_words}}
+                </td>
+                <td>
+                <table class="table">
+                    <tr>
+                        <td scope="row">Sub Total:</td>
+                        <td>{{currencySymbol}} {{total_sales}}</td>
+                    </tr>
+                    <tr>
+                        <td scope="row">Descuento:</td>
+                        <td>{{currencySymbol}} {{total_discounts}}</td>
+                    </tr>
+                    <tr>
+                        <td scope="row">IVA:</td>
+                        <td>{{currencySymbol}} {{total_taxes}}</td>
+                    </tr>
+                    <tr>
+                        <td scope="row">Total Factura:</td>
+                        <td>{{currencySymbol}} {{total_document}}</td>
+                    </tr>
+                </table>
+            </td>
             </tr>
-            <tr>
-                <td id="td01">Descuento:</td>
-                <td id="td01">{{currencySymbol}} {{total_discounts}}</td>
-            </tr>
-            <tr>
-                <td id="td01">IVA:</td>
-                <td id="td01">{{currencySymbol}} {{total_taxes}}</td>
-            </tr>
-            <tr>
-                <td id="td02">Total Factura:</td>
-                <td id="td02">{{currencySymbol}} {{total_document}} {{total_document_words}}</td>
-            </tr>
+
         </table>
     </div>
 </body>
 <footer>
-        <div class="footer-div">
-            <b>Observaciones:</b>
-            <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
-        </div>
-
-    </footer>
+    <div class="container">
+        <p>Este documento constituye factura comercial con titulo ejecutivo de acuerdo al art. 460 del C&oacutedigo de Comercio que podr&aacute
+hacerse efectivo el d&iacutea de su vencimiento y en caso de ejecuci&oacuten, renuncio a mi domicilio y los tr&aacutemites de juicio ejecutivo.
+CONFIRMACIONES: Para enviar confirmaciones de dep&oacutesito Correo: {{company.email}}</p>
+        <b>Observaciones:</b>
+        <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
+    </div>
+</footer>
 </html>

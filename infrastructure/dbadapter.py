@@ -5,6 +5,7 @@ from extensions import mysql
 from enum import Enum
 from pymysql import cursors
 
+
 class FetchType(Enum):
     """
     Enum that specifies how cursors will fetch data from the the query given.
