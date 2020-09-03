@@ -36,7 +36,8 @@ def route_modify_user():
     return result
 
 
-def login(email, password):
-    result = service.login(email, password)
+def login():
+    body = connexion.request.form
+    result = service.login(body)
     return result
 

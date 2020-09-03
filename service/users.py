@@ -80,7 +80,9 @@ def delete_user_companies(data):
         return {'error': 'The user company can not be deleted'}
 
 
-def login(email, password):
+def login(data):
+    email = data['email']
+    password = data['password']
     user_check = users.check_user(email, password)
     if user_check is not None:
         token = generate_token(email)
