@@ -94,13 +94,13 @@ def save_document(company_id, key_mh, sign_xml, status, date, document_type, rec
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_saveDocument', (company_id, key_mh, sign_xml, status, date, document_type,receiver_type,
-                                            receiver_dni, total_document, total_taxed, pdf, email, email_costs))
+                                            receiver_dni, total_document, total_taxed, pdf, email, email_costs,))
         data = cursor.rowcount
         if data != 0:
             conn.commit()
             return True
         else:
-            return json.dumps({'error': str(data[0])})
+            return json.dumps({'error': 'SP Call returned 0 affected rows (should have returned 1).'}) # this may happen when the document's key_mh is already in the database. Should prolly change the response message accordingly
     except Exception as e:
         return json.dumps({'error': str(e)})
     finally:
@@ -138,7 +138,7 @@ def save_document_line_info(id_company, line_number, quantity, unity
             conn.commit()
             return True
         else:
-            return json.dumps({'error': str(data[0])})
+            return json.dumps({'error': 'SP Call returned 0 affected rows.'})
     except Exception as e:
         return json.dumps({'error': str(e)})
     finally:
