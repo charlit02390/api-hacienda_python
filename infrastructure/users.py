@@ -2,33 +2,20 @@ import json
 from extensions import mysql
 
 
-def save_user(id_user, password, name, idrol):
+def save_user(id_user, password, name, idrol, idcompanies):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_createUser', (id_user, password, name, idrol))
+
+        for id in idcompanies:
+            idcompany = id['id']
+            cursor.callproc('sp_createUser_Company', (id_user, idcompany))
+
         data = cursor.fetchall()
         if len(data) is 0:
             conn.commit()
             return True
-        else:
-            return {'error': str(data[0])}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
-
-
-def save_user_company(id_user,idcompany):
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_createUser_Company', (id_user,idcompany))
-        data = cursor.fetchall()
-        if len(data) is 0:
-            conn.commit()
-            return {'message': 'user and data created successfully '}
         else:
             return {'error': str(data[0])}
     except Exception as e:
