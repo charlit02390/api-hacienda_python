@@ -22,16 +22,13 @@ def create_user(data):
 
     if not user_exist:
 
-        result = users.save_user(_email, _password, _name, _idrol)
+        result = users.save_user(_email, _password, _name, _idrol, _idcompanies)
 
         if result is True:
-            for id in _idcompanies:
-                _idcompany = id['id']
-                result = users.save_user_company(_email,_idcompany)
+            return {'message': 'user and data created successfully '}
         else:
             return {'Error': 'The user can not be created'}
 
-        return result
     else:
         return {'message': 'Email already registered'}
 
@@ -80,7 +77,9 @@ def delete_user_companies(data):
         return {'error': 'The user company can not be deleted'}
 
 
-def login(email, password):
+def login(data):
+    email = data['email']
+    password = data['password']
     user_check = users.check_user(email, password)
     if user_check is not None:
         token = generate_token(email)

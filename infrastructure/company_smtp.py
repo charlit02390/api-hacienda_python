@@ -35,7 +35,7 @@ def get_company_smtp(id_company):
                 json_data.append(dict(zip(row_headers, row)))
             return json_data
         else:
-            return {'error': 'Error: Not get information of the user'}
+            return {'error': 'Error: Not get smtp information of the company'}
     except Exception as e:
         return {'error': str(e)}
     finally:

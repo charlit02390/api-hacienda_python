@@ -32,16 +32,12 @@ def create_company(data, file, logo):
 
     if not company_exist:
         result = companies.create_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
-                                          _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code
-                                          , _is_active)
-
-        result_mh = companies.save_mh_data(_company_user, _user_mh, _pass_mh, _signature, _logo,
-                                           _pin, _env, _expiration_date)
+                                          _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code,
+                                          _is_active, _user_mh, _pass_mh, _signature, _logo,_pin, _env,
+                                          _expiration_date)
 
         if result is not True:
             return result
-        elif result_mh is not True:
-            return result_mh
         else:
             return {'message': 'company created successfully!'}
     else:
@@ -86,13 +82,10 @@ def modify_company(data, file, logo):
     _expiration_date = utils_mh.p12_expiration_date(file, _pin)
 
     result = companies.modify_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
-                                      _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code
-                                      , _is_active)
+                                      _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code,
+                                      _is_active, _user_mh, _pass_mh, _signature, _logo, _pin, _env, _expiration_date)
 
-    result_mh = companies.modify_mh_data(_company_user, _user_mh, _pass_mh, _signature, _logo,
-                                         _pin, _env,_expiration_date)
-
-    if result is not True and result_mh is not True:
+    if result is not True:
         return result
     else:
         return {'message': 'company modify successfully!'}

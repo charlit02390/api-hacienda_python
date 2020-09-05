@@ -455,7 +455,7 @@ components:
                 type: number
       required:
         - status
-        - cabys 
+        - cabys
     rspns_sac:
       type: object
       properties:
@@ -521,6 +521,16 @@ components:
       required:
         - status
         - persona
+    login:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
 paths:
   /api/companies:
     get:
@@ -956,27 +966,18 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
-  /api/auth/{email}/{password}:
+  /api/auth:
     get:
       tags:
       - Auth
       summary: Login into API
       operationId: routes.users.login
-      parameters:
-      - name: email
-        description: User unique identifier
-        in: path
+      requestBody:
         required: true
-        example: cmonge@jackdevelopers.com
-        schema:
-          type: string
-      - name: password
-        description: User unique identifier
-        in: path
-        required: true
-        example: 12
-        schema:
-          type: string
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/login'
 
       responses:
         '200':
@@ -1179,5 +1180,3 @@ tags:
     description: Everything about your documents
   - name: references
     description: Everything about your references data
-
-
