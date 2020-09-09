@@ -101,11 +101,33 @@ tagNamePDF = {
 }
 
 tipoCedulaPDF = {
-    '01': 'fisica',
-    '02': 'juridica',
-    '03': 'dimex',
-    '04': 'nite',
-    '05': 'extranjero',
+    '01': 'Cédula Física',
+    '02': 'Cédula Jurídica',
+    '03': 'DIMEX',
+    '04': 'NITE',
+    '05': 'Cédula Extranjera', # <- this one is not mentioned as a valid value for the XML...
 }
 
 currencies = {'USD': '$', 'CRC': '₡', 'EUR': '€'}
+
+paymentMethods = {
+    '01' : 'Efectivo',
+    '02' : 'Tarjeta',
+    '03' : 'Cheque',
+    '04' : 'Transferencia - depósito bancario',
+    '05' : 'Recaudado por terceros',
+    '99' : 'Otro: '
+    }
+
+saleConditions = {
+    '01' : 'Contado',
+    '02' : 'Crédito',
+    '03' : 'Consignación',
+    '04' : 'Apartado',
+    '05' : 'Arrendamiento con opción de compra',
+    '06' : 'Arrendamiento en función financiera',
+    '07' : 'Cobro a favor de un tercero',
+    '08' : 'Servicios prestados al Estado a crédito',
+    '09' : 'Pago del servicios prestados al Estado',
+    '99' : 'Otros: '
+    }

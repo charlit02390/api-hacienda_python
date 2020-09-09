@@ -1,77 +1,116 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
-<head>
-    <style>
-        .image{
-            margin-top:20px;
-            margin-right:20px;
-            max-width:150px;
-            max-height:150px;
-        }
-        .container{
-            font-size: 13px;
-        }
-    </style>
-    <div class="container">
-        <table class="table">
-            <tr>
-                <td>
-                    <img src="data:;base64,{{ logo }}" class="image"/>
-                </td>
-                <td>
-                    <table class="table table-sm">
-                        <tr>
-                            <td>
-                                {{company.name}}
-                            </td>
-                            <td>
-                                <b>{{type}}</b></br>
-                                {{consecutive}}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                C&eacutedula {{type_iden_company}}:{{company.identification_dni}}
-                            </td>
-                            <td>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                Tel&eacutefono: {{company.phone}}
-                            </td>
-                            <td>
-                                <b>Fecha:</b>{{date}}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
+    <head>
+        <meta charset="utf-8"/>
+    </head>
+    <body>
+        <style>
+            .image {
+                margin-top: 20px;
+                margin-right: 20px;
+                max-width: 150px;
+                max-height: 150px;
+            }
 
-                            </td>
-                            <td>
+			.container {
+				font-size: 0.85rem;
+			}
 
-                            </td>
-                        </tr>
-                         <tr>
-                            <td>
-                                Correo electr&oacutenico: {{company.email}}
-                            </td>
-                            <td>
+			.table {
+				font-size: 0.85rem;
+                margin-top: 20px;
+			}
 
-                            </td>
-                        </tr>
-                         <tr>
-                            <td>
-                                Direcci&oacuten: {{company.address}}
-                            </td>
-                            <td>
+			.text-left {
+				text-align: left !important
+			}
 
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
+			.text-right {
+				text-align: right !important
+			}
 
-        </table>
-    </div>
-</head>
+			.header table {
+                font-size: 1rem
+			}
+
+			.invoice-info {
+                position: absolute;
+                top: 0;
+                right: 0;
+			}
+        </style>
+        <div class="container">
+            <table class="header table">
+                <tr>
+                    <td>
+                        <img src="data:;base64,{{ logo }}" class="image" />
+                    </td>
+                    <td>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>
+                                    {{company.name}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    {{type_iden_company}}: {{company.identification_dni}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Tel&eacutefono: {{company.phone}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Correo electr&oacutenico: {{company.email}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Direcci&oacuten: {{company.address}}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td>
+                        <table class="table table-sm invoice-info">
+                            <tr>
+                                <td>
+                                    <b>{{type}}</b><br>
+                                    {{consecutive}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <b>Fecha:</b> {{date}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
