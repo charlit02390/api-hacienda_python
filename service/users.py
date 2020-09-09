@@ -40,13 +40,7 @@ def modify_user(data):
     _idrol = data['idrol']
     _idcompanies = data['idcompanies']
 
-    result = users.modify_user(_email, _password, _name, _idrol)
-
-    for id in _idcompanies:
-        _idcompany = id['id']
-        user_company_exist = users.verify_user_company(_email,_idcompany)
-        if user_company_exist is False:
-            result = users.save_user_company(_email,_idcompany)
+    result = users.modify_user(_email, _password, _name, _idrol, _idcompanies)
 
     return result
 

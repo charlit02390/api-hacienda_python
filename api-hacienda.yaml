@@ -422,6 +422,9 @@ components:
         file2:
           type: string
           format: binary
+        file3:
+          type: string
+          format: binary
       required:
         - receivers
         - company_id
