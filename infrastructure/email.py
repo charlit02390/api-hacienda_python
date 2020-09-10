@@ -6,14 +6,13 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-def send_email(receiver, subject, body, file1, file2, file3,
+def send_email(receiver, subject, content, file1, file2, file3,
                host, sender, password, port, encrypt_type,
                name_file1, name_file2, name_file3):
     try:
         sender_email = sender
         receiver_email = receiver
         password = password
-
         # Create a multipart message and set headers
         message = MIMEMultipart()
         message["From"] = sender_email
@@ -22,7 +21,7 @@ def send_email(receiver, subject, body, file1, file2, file3,
         message["Bcc"] = receiver_email  # Recommended for mass emails
 
         # Add body to email
-        message.attach(MIMEText(body, "plain"))
+        message.attach(MIMEText(content, "plain"))
 
         # Open PDF file in binary mode
         if name_file1 != "":
@@ -36,7 +35,6 @@ def send_email(receiver, subject, body, file1, file2, file3,
         if name_file3 != "":
             part3 = create_email_files(file3, name_file3)
             message.attach(part3)
-
         # Add attachment to message and convert message to string
 
         text = message.as_string()
@@ -46,7 +44,7 @@ def send_email(receiver, subject, body, file1, file2, file3,
         with smtplib.SMTP(host, port) as server:
             server.starttls(context=context)
             server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, text)
+            server.sendmail(sender_email, receiver_email.split(','), text)
         return {'message': 'email sent successfully'}
 
     except Exception as e:

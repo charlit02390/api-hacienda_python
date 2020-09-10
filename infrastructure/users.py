@@ -95,11 +95,18 @@ def get_users():
         conn.close()
 
 
-def modify_user(id_user, password, name, idrol):
+def modify_user(id_user, password, name, idrol, idcompanies):
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
         cursor.callproc('sp_ModifyUser', (id_user, password, name, idrol))
+
+        for id in idcompanies:
+            idcompany = id['id']
+            user_company_exist = verify_user_company(id_user, idcompany)
+            if user_company_exist is False:
+                cursor.callproc('sp_createUser_Company', (id_user, idcompany))
+
         data = cursor.rowcount
         if data != 0:
             conn.commit()

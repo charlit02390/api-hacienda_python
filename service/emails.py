@@ -47,29 +47,27 @@ def sent_email_fe(data):
     return result
 
 
-def send_custom_email(data, file1, file2):
+def send_custom_email(data, file1, file2, file3):
     smtp_data = company_smtp.get_company_smtp(data['company_id'])
-
     receivers = data['receivers']
     subject = data['subject']
-    body = data['body']
-
+    content = data['content']
     name_file1 = file1.filename
     name_file2 = file2.filename
+    name_file3 = file3.filename
     file1 = file1.stream.read()
     file2 = file2.stream.read()
+    file3 = file3.stream.read()
 
     host = smtp_data[0]['host']
     sender = smtp_data[0]['user']
     password = smtp_data[0]['password']
     port = smtp_data[0]['port']
     encrypt_type = smtp_data[0]['encrypt_type']
-
-
-    # todo: lista de receptores pasar a receptor (enviar email a varios usuarios)
-    result = send_email(receivers, subject, body, file1, file2,host, sender, password, port,
-                        encrypt_type,name_file1, name_file2)
+    result = send_email(receivers, subject, content, file1, file2, file3, host, sender, password, port,
+                        encrypt_type, name_file1, name_file2, name_file3)
     return result
+
 
 def sent_email(pdf, signxml):
 
