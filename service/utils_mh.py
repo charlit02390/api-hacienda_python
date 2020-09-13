@@ -29,7 +29,7 @@ from .xades.context2 import XAdESContext2, PolicyId2, create_xades_epes_signatur
 _logger = logging.getLogger( __name__ )
 
 
-def get_consecutivo_hacienda(tipo_documento, consecutivo, sucursal_id, terminal_id):
+def get_consecutivo_hacienda(tipo_documento, consecutivo, sucursal_id, terminal_id): #duped in api_facturae and not used
     tipo_doc = fe_enums.TipoDocumento[tipo_documento].value
 
     inv_consecutivo = str( consecutivo ).zfill( 10 )
@@ -41,7 +41,7 @@ def get_consecutivo_hacienda(tipo_documento, consecutivo, sucursal_id, terminal_
     return consecutivo_mh
 
 
-def get_clave_hacienda(self, tipo_documento, consecutivo, sucursal_id, terminal_id, situacion='normal'):
+def get_clave_hacienda(self, tipo_documento, consecutivo, sucursal_id, terminal_id, situacion='normal'): # self??? was this a class method? duped in api_facturae
     tipo_doc = fe_enums.TipoDocumento[tipo_documento].value
 
     # '''Verificamos si el consecutivo indicado corresponde a un numero# '''
@@ -108,7 +108,7 @@ last_tokens_expire = {}
 last_tokens_refresh = {}
 
 
-def get_token_hacienda(data):
+def get_token_hacienda(data): # duped in api_facturae. This one is not used
 
     global last_tokens
     global last_tokens_time
@@ -163,7 +163,7 @@ def get_token_hacienda(data):
     return json.dumps({'token':token_hacienda })
 
 
-def refresh_token_hacienda(tipo_ambiente, token):
+def refresh_token_hacienda(tipo_ambiente, token): # duped in api_facturae. Not used.
     headers = {}
     data = {'client_id': tipo_ambiente,
             'client_secret': '',
@@ -185,7 +185,7 @@ def refresh_token_hacienda(tipo_ambiente, token):
         raise Warning( 'Error Refrescando el Token desde MH' )
 
 
-def sign_xml(data):
+def sign_xml(data): # duped in api_facturae. This one is not used.
     _user_api = data['compania_id']
     xml_encode = data['xml']
     policy_id = 'https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.2' \
@@ -215,7 +215,7 @@ def sign_xml(data):
 
 
 # Funcion para enviar el XML al Ministerio de Hacienda
-def send_xml(inv, token, date, tipo_ambiente):
+def send_xml(inv, token, date, tipo_ambiente):  # sorta duped in api_facturae? This one is not used.
     headers = {'Authorization': 'Bearer ' +
                                 token, 'Content-type': 'application/json'}
 
@@ -263,7 +263,7 @@ def send_xml(inv, token, date, tipo_ambiente):
 
 
 # Obtener Attachments para las Facturas Electrónicas
-def get_invoice_attachments(invoice, record_id):
+def get_invoice_attachments(invoice, record_id): # duped in api_facturae and not used
     attachments = []
 
     attachment = invoice.env['ir.attachment'].search(
@@ -286,7 +286,7 @@ def get_invoice_attachments(invoice, record_id):
 
     return attachments
 
-def consulta_clave(clave, token, tipo_ambiente):
+def consulta_clave(clave, token, tipo_ambiente): # duped in api_facturae...
     endpoint = fe_enums.UrlHaciendaRecepcion[tipo_ambiente].value + clave
 
     headers = {
@@ -322,7 +322,7 @@ def consulta_clave(clave, token, tipo_ambiente):
     return response_json
 
 
-def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
+def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado): # self again??? what is this? duped in api_facturae. This one is not used
     if inv.type == 'in_invoice' or inv.type == 'in_refund':
         if not inv.consecutive_number_receiver:
             if len( inv.number ) == 20:
@@ -421,7 +421,7 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
             email_template.attachment_ids = [(5)]
 
 
-def send_message(inv, date_cr, token, env):
+def send_message(inv, date_cr, token, env): # duped in api_facturae and not used.
     endpoint = fe_enums.UrlHaciendaRecepcion[env].value
 
     comprobante = {}
