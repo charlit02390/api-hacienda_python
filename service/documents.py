@@ -262,8 +262,5 @@ def consult_voucher_byid(company_user, clave):
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
-    if response_status == 200:
-        return_message = {'Comprobante ': response_text}
-        return return_message
-    else:
-        return {'Error': 'Unauthorized'}
+
+    return {'status': response_status, 'message': response_text}
