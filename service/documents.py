@@ -410,3 +410,4 @@ def consult_voucher_byid(company_user, clave):
         return {'Comprobante' : response_text}
     else:
         return {'error': 'Hacienda considered the query as unauthorized.'}
+     # return {'status': response_status, 'message': response_text}
