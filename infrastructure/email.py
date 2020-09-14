@@ -11,16 +11,27 @@ def send_email(receiver, subject, content, file1, file2, file3,
                name_file1, name_file2, name_file3):
     try:
         sender_email = sender
-        receiver_email = receiver
-        password = password
+        
+        # recipient circus 'cuz don't know python well enough
+        receiver_email = receiver.pop(0)
+        bccs = receiver.copy()
+        receiver.insert(0,receiver_email)
+
         # Create a multipart message and set headers
+        # todo: use 'alternative' subtype for crazy formatting?
         message = MIMEMultipart()
         message["From"] = sender_email
         message["To"] = receiver_email
         message["Subject"] = subject
-        message["Bcc"] = receiver_email  # Recommended for mass emails
+
+        # shouldn't this be Cc?
+        # Like, if a client specified additional address to receive their mail,
+        # it should be fine showing that these other addresses received a Cc.
+        if len(bccs) > 0:
+            message["Bcc"] = ', '.join(bccs)  # Recommended for mass emails
 
         # Add body to email
+        # todo: use html subtype and specify utf8 charset?
         message.attach(MIMEText(content, "plain"))
 
         # Open PDF file in binary mode
@@ -44,7 +55,7 @@ def send_email(receiver, subject, content, file1, file2, file3,
         with smtplib.SMTP(host, port) as server:
             server.starttls(context=context)
             server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email.split(','), text)
+            server.sendmail(sender_email, receiver, text)
         return {'message': 'email sent successfully'}
 
     except Exception as e:
