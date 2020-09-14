@@ -7,128 +7,199 @@ import base64
 from service import emails
 from infrastructure import companies
 from infrastructure import documents
+from infrastructure.dbadapter import DatabaseError, connectToMySql
 
 
 def create_document(data):
-    _company_user = data['nombre_usuario']
-    _type_document = fe_enums.TipoDocumentoApi[data['tipo']]
-    _situation = data['situacion']
-    _consecutive = data['consecutivo']
-    _key_mh = data['clavelarga']
-    _terminal = data['terminal']
-    _branch = data['sucursal']
-    _datestr = api_facturae.get_time_hacienda()
-    datecr = api_facturae.get_time_hacienda(True)
-    _activity_code = data['codigoActividad']
-    _other_phone = data['otro_telefono']
-    if data.get('receptor'):
-        _receptor = data['receptor']
-        _email = _receptor['correo']
-        _email_costs = _receptor['correo_gastos']
-    else:
-        _receptor = None
-        _email = None
-        _email_costs = None
-    _sale_condition = data['condicionVenta']
-    _credit_term = data['plazoCredito']
-    _payment_methods = data['medioPago']
-    _lines = data['detalles']
-    _currency = data['codigoTipoMoneda']
-    _total_serv_taxed = data['totalServGravados']
-    _total_serv_untaxed = data['totalServExentos']
-    _total_serv_exone = data['totalServExonerado']
-    _total_merch_taxed = data['totalMercanciasGravados']
-    _total_merch_untaxed = data['totalMercanciasExentos']
-    _total_merch_exone = data['totalMercExonerada']
-    _total_taxed = data['totalGravados']
-    _total_untaxed = data['totalExentos']
-    _total_exone = data['totalExonerado']
-    _total_sales = data['totalVentas']
-    _total_discount = data['totalDescuentos']
-    _total_net_sales = data['totalVentasNetas']
-    _total_taxes = data['totalImpuestos']
-    _total_return_iva = data['totalIVADevuelto']
-    _total_other_charges = data['totalOtrosCargos']
-    _total_document = data['totalComprobantes']
-    _other_charges = data['otrosCargos']
-    _reference = data['referencia']
-    _others = data['otros']
+    try:
+        _company_user = data['nombre_usuario']
+    except KeyError as ker:
+        return {'error' : 'Missing property: ' + str(ker)}
 
     company_data = companies.get_company_data(_company_user)
+    if '_error' in company_data:
+        return {'error' : 'A problem occurred when obtaining the data for the company.'}
+    elif '_warning' in company_data:
+        return {'error' : 'The specified company is not registered in the system.'}
 
-    xml = api_facturae.gen_xml_v43(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
+    signature = companies.get_sign_data(_company_user)
+    if '_error' in signature:
+        return {'error' : 'A problem occurred when obtaining the signature information for the company.'}
+    elif '_warning' in signature:
+        return {'error' : "No signature information was found for the company; can't sign the document, so the document can't be created."}
+
+    try:
+        _type_document = fe_enums.TipoDocumentoApi[data['tipo']]
+        _situation = data['situacion']
+        _consecutive = data['consecutivo']
+        _key_mh = data['clavelarga']
+        _terminal = data['terminal']
+        _branch = data['sucursal']
+        _activity_code = data['codigoActividad']
+        _other_phone = data['otro_telefono']
+        if data.get('receptor'):
+            _receptor = data['receptor']
+            _email = _receptor['correo']
+            _email_costs = _receptor['correo_gastos']
+        else:
+            _receptor = None
+            _email = None
+            _email_costs = None
+        _sale_condition = data['condicionVenta']
+        _credit_term = data['plazoCredito']
+        _payment_methods = data['medioPago']
+        _lines = data['detalles']
+        _currency = data['codigoTipoMoneda']
+        _total_serv_taxed = data['totalServGravados']
+        _total_serv_untaxed = data['totalServExentos']
+        _total_serv_exone = data['totalServExonerado']
+        _total_merch_taxed = data['totalMercanciasGravados']
+        _total_merch_untaxed = data['totalMercanciasExentos']
+        _total_merch_exone = data['totalMercExonerada']
+        _total_taxed = data['totalGravados']
+        _total_untaxed = data['totalExentos']
+        _total_exone = data['totalExonerado']
+        _total_sales = data['totalVentas']
+        _total_discount = data['totalDescuentos']
+        _total_net_sales = data['totalVentasNetas']
+        _total_taxes = data['totalImpuestos']
+        _total_return_iva = data['totalIVADevuelto']
+        _total_other_charges = data['totalOtrosCargos']
+        _total_document = data['totalComprobantes']
+        _other_charges = data['otrosCargos']
+        _reference = data['referencia']
+        _others = data['otros']
+    except KeyError as ker:
+        return {'error' : 'Missing property: ' + str(ker)}
+
+    _datestr = api_facturae.get_time_hacienda()
+    datecr = api_facturae.get_time_hacienda(True)
+
+    try:
+        xml = api_facturae.gen_xml_v43(company_data, _type_document, _key_mh, _consecutive, _datestr, _sale_condition,
                                    _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                                    _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                                    _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                                    _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
                                    _total_untaxed, _total_sales, _total_return_iva, _total_document)
+    except Exception as ex: # todo: be more specific about exceptions
+        return {'error' : 'An issue was found when building the XML Document: ' + ex}
+
     xml_to_sign = str(xml)
 
-    signature = companies.get_sign_data(_company_user)
-
-    xml_sign = api_facturae.sign_xml(
-        signature['signature'],
-        company_data[0]['pin_sig'], xml_to_sign)
+    try:
+        xml_sign = api_facturae.sign_xml(
+            signature['signature'],
+            company_data['pin_sig'], xml_to_sign)
+    except Exception as ex: # todo: be more specific about exceptions
+        return {'error' : 'A problem occurred when signing the XML Document.'}
 
     xmlencoded = base64.b64encode(xml_sign)
 
     _logo = companies.get_logo_data(_company_user)
+    if '_error' in _logo:
+        return {'error' : 'A problem occuren when attempting to get the Company Logo.'}
+    elif '_warning' in _logo:
+        return {'error' : 'No logo was found for the Company.'} # this shouldn't happen at all, 'cuz we've validated that the company exists above, but... never hurts to leave here, I guess...
+
     _logo = _logo['logo'].decode('utf-8')
-    pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
+    try:
+        pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
                              datecr.strftime("%d-%m-%Y"), _sale_condition,
                              _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                              _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                              _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                              _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
                              _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo);
-
+    except Exception as ex: # todo: be more specific about exceptions
+        return {'error' : 'A problem occured when creating the PDF File for the document.'}
     #Prueba de creacion de correo
     #emails.sent_email(pdf, xml_sign)
 
     pdfencoded = base64.b64encode(pdf);
 
-    result = documents.save_document(_company_user, _key_mh, xmlencoded, 'creado', datecr, _type_document,
-                                     _receptor, _total_document, _total_taxes, pdfencoded, _email, _email_costs)
+    # Managing connection here...
+    try:
+        conn = connectToMySql()
+    except DatabaseError as dbe:
+        return {'error' : str(dbe) + " The document can't be saved."}
 
-    _id_company = company_data[0]['id']
+    try:
+            try:
+                documents.save_document(_company_user, _key_mh, xmlencoded, 'creado', datecr, _type_document,
+                                     _receptor, _total_document, _total_taxes, pdfencoded, _email, _email_costs,connection=conn)
+            except DatabaseError as dbe:
+                conn.rollback()
+                return {'error' : str(dbe)}
+            except KeyError as ker:
+                conn.rollback()
+                return {'error' : str(ker)}
 
-    if result is True:
-        result = save_document_lines(_lines, _id_company, _key_mh)
+            _id_company = company_data['id']
 
-    if result is True:
-        return {'Respuesta Hacienda': 'creado'}
-    else:
-        return {'Error in Database': 'Found a problem when tried to save the document'}
+            try:
+                save_document_lines(_lines,_id_company,_key_mh,connection=conn)
+            except DatabaseError as dbe:
+                conn.rollback()
+                return {'error' : str(dbe)}
+                conn.rollback()
+            except KeyError as ker:
+                return {'error' : str(ker)}
+
+            conn.commit()
+    finally:
+        conn.close()
+
+    return {'message' : 'Document successfully created.'}
 
 
-def save_document_lines(lines, id_company, key_mh):
+def save_document_lines(lines, id_company, key_mh, conn):
     for _line in lines:
-        _line_number = _line['numero']
-        _quantity = _line['cantidad']
-        _unity = _line['unidad']
-        _detail = _line['detalle']
-        _unit_price = _line['precioUnitario']
-        _net_tax = _line['impuestoNeto']
-        _total_line = _line['totalLinea']
+        try:
+            _line_number = _line['numero']
+            _quantity = _line['cantidad']
+            _unity = _line['unidad']
+            _detail = _line['detalle']
+            _unit_price = _line['precioUnitario']
+            _net_tax = _line['impuestoNeto']
+            _total_line = _line['totalLinea']
+        except KeyError as ker:
+            raise KeyError('Missing property: ' + str(ker))
 
-        result = documents.save_document_line_info(id_company, _line_number, _quantity, _unity
-                                                   , _detail, _unit_price, _net_tax, _total_line, key_mh)
-        if result is True and _line.get('impuesto'):
-            result = save_document_taxes(_line, id_company, _line_number, key_mh)
+        try:
+            documents.save_document_line_info(id_company, _line_number, _quantity, _unity
+                                                   , _detail, _unit_price, _net_tax, _total_line, key_mh,connection=conn)
+        except DatabaseError as dbe:
+            raise
 
-    return result
+        _taxes = _line.get('impuesto')
+        if taxes:
+            try:
+                save_document_taxes(_taxes,id_company,_line_number,key_mh, conn=conn)
+            except DatabaseError as dbe:
+                raise
+            except KeyError as ker:
+                raise
+
+    return True
 
 
-def save_document_taxes(line, id_company, line_number, key_mh):
-    _taxes = line['impuesto']
-    for _tax in _taxes:
-        _rate_code = _tax['codigoTarifa']
-        _code = _tax['codigo']
-        _rate = _tax['tarifa']
-        _amount = _tax['monto']
-        result = documents.save_document_line_taxes(id_company, line_number, _rate_code,
-                                                    _code, _rate, _amount, key_mh)
-    return result
+def save_document_taxes(taxes, id_company, line_number, key_mh, conn):
+    for _tax in taxes:
+        try:
+            _rate_code = _tax['codigoTarifa']
+            _code = _tax['codigo']
+            _rate = _tax['tarifa']
+            _amount = _tax['monto']
+        except KeyError as ker:
+            raise KeyError('Missing property: ' + str(ker))
+        try:
+            documents.save_document_line_taxes(id_company, line_number, _rate_code,
+                                                    _code, _rate, _amount, key_mh, connection=conn)
+        except DatabaseError as dbe:
+            raise
+
+    return True
 
 
 def validate_documents():
@@ -137,16 +208,32 @@ def validate_documents():
 
 def validate_document(company_user, key_mh):
     document_data = documents.get_document(key_mh)
+    if '_error' in document_data:
+        return {'error' : 'A problem occurred when attempting to get the document from the database.'}
+    elif '_warning' in document_data:
+        return {'error' : "The specified document wasn't found in the database."}
+
     company_data = companies.get_company_data(company_user)
+    if '_error' in company_data:
+        return {'error' : 'A problem occurred when attempting to get the company from the database'}
+    elif '_warning' in company_data:
+        return {'error' : "The specified company wasn't found in the database."}
+
     date_cr= api_facturae.get_time_hacienda(False)
     date = api_facturae.get_time_hacienda(True)
 
-    token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
-                                                company_data[0]['env'])
+    try:
+        token_m_h = api_facturae.get_token_hacienda(company_user, company_data['user_mh'], company_data['pass_mh'],
+                                                company_data['env'])
+    except Exception as ex: # todo: be more specific about exceptions
+        return {'error' : 'A problem occured when attempting to get the token from Hacienda.'}
 
-    response_json = api_facturae.send_xml_fe(company_data[0], document_data[0], key_mh, token_m_h, date_cr,
-                                             document_data[0]['signxml'],
-                                             company_data[0]['env'])
+    try:
+        response_json = api_facturae.send_xml_fe(company_data, document_data, key_mh, token_m_h, date_cr,
+                                             document_data['signxml'],
+                                             company_data['env'])
+    except Exception as ex: # todo: be more specific about exceptions
+        return {'error' : 'A problem occurred when attempting to send the document to Hacienda.'}
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
@@ -162,11 +249,12 @@ def validate_document(company_user, key_mh):
             state_tributacion = 'procesando'
             return_message = response_text
 
-    result = documents.update_document(company_user, key_mh, None, state_tributacion, date)
-    if result:
-        return {'Respuesta Hacienda': return_message}
-    else:
-        return {'Error in Database': 'Found a problem when tried to update the document'}
+    try:
+        documents.update_document(company_user, key_mh, None, state_tributacion, date)
+    except DatabaseError as dbe:
+        return {'error' : str(dbe)}
+
+    return {'message' : return_message}
 
 
 def consult_documents():
@@ -175,42 +263,77 @@ def consult_documents():
 
 def consult_document(company_user, key_mh):
     document_data = documents.get_document(key_mh)
+    # todo: move this type of validation to a function?
+    if '_error' in document_data:
+        return {'error' : 'A problem occurred when attempting to get the document from the database.'}
+    elif '_warning' in document_data:
+        return {'error' : "The specified document wasn't found in the database."}
+
     company_data = companies.get_company_data(company_user)
+    if '_error' in company_data:
+        return {'error' : 'A problem occurred when attempting to get the company from the database'}
+    elif '_warning' in company_data:
+        return {'error' : "The specified company wasn't found in the database."}
+
     date = api_facturae.get_time_hacienda(True)
 
-    token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
-                                                company_data[0]['env'])
+    try:
+        token_m_h = api_facturae.get_token_hacienda(company_user, company_data['user_mh'], company_data['pass_mh'],
+                                                company_data['env'])
+    except Exception as ex:
+        return {'error' : 'A problem occured when attempting to get the token from Hacienda.'}
 
-    response_json = api_facturae.consulta_documentos(key_mh, company_data[0]['env'], token_m_h, date,
-                                                     document_data[0]['document_type'])
+    try:
+        response_json = api_facturae.consulta_documentos(key_mh, company_data['env'], token_m_h, date,
+                                                     document_data['document_type'])
+    except Exception as ex: # todo: be more specific about exceptions
+        return {'error' : 'A problem occurred when attempting to query the document to Hacienda.'}
 
     response_status = response_json.get('ind-estado')
     response_text = response_json.get('respuesta-xml')
-    result = documents.update_document(company_user, key_mh, response_text, response_status, date)
+
+    try:
+        documents.update_document(company_user, key_mh, response_text, response_status, date)
+    except DatabaseError as dbe:
+        return {'error' : str(dbe)}
+
     if response_status == 'aceptado':
-        emails.sent_email_fe(document_data[0])
-    if result:
-        return {'Respuesta Hacienda': response_status, 'xml-respuesta': response_text}
-    else:
-        return {'Error in Database': 'Found a problem when tried to save the document'}
+        try:
+            emails.sent_email_fe(document_data)
+        except Exception as ex: # todo be more specific about exceptions
+            return {'error' : 'A problem occurred when attempting to send the email.'}
+
+    return {'message' : response_status, 'xml-respuesta' : response_text}
+    
 
 def consult_document_notdatabase(company_user, key_mh, document_type):
-    #document_data = documents.get_document(key_mh)
     company_data = companies.get_company_data(company_user)
+    if '_error' in company_data:
+        return {'error' : 'A problem occurred when attempting to get the company from the database'}
+    elif '_warning' in company_data:
+        return {'error' : "The specified company wasn't found in the database."}
+
     date = api_facturae.get_time_hacienda(True)
 
-    token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
-                                                company_data[0]['env'])
+    try:
+        token_m_h = api_facturae.get_token_hacienda(company_user, company_data['user_mh'], company_data['pass_mh'],
+                                                company_data['env'])
+    except Exception as ex: # todo: be more specific about exceptions
+        return {'error' : 'A problem occurred when attempting to get the token from Hacienda.'}
 
-    response_json = api_facturae.consulta_documentos(key_mh, company_data[0]['env'], token_m_h, date,
+    try:
+        response_json = api_facturae.consulta_documentos(key_mh, company_data['env'], token_m_h, date,
                                                      document_type)
+    except Exception as ex: # todo: be more specific about exceptions
+        return {'error' : 'A problem occurred when attempting to fetch the document from Hacienda.'}
 
     response_status = response_json.get('ind-estado')
     response_text = response_json.get('respuesta-xml')
+
     if response_text:
-        return {'Respuesta Hacienda': response_status, 'xml-respuesta': response_text}
+        return {'message' : response_status, 'xml-respuesta' : response_text}
     else:
-        return {'Error in Database': 'Found a problem when tried to save the document'}
+        return {'error': 'A problem was found with the data received by Hacienda.'}
 
 
 def processing_documents(company_user, key_mh, is_consult):
@@ -228,8 +351,16 @@ def document_report(company_user, document_type):
 
 def consult_vouchers(company_user, emisor, receptor, offset, limit):
     company_data = companies.get_company_data(company_user)
-    token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
-                                                 company_data[0]['env'])
+    if '_error' in company_data:
+        return {'error' : 'A problem occurred when attempting to get the company from the database'}
+    elif '_warning' in company_data:
+        return {'error' : "The specified company wasn't found in the database."}
+
+    try:
+        token_m_h = api_facturae.get_token_hacienda(company_user, company_data['user_mh'], company_data['pass_mh'],
+                                                 company_data['env'])
+    except Exception as ex: # todo: be more specific with exceptions
+        return {'error' : 'A problem occurred when attempting to get the token from Hacienda.'}
 
     parameters = {}
     if emisor is not None:
@@ -241,26 +372,42 @@ def consult_vouchers(company_user, emisor, receptor, offset, limit):
     if limit is not None:
         parameters['limit'] = limit
 
-    response_json = api_facturae.get_vouchers(token_m_h, parameters)
+    try:
+        response_json = api_facturae.get_vouchers(token_m_h, parameters)
+    except Exception as ex: # todo: be more specific with exceptions
+        return {'error' : "A problem occurred when attempting to get the company's vouchers."}
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
 
     if 200 <= response_status <= 206:
-        return_message = {'Comprobantes ': response_text}
-        return return_message
+        return {'Comprobantes' : response_text}
     else:
-        return {'Error': 'Unauthorized'}
+        return {'error': 'Hacienda considered the query as unauthorized.'}
 
 
 def consult_voucher_byid(company_user, clave):
     company_data = companies.get_company_data(company_user)
-    token_m_h = api_facturae.get_token_hacienda(company_user, company_data[0]['user_mh'], company_data[0]['pass_mh'],
-                                                company_data[0]['env'])
+    if '_error' in company_data:
+        return {'error' : 'A problem occurred when attempting to get the company from the database'}
+    elif '_warning' in company_data:
+        return {'error' : "The specified company wasn't found in the database."}
 
-    response_json = api_facturae.get_voucher_byid(clave, token_m_h)
+    try:
+        token_m_h = api_facturae.get_token_hacienda(company_user, company_data['user_mh'], company_data['pass_mh'],
+                                                company_data['env'])
+    except Exception as ex: # todo: be more specific with exceptions
+        return {'error' : 'A problem occurred when attempting to get the token from Hacienda.'}
+
+    try:
+        response_json = api_facturae.get_voucher_byid(clave, token_m_h)
+    except Exception as ex: # todo: be more specific with exceptions
+        return {'error' : "A problem occurred when attempting to fetch the specified document."}
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
-
-    return {'status': response_status, 'message': response_text}
+    if response_status == 200:        
+        return {'Comprobante' : response_text}
+    else:
+        return {'error': 'Hacienda considered the query as unauthorized.'}
+     # return {'status': response_status, 'message': response_text}

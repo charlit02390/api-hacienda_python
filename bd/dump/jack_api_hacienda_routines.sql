@@ -375,8 +375,16 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteCompany`(
 v_company_id varchar(45))
 BEGIN
-	Delete from companies_mh where company_api = (select id from companies where company_user = v_company_id);
-	Delete from companies where company_user = v_company_id;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    	BEGIN
+        	ROLLBACK;
+            RESIGNAL;
+        END;
+
+	START TRANSACTION;
+		Delete from companies_mh where company_api = (select id from companies where company_user = v_company_id);
+		Delete from companies where company_user = v_company_id;
+	COMMIT;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -416,8 +424,16 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteUser`(
 v_email varchar(45))
 BEGIN
-	Delete from users_companies where iduser = (select idusers from users where email = v_email);
-	Delete from users where email = v_email;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+    	ROLLBACK;
+        RESIGNAL;
+    END;
+
+	START TRANSACTION;
+		Delete from users_companies where iduser = (select idusers from users where email = v_email);
+		Delete from users where email = v_email;
+    COMMIT;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1148,3 +1164,12 @@ DELIMITER ;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2020-09-13 14:39:44
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_deleteUser_CompanyByUser`(
+	IN `p_user_email` VARCHAR(255)
+)
+BEGIN
+	DELETE FROM users_companies WHERE iduser = (SELECT idusers FROM users WHERE email = p_user_email);
+END$$
+DELIMITER ;

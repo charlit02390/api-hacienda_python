@@ -1,96 +1,53 @@
 import json
-from extensions import mysql
+from infrastructure import dbadapter as dba
 
 
 def save_company_smtp(host, user, password, port, encrypt_type, id_company):
+    procedure = 'sp_createSmtpData'
+    args = (host,user,password,port,encrypt_type,id_company)
     try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_createSmtpData', (host, user, password,
-                                              port, encrypt_type, id_company))
-        data = cursor.fetchall()
-        if len(data) is 0:
-            conn.commit()
-            return True
-        else:
-            return {'error': str(data[0])}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+        dba.execute_proc(proc_name=procedure,args=args,assert_unique=True)
+    except dba.DatabaseError as dbe:
+        raise dba.DatabaseError(str(dbe) + " The company's SMTP couldn't be saved")
+
+    return True
 
 
 def get_company_smtp(id_company):
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_getCompanySmtpInfo', (id_company,))
-        row_headers = [x[0] for x in cursor.description]
-        data = cursor.fetchall()
-        if len(data) is not 0:
-            conn.commit()
-            json_data = []
-            for row in data:
-                json_data.append(dict(zip(row_headers, row)))
-            return json_data
-        else:
-            return {'error': 'Error: Not get smtp information of the company'}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+    procedure = 'sp_getCompanySmtpInfo'
+    args = (id_company,)
+    return dba.fetchone_from_proc(procname=procedure,args=args)
 
 
 def delete_company_smtp(id_company):
+    procedure = 'sp_deleteCompanySmtp'
+    args = (id_company,)
     try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_deleteCompanySmtp', (id_company,))
-        data = cursor.rowcount
-        if data != 0:
-            conn.commit()
-            return {'message': 'The company smtp data has been deleted'}
-        else:
-            return {'error': 'The company smtp data can not be deleted'}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+        dba.execute_proc(proc_name=procedure, args=args,assert_unique=True)
+    except dba.DatabaseError as dbe:
+        raise dba.DatabaseError(str(dbe) + " The company's SMTP couldn't be deleted.")
+
+    return {'message' : "The company's SMTP has been deleted."}
 
 
 def modify_company_smtp(host, password, user, port, encrypt_type, id_company):
+    procedure = 'sp_ModifyCompanySmtp'
+    args = (host, password, user, port, encrypt_type, id_company)
     try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_ModifyCompanySmtp', (host, password, user, port, encrypt_type, id_company))
-        data = cursor.rowcount
-        if data != 0:
-            conn.commit()
-            return {'message': 'Company smtp data modify'}
-        else:
-            return {'error': 'The Company smtp can not be modify'}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+        dba.execute_proc(proc_name=procedure,args=args,assert_unique=True)
+    except dba.DatabaseError as dbe:
+        raise dba.DatabaseError(str(dbe) + " The company's SMTP couldn't be updated.")
+
+    return {'message' : "The company's SMTP was successfully updated."}
 
 
 def verify_company_smtp(company_user):
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_getCompanySmtpInfo', (company_user,))
-        data = cursor.fetchall()
-        if len(data) is not 0:
-            return True
-        else:
-            return False
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+    procedure = 'sp_getCompanySmtpInfo'
+    args = (company_user,)
+    smtp = dba.fetchone_from_proc(procname=procedure,args=args)
+    if '_error' in smtp:
+        raise dba.DatabaseError('A problem occurred when trying to verify the SMTP')
+    elif '_warning' in smtp:
+        return False
+    else:
+        return True

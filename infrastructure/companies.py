@@ -1,179 +1,140 @@
 import json
 import base64
-from extensions import mysql
+from infrastructure import dbadapter as dba
 
 
 def create_company(company_user, name, tradename, type_identification, dni, state, county, district, neighbor, address,
                    phone_code, phone, email, activity_code, is_active, user_mh, pass_mh, signature, logo, pin_sig, env,
                    expiration_date):
+    conn = None
     try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
+        conn = dba.connectToMySql()
+    except dba.DatabaseError as dbe:
+        raise
 
-        cursor.callproc('sp_createCompany', (company_user, name, tradename, type_identification, dni, state,
-                                             county, district, neighbor, address, phone_code, phone, email,
-                                             activity_code, is_active))
+    try: 
+        comp_proc = 'sp_createCompany'
+        comp_args = (company_user, name, tradename, type_identification, dni, state,
+                                                 county, district, neighbor, address, phone_code, phone, email,
+                                                 activity_code, is_active)
+        try:
+            dba.execute_proc(proc_name=comp_proc, args=comp_args,conn=conn,assert_unique=True)
 
-        cursor.callproc('sp_saveMHInfo', (user_mh, pass_mh, signature, logo, pin_sig, company_user, env,
-                                          expiration_date))
+        except dba.DatabaseError as dbe:
+            conn.rollback()
+            raise dba.DatabaseError(str(dbe) + " The company couldn't be created.")
 
-        data = cursor.fetchall()
-        if len(data) is 0:
-            conn.commit()
-            return True
-        else:
-            return {'error': str(data[0])}
-    except Exception as e:
-        return {'error': str(e)}
+        mh_proc = 'sp_saveMHInfo'
+        mh_args = (user_mh, pass_mh, signature, logo, pin_sig, company_user, env,
+                                              expiration_date)
+        try:
+            dba.execute_proc(proc_name=mh_proc, args=mh_args, conn=conn, assert_unique=True)
+
+        except dba.DatabaseError as dbe:
+            conn.rollback()
+            raise dba.DatabaseError(str(dbe) + " The company's Hacienda data couldn't be saved.")
+
+        conn.commit()
+        return True
+
     finally:
-        cursor.close()
         conn.close()
+   
+
 
 
 def modify_company(company_user, name, tradename, type_identification, dni, state, county, district, neighbor, address,
                    phone_code, phone, email, activity_code, is_active, user_mh, pass_mh, signature, logo, pin_sig, env,
                    expiration_date):
+    conn = None
     try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_ModifyCompany', (company_user, name, tradename, type_identification, dni, state,
+        conn = dba.connectToMySql()
+    except dba.DatabaseError as dbe:
+        raise
+
+    try: 
+        comp_proc = 'sp_ModifyCompany'
+        comp_args = (company_user, name, tradename, type_identification, dni, state,
                                              county, district, neighbor, address, phone_code, phone, email,
-                                             activity_code, is_active))
-        data_company = cursor.rowcount
+                                             activity_code, is_active)
+        try:
+            dba.execute_proc(proc_name=comp_proc, args=comp_args,conn=conn,assert_unique=True)
 
-        cursor.callproc('sp_modifyMHInfo', (user_mh, pass_mh, signature, logo,
-                                            pin_sig, company_user, env, expiration_date))
-        data_mh = cursor.rowcount
+        except dba.DatabaseError as dbe:
+            conn.rollback()
+            raise dba.DatabaseError(str(dbe) + " The company couldn't be created.")
 
-        if data_company != 0 and data_mh != 0:
-            conn.commit()
-            return True
-        else:
-            return {'error': 'The company data can not be modify'}
-    except Exception as e:
-        return {'error': str(e)}
+
+        # in case the mh_info is missing for a company, we should be able to add new info to it.
+        # consider changing this procedure to one less intensive.
+        mh_info = dba.fetchone_from_proc('sp_getMHInfo',(company_user,))
+        if '_error' in mh_info:
+            conn.rollback()
+            raise dba.DatabaseError("A problem occurred in the database and the company couldn't be created.")
+        elif '_warning' in mh_info: # if no info, add new info
+            mh_proc = 'sp_saveMHInfo'
+        else: # else, update it
+            mh_proc = 'sp_modifyMHInfo'
+
+        mh_args = (user_mh, pass_mh, signature, logo,
+                                            pin_sig, company_user, env, expiration_date)
+        try:
+            dba.execute_proc(proc_name=mh_proc, args=mh_args, conn=conn, assert_unique=True)
+
+        except dba.DatabaseError as dbe:
+            conn.rollback()
+            raise dba.DatabaseError(str(dbe) + " The company's Hacienda data couldn't be saved.")
+
+        conn.commit()
+        return True
+
     finally:
-        cursor.close()
         conn.close()
 
 
 def verify_company(company_user):
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_getCompanyInfo', (company_user,))
-        data = cursor.fetchall()
-        if len(data) is not 0:
-            return True
-        else:
-            return False
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+    procedure = 'sp_getCompanyInfo'
+    args = (company_user,)
+    company = dba.fetchone_from_proc(procname=procedure, args=args)
+    result = None
+    if '_error' in company:
+        raise dba.DatabaseError('A problem occured when trying to verify the company.')
+    elif '_warning' in company:
+        result = False
+    else:
+        result = True
+
+    return result
 
 
 def get_company_data(company_user):
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_getCompanyInfo', (company_user,))
-        row_headers = [x[0] for x in cursor.description]
-        data = cursor.fetchall()
-
-        if len(data) is not 0:
-            conn.commit()
-            json_data = []
-            for row in data:
-                json_data.append(dict(zip(row_headers, row)))
-            return json_data
-        else:
-            return {'error': 'Error: Not get information of your company'}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+    procedure = 'sp_getCompanyInfo'
+    args = (company_user,)
+    return dba.fetchone_from_proc(procname=procedure, args=args)
 
 
 def get_companies():
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_getCompanies', ())
-        row_headers = [x[0] for x in cursor.description]
-        data = cursor.fetchall()
-        if len(data) is not 0:
-            conn.commit()
-            json_data = []
-            for row in data:
-                json_data.append(dict(zip(row_headers, row)))
-            return json_data
-        else:
-            return {'error': 'Error: Not get information of your company'}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+    procedure = 'sp_getCompanies'
+    return dba.fetchall_from_proc(procname=procedure)
 
 
 def get_sign_data(company_user):
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_getSignCompany', (company_user,))
-        row_headers = [x[0] for x in cursor.description]
-        data = cursor.fetchall()
-        if len(data) is not 0:
-            conn.commit()
-            for row in data:
-                signature = dict(zip(row_headers, row))
-            return signature
-        else:
-            return {'error': 'Error: Not get information of your company'}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+    procedure = 'sp_getSignCompany'
+    args = (company_user,)
+    return dba.fetchone_from_proc(procname=procedure,args=args)
 
 
 def get_logo_data(company_user):
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_getLogoCompany', (company_user,))
-        row_headers = [x[0] for x in cursor.description]
-        data = cursor.fetchall()
-        if len(data) is not 0:
-            conn.commit()
-            for row in data:
-                logo = dict(zip(row_headers, row))
-            return logo
-        else:
-            return {'error': 'Error: Not get information of your company'}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+    procedure = 'sp_getLogoCompany'
+    args = (company_user,)
+    return dba.fetchone_from_proc(procname=procedure, args=args)
 
 
 def delete_company_data(company_user):
+    procedure = 'sp_deleteCompany'
+    args = (company_user,)
     try:
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        cursor.callproc('sp_deleteCompany', (company_user,))
-        data = cursor.rowcount
-        if data != 0:
-            conn.commit()
-            return {'message': 'The company has been deleted'}
-        else:
-            return {'error': 'The company can not be deleted'}
-    except Exception as e:
-        return {'error': str(e)}
-    finally:
-        cursor.close()
-        conn.close()
+        dba.execute_proc(proc_name=procedure,args=args,assert_unique=True)
+        return {'message':'The company has been succesfully deleted.'}
+    except dba.DatabaseError as dbe:
+        return {'error' : str(dbe) + " The company couldn't be deleted."}
