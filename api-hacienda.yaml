@@ -400,7 +400,7 @@ components:
             - user
             - password
             - port
-            - encrypy_type
+            - encrypt_type
       required:
         - data
     email:

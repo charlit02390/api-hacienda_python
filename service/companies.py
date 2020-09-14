@@ -10,7 +10,7 @@ def create_company(data, file, logo):
     try:
         _company_user = data['id_compania']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + str(ker)} 
+        return {'error' : 'Missing property: ' + str(ker)} 
 
     company_exists = True
     try:
@@ -42,7 +42,7 @@ def create_company(data, file, logo):
         _env = data['ambiente']
         _is_active = data['estado']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + str(ker)}
+        return {'error' : 'Missing property: ' + str(ker)}
 
     _signature = base64.b64encode(file)
     _logo = base64.b64encode(logo)
@@ -98,7 +98,7 @@ def modify_company(data, file, logo):
         _env = data['ambiente']
         _is_active = data['estado']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + str(ker)}
+        return {'error' : 'Missing property: ' + str(ker)}
 
     _signature = base64.b64encode(file)
     _logo = base64.b64encode(logo)

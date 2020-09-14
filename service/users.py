@@ -20,7 +20,7 @@ def create_user(data):
         _idrol = data['idrol']
         _idcompanies = data['idcompanies']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + str(ker)}
+        return {'error' : 'Missing property: ' + str(ker)}
 
     try:
         user_exist = users.verify_email(_email)
@@ -36,6 +36,8 @@ def create_user(data):
         return {'error' : "The user couldn't be created."} # or just... {'error' : str(dbe)}
     except KeyError as ker:
         return {'error' : str(ker)}
+    except TypeError as ter:
+        return {'error' : str(ter)}
 
     return {'message' : 'User created successfully'}
 
@@ -82,7 +84,7 @@ def delete_user_companies(data): # scrap this?
         _email = data['email']
         _idcompanies = list(id['id'] for id in data['idcompanies'])
     except KeyError as ker:
-        return {'error' : 'Invalid property ' + ker}
+        return {'error' : 'Missing property ' + ker}
 
     try:
         users.delete_user_company(_email, _idcompanies)
@@ -97,7 +99,7 @@ def login(data):
         email = data['email']
         password = data['password']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + ker}
+        return {'error' : 'Missing property: ' + ker}
 
     user_check = users.check_user(email, password)
     result = None
@@ -109,9 +111,11 @@ def login(data):
         try:
             token = generate_token(email)
         except Exception as ex:
-            return {'error' : 'A problem occurred during the login proccess.'}
+            result = {'error' : 'A problem occurred during the login proccess.'}
         
-        return {'token' : token, 'user' : user_check}
+        result = {'token' : token, 'user' : user_check}
+
+    return result
 
 
 def generate_token(email):

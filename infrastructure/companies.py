@@ -64,7 +64,18 @@ def modify_company(company_user, name, tradename, type_identification, dni, stat
             conn.rollback()
             raise dba.DatabaseError(str(dbe) + " The company couldn't be created.")
 
-        mh_proc = 'sp_modifyMHInfo'
+
+        # in case the mh_info is missing for a company, we should be able to add new info to it.
+        # consider changing this procedure to one less intensive.
+        mh_info = dba.fetchone_from_proc('sp_getMHInfo',(company_user,))
+        if '_error' in mh_info:
+            conn.rollback()
+            raise dba.DatabaseError("A problem occurred in the database and the company couldn't be created.")
+        elif '_warning' in mh_info: # if no info, add new info
+            mh_proc = 'sp_saveMHInfo'
+        else: # else, update it
+            mh_proc = 'sp_modifyMHInfo'
+
         mh_args = (user_mh, pass_mh, signature, logo,
                                             pin_sig, company_user, env, expiration_date)
         try:
@@ -126,4 +137,4 @@ def delete_company_data(company_user):
         dba.execute_proc(proc_name=procedure,args=args,assert_unique=True)
         return {'message':'The company has been succesfully deleted.'}
     except dba.DatabaseError as dbe:
-        return dbe
+        return {'error' : str(dbe) + " The company couldn't be deleted."}

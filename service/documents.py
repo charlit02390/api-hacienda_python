@@ -14,7 +14,7 @@ def create_document(data):
     try:
         _company_user = data['nombre_usuario']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + str(ker)}
+        return {'error' : 'Missing property: ' + str(ker)}
 
     company_data = companies.get_company_data(_company_user)
     if '_error' in company_data:
@@ -70,7 +70,7 @@ def create_document(data):
         _reference = data['referencia']
         _others = data['otros']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + str(ker)}
+        return {'error' : 'Missing property: ' + str(ker)}
 
     _datestr = api_facturae.get_time_hacienda()
     datecr = api_facturae.get_time_hacienda(True)
@@ -164,7 +164,7 @@ def save_document_lines(lines, id_company, key_mh, conn):
             _net_tax = _line['impuestoNeto']
             _total_line = _line['totalLinea']
         except KeyError as ker:
-            raise KeyError('Invalid property: ' + str(ker))
+            raise KeyError('Missing property: ' + str(ker))
 
         try:
             documents.save_document_line_info(id_company, _line_number, _quantity, _unity
@@ -192,7 +192,7 @@ def save_document_taxes(taxes, id_company, line_number, key_mh, conn):
             _rate = _tax['tarifa']
             _amount = _tax['monto']
         except KeyError as ker:
-            raise KeyError('Invalid property: ' + str(ker))
+            raise KeyError('Missing property: ' + str(ker))
         try:
             documents.save_document_line_taxes(id_company, line_number, _rate_code,
                                                     _code, _rate, _amount, key_mh, connection=conn)

@@ -29,10 +29,7 @@ def route_delete_user(id):
 
 def route_delete_user_companies():
     body = json.loads(connexion.request.data)
-    try:
-        result = service.delete_user_companies(body['data'])
-    except KeyError as ker:
-        result = {'error' : 'Missing property: ' + str(ker)}
+    result = service.delete_user_companies(body)
     return result
 
 

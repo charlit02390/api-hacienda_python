@@ -26,7 +26,10 @@ def save_user(id_user, password, name, idrol, idcompanies):
                 idcompany = id['id']
             except KeyError as ker:
                 conn.rollback()
-                raise KeyError('Invalid property ' + str(ker))
+                raise KeyError('Missing property ' + str(ker))
+            except TypeError as ter:
+                conn.rollback()
+                raise TypeError('Expected object with property "id"; instead got: ' + str(ter).rstrip('object is not subscriptable'))
 
             usercom_args = (id_user, idcompany)            
             try:
@@ -111,7 +114,10 @@ def modify_user(id_user, password, name, idrol, idcompanies):
                 idcompany = id['id']
             except KeyError as ker:
                 conn.rollback()
-                raise KeyError('Invalid property: ' + str(ker))
+                raise KeyError('Missing property: ' + str(ker))
+            except TypeError as ter:
+                conn.rollback()
+                raise TypeError('Expected object with property "id"; instead got: ' + str(ter).rstrip('object is not subscriptable'))
 
             usercom_args = (id_user, idcompany)
             try:
@@ -154,7 +160,7 @@ def delete_user_data(id_user):
     procedure = 'sp_deleteUser'
     args = (id_user,)
     try:
-        dba.execute_proc(proc_name=procedure,args=args)
+        dba.execute_proc(proc_name=procedure,args=args,assert_unique=True)
     except dba.DatabaseError as dbe:
         raise dba.DatabaseError(str(dbe) + " The user couldn't be deleted.")
 

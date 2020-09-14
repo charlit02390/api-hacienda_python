@@ -12,7 +12,7 @@ def save_company_smtp(data, id_company):
         _port = data['port']
         _encrypt_type = data['encrypt_type']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + ker}
+        return {'error' : 'Missing property: ' + ker}
 
     try:
         company_exists = companies.verify_company(id_company)
@@ -60,7 +60,7 @@ def modify_company_smtp(data, id_company):
         _port = data['port']
         _encrypt_type = data['encrypt_type']
     except KeyError as ker:
-        return {'error' : 'Invalid property: ' + str(ker)}
+        return {'error' : 'Missing property: ' + str(ker)}
 
     try:
         company_smtp_exists = company_smtp.verify_company_smtp(id_company)

@@ -242,7 +242,7 @@ def connectToMySql():
     """
     conn = None
     try:
-        conn = mysql.connect()
+        conn = mysql.get_db() # mysql.connect()
     except (OperationalError, InternalError) as e:
         logging.error(str(e)) # todo
         raise DatabaseError('A problem occured when attempting to connect to the database.')

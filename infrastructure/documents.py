@@ -42,7 +42,7 @@ def save_document(company_id, key_mh, sign_xml, status, date, document_type, rec
             receiver_type = receiver['tipoIdentificacion']
             receiver_dni = receiver['numeroIdentificacion']
         except KeyError as ker:
-            raise KeyError('Invalid property: ' + str(ker))
+            raise KeyError('Missing property: ' + str(ker))
 
     procedure = 'sp_saveDocument'
     args = (company_id, key_mh, sign_xml, status, date, document_type,receiver_type,
