@@ -138,7 +138,7 @@ def create_document(data):
             _id_company = company_data['id']
 
             try:
-                save_document_lines(_lines,_id_company,_key_mh,connection=conn)
+                save_document_lines(_lines,_id_company,_key_mh,conn)
             except DatabaseError as dbe:
                 conn.rollback()
                 return {'error' : str(dbe)}
@@ -173,9 +173,9 @@ def save_document_lines(lines, id_company, key_mh, conn):
             raise
 
         _taxes = _line.get('impuesto')
-        if taxes:
+        if _taxes:
             try:
-                save_document_taxes(_taxes,id_company,_line_number,key_mh, conn=conn)
+                save_document_taxes(_taxes,id_company,_line_number,key_mh, conn)
             except DatabaseError as dbe:
                 raise
             except KeyError as ker:
@@ -297,13 +297,16 @@ def consult_document(company_user, key_mh):
     except DatabaseError as dbe:
         return {'error' : str(dbe)}
 
+    result = dict()
     if response_status == 'aceptado':
         try:
             emails.sent_email_fe(document_data)
         except Exception as ex: # todo be more specific about exceptions
-            return {'error' : 'A problem occurred when attempting to send the email.'}
+            result['warning'] = 'A problem occurred when attempting to send the email.'
 
-    return {'message' : response_status, 'xml-respuesta' : response_text}
+    result['message'] = response_status
+    result['xml-respuesta'] = response_text
+    return result
     
 
 def consult_document_notdatabase(company_user, key_mh, document_type):

@@ -10,19 +10,23 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 import ssl
+from infrastructure.dbadapter import DatabaseError
+import logging
 
 cfg = globalsettings.cfg
 
 
 def sent_email_fe(data):
     smtp_data = company_smtp.get_company_smtp(data['company_user'])
+    if '_error' in smtp_data: # not gonna raise or return an error here... just log that something happened in the database... let's just use the fallback smtp
+        logging.error("A problem occurred when attempting to fetch the company's SMTP.")
 
     if smtp_data.get('host'):
-        host = smtp_data[0]['host']
-        sender = smtp_data[0]['user']
-        password = smtp_data[0]['password']
-        port = smtp_data[0]['port']
-        encrypt_type = smtp_data[0]['encrypt_type']
+        host = smtp_data['host']
+        sender = smtp_data['user']
+        password = smtp_data['password']
+        port = smtp_data['port']
+        encrypt_type = smtp_data['encrypt_type']
     else:
         host = cfg['email']['host']
         sender = cfg['email']['user']
@@ -30,7 +34,7 @@ def sent_email_fe(data):
         port = cfg['email']['port']
         encrypt_type = cfg['email']['type']
 
-    document = documents.get_document(data['key_mh'])[0]
+    document = documents.get_document(data['key_mh'])
     receivers = document['email']
     subject = "Envio de "+fe_enums.tagNamePDF[document['document_type']] + ' Numero: ' + document['key_mh']
     body = 'Adjuntamos los datos de la ' + fe_enums.tagNamePDF[document['document_type']]
@@ -49,27 +53,47 @@ def sent_email_fe(data):
 
 def send_custom_email(data, file1, file2, file3):
     smtp_data = company_smtp.get_company_smtp(data['company_id'])
-    receivers = data['receivers']
+    # this is a custom email from the SMTP of the company. Can't have fallbacks:
+    if '_error' in smtp_data:
+        raise DatabaseError("A problem occurred when attempting to fetch the company's SMTP.")
+    elif '_warning' in smtp_data:
+        return {'error' : "The company doesn't have a SMTP configured."}
+
+    receivers = data.getlist('receivers')
+    if not receivers[0]:
+        return {'error' : "No primary recipient was specified."}
+
     subject = data['subject']
     content = data['content']
-    name_file1 = file1.filename
-    name_file2 = file2.filename
-    name_file3 = file3.filename
-    file1 = file1.stream.read()
-    file2 = file2.stream.read()
-    file3 = file3.stream.read()
+    # wish these were just a list...
+    # files are optional, so, if no file was received, just set the filename to empty string so send_mail doesn't attach it
+    name_file1 = ""
+    name_file2 = ""
+    name_file3 = ""
+    if file1:
+        name_file1 = file1.filename
+        file1 = file1.stream.read() # if this is a FileStorage werkzeug thingie, could prolly just file1.read()... to lazy to test...
+        
+    if file2:
+        name_file2 = file2.filename
+        file2 = file2.stream.read()
 
-    host = smtp_data[0]['host']
-    sender = smtp_data[0]['user']
-    password = smtp_data[0]['password']
-    port = smtp_data[0]['port']
-    encrypt_type = smtp_data[0]['encrypt_type']
+    if file3:
+        name_file3 = file3.filename
+        file3 = file3.stream.read()
+        
+    
+    host = smtp_data['host']
+    sender = smtp_data['user']
+    password = smtp_data['password']
+    port = smtp_data['port']
+    encrypt_type = smtp_data['encrypt_type']
     result = send_email(receivers, subject, content, file1, file2, file3, host, sender, password, port,
                         encrypt_type, name_file1, name_file2, name_file3)
     return result
 
 
-def sent_email(pdf, signxml):
+def sent_email(pdf, signxml): # not used. Prolly a prototype to infrastructure.email.send_email
 
     subject = "An email with attachment from Python"
     body = "This is an email with attachment sent from Python"
