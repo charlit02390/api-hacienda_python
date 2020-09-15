@@ -529,6 +529,10 @@ def lines_xml(sb, lines, document_type, receiver_company):
         if document_type == 'FEE' and v.get('partidaArancelaria'):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
+        code = v.get('codigo',v.get('codigoServicio',v.get('codigoProducto'))) # just in case...
+        if isinstance(code, str):
+            sb.Append('<Codigo>' + code + '</Codigo>')
+
         com_codes = v.get('codigoComercial')
         #if isinstance(com_codes, dict): # this could be used in case, when only one is sent, it's sent as an object instead of array... dunno...
         #    com_codes = [com_codes]
