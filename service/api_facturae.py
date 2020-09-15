@@ -574,10 +574,12 @@ def lines_xml(sb, lines, document_type, receiver_company):
         if document_type != 'FEE':
             # BaseImponible only applies to Impuesto where Codigo = '07'... look ahead for this
             uses_BaseImponible = False
-            for impuesto in v['impuesto']:
-                if impuesto['codigo'] == '07':
-                    uses_BaseImponible = True
-                    break
+            _impuesto = v.get('impuesto')
+            if _impuesto:
+                for impuesto in _impuesto:
+                    if impuesto['codigo'] == '07':
+                        uses_BaseImponible = True
+                        break
 
             if uses_BaseImponible:
                 try:
@@ -656,7 +658,7 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
                 total_taxed, total_exone, total_untaxed, total_sales, total_return_iva, total_document):
     if document_type == 'FEC':
         issuing_company = receptor
-        activity_code = receptor['codigo_actividad']
+        activity_code = receptor.get('codigoActividad', activity_code)
         receiver_company = company_data
     else:
         issuing_company = company_data
