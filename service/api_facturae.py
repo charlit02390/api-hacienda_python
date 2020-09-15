@@ -529,7 +529,19 @@ def lines_xml(sb, lines, document_type, receiver_company):
         if document_type == 'FEE' and v.get('partidaArancelaria'):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
-        # sb.Append('<CodigoComercial>' + str(v['codigoProducto']) + '</CodigoComercial>')
+        com_codes = v.get('codigoComercial')
+        #if isinstance(com_codes, dict): # this could be used in case, when only one is sent, it's sent as an object instead of array... dunno...
+        #    com_codes = [com_codes]
+
+        if isinstance(com_codes, list) and len(com_codes) > 0:
+            try:
+                for cc in com_codes:
+                    sb.Append('<CodigoComercial>')
+                    sb.Append('<Tipo>' + str(cc['tipo']) + '</Tipo>')
+                    sb.Append('<Codigo>' + str(cc['codigo']) + '</Codigo>')
+                    sb.Append('</CodigoComercial>')
+            except KeyError as ker:
+                raise KeyError('Missing property in codigoComercial: ' + str(ker))
 
         sb.Append('<Cantidad>' + str(v['cantidad']) + '</Cantidad>')
         sb.Append('<UnidadMedida>' +
