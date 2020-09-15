@@ -35,7 +35,12 @@ def sent_email_fe(data):
         encrypt_type = cfg['email']['type']
 
     document = documents.get_document(data['key_mh'])
-    receivers = document['email']
+    primaryRecipient = document['email']
+    receivers = [primaryRecipient]
+    additionalRecipients = documents.get_additional_emails(data['key_mh'])
+    if isinstance(additionalRecipients, list):
+        receivers += list(x['email'] for x in additionalRecipients)
+
     subject = "Envio de "+fe_enums.tagNamePDF[document['document_type']] + ' Numero: ' + document['key_mh']
     body = 'Adjuntamos los datos de la ' + fe_enums.tagNamePDF[document['document_type']]
 

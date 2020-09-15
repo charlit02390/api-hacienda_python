@@ -555,6 +555,19 @@ def lines_xml(sb, lines, document_type, receiver_company):
         # TODO: ¿qué es base imponible? ¿porqué podría ser diferente del subtotal?
         # if document_type != 'FEE':
         #   sb.Append('<BaseImponible>' + str(v['subtotal']) + '</BaseImponible>')
+        if document_type != 'FEE':
+            # BaseImponible only applies to Impuesto where Codigo = '07'... look ahead for this
+            uses_BaseImponible = False
+            for impuesto in v['impuesto']:
+                if impuesto['codigo'] == '07':
+                    uses_BaseImponible = True
+                    break
+
+            if uses_BaseImponible:
+                try:
+                    sb.Append('<BaseImponible>' + str(v['baseImponible']) + '</BaseImponible>')
+                except KeyError as ker:
+                    raise KeyError('Missing property in detalles: ' + str(ker) + '. This is REQUIRED because the specified Tax Code is "07".')
 
         if v.get('impuesto'):
             for b in v['impuesto']:

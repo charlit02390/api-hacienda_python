@@ -1173,3 +1173,38 @@ BEGIN
 	DELETE FROM users_companies WHERE iduser = (SELECT idusers FROM users WHERE email = p_user_email);
 END$$
 DELIMITER ;
+
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_documentxemail`(
+	IN `p_key` VARCHAR(50), IN `p_email` VARCHAR(64)
+)
+BEGIN
+	DECLARE v_iddoc int;
+	SET v_iddoc = (SELECT id FROM documents WHERE key_mh = p_key);
+	IF v_iddoc IS NOT NULL THEN
+		INSERT INTO documentxemail(
+        	iddocument,
+        	email
+    	)
+   		VALUES (
+            v_iddoc,
+        	p_email
+    	);
+    END IF;
+END$$
+DELIMITER ;
+
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByDocKey_documentxemail`(
+	IN `p_key` VARCHAR(50)
+)
+BEGIN
+    DECLARE v_iddoc int;
+    SET v_iddoc = (SELECT id FROM documents WHERE key_mh = p_key);
+    IF v_iddoc IS NOT NULL THEN
+    	SELECT email FROM documentxemail WHERE iddocument = v_iddoc;
+    END IF;
+END$$
+DELIMITER ;
