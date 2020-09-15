@@ -529,7 +529,23 @@ def lines_xml(sb, lines, document_type, receiver_company):
         if document_type == 'FEE' and v.get('partidaArancelaria'):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
-        # sb.Append('<CodigoComercial>' + str(v['codigoProducto']) + '</CodigoComercial>')
+        code = v.get('codigo',v.get('codigoServicio',v.get('codigoProducto'))) # just in case...
+        if isinstance(code, str):
+            sb.Append('<Codigo>' + code + '</Codigo>')
+
+        com_codes = v.get('codigoComercial')
+        #if isinstance(com_codes, dict): # this could be used in case, when only one is sent, it's sent as an object instead of array... dunno...
+        #    com_codes = [com_codes]
+
+        if isinstance(com_codes, list) and len(com_codes) > 0:
+            try:
+                for cc in com_codes:
+                    sb.Append('<CodigoComercial>')
+                    sb.Append('<Tipo>' + str(cc['tipo']) + '</Tipo>')
+                    sb.Append('<Codigo>' + str(cc['codigo']) + '</Codigo>')
+                    sb.Append('</CodigoComercial>')
+            except KeyError as ker:
+                raise KeyError('Missing property in codigoComercial: ' + str(ker))
 
         sb.Append('<Cantidad>' + str(v['cantidad']) + '</Cantidad>')
         sb.Append('<UnidadMedida>' +
@@ -555,6 +571,21 @@ def lines_xml(sb, lines, document_type, receiver_company):
         # TODO: ¿qué es base imponible? ¿porqué podría ser diferente del subtotal?
         # if document_type != 'FEE':
         #   sb.Append('<BaseImponible>' + str(v['subtotal']) + '</BaseImponible>')
+        if document_type != 'FEE':
+            # BaseImponible only applies to Impuesto where Codigo = '07'... look ahead for this
+            uses_BaseImponible = False
+            _impuesto = v.get('impuesto')
+            if _impuesto:
+                for impuesto in _impuesto:
+                    if impuesto['codigo'] == '07':
+                        uses_BaseImponible = True
+                        break
+
+            if uses_BaseImponible:
+                try:
+                    sb.Append('<BaseImponible>' + str(v['baseImponible']) + '</BaseImponible>')
+                except KeyError as ker:
+                    raise KeyError('Missing property in detalles: ' + str(ker) + '. This is REQUIRED because the specified Tax Code is "07".')
 
         if v.get('impuesto'):
             for b in v['impuesto']:
@@ -627,7 +658,7 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
                 total_taxed, total_exone, total_untaxed, total_sales, total_return_iva, total_document):
     if document_type == 'FEC':
         issuing_company = receptor
-        activity_code = receptor['codigo_actividad']
+        activity_code = receptor.get('codigoActividad', activity_code)
         receiver_company = company_data
     else:
         issuing_company = company_data

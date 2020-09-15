@@ -8,6 +8,7 @@ from service import emails
 from infrastructure import companies
 from infrastructure import documents
 from infrastructure.dbadapter import DatabaseError, connectToMySql
+from email.headerregistry import Address
 
 
 def create_document(data):
@@ -28,6 +29,34 @@ def create_document(data):
     elif '_warning' in signature:
         return {'error' : "No signature information was found for the company; can't sign the document, so the document can't be created."}
 
+
+    _email_costs = None # marked for death. Using _additional_emails now
+    _additional_emails = []
+    _email = None
+    _receptor = data.get('receptor')
+    # time for spaghetti
+    if _receptor:
+        try:
+            _email = _receptor['correo']
+        except KeyError as ker:
+            return {'error' : 'Missing property in receptor: ' + str(ker)}
+
+        # validate emails
+        try:
+            _additional_emails = _receptor.get('correosAdicionales')
+            if _additional_emails is None or not isinstance(_additional_emails, list):
+                _temp = _receptor.get('correo_gastos', '')
+                _additional_emails = [_temp] if _temp != '' else [] # falling back to correo_gastos
+            else:
+                # remove duplicates
+                _additional_emails = list(set(_additional_emails))
+            validate_email(_email)
+            for mail in _additional_emails:
+                validate_email(mail)
+        except ValueError as ver: # if we catch a ValueError, email validation failed
+            return {'error' : 'Invalid email: ' + str(ver)}
+
+
     try:
         _type_document = fe_enums.TipoDocumentoApi[data['tipo']]
         _situation = data['situacion']
@@ -37,14 +66,6 @@ def create_document(data):
         _branch = data['sucursal']
         _activity_code = data['codigoActividad']
         _other_phone = data['otro_telefono']
-        if data.get('receptor'):
-            _receptor = data['receptor']
-            _email = _receptor['correo']
-            _email_costs = _receptor['correo_gastos']
-        else:
-            _receptor = None
-            _email = None
-            _email_costs = None
         _sale_condition = data['condicionVenta']
         _credit_term = data['plazoCredito']
         _payment_methods = data['medioPago']
@@ -82,6 +103,8 @@ def create_document(data):
                                    _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                                    _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
                                    _total_untaxed, _total_sales, _total_return_iva, _total_document)
+    except KeyError as ker: # atm, this is just a baseImponible exception.
+        return {'error' : str(ker)}
     except Exception as ex: # todo: be more specific about exceptions
         return {'error' : 'An issue was found when building the XML Document: ' + ex}
 
@@ -135,15 +158,26 @@ def create_document(data):
                 conn.rollback()
                 return {'error' : str(ker)}
 
-            _id_company = company_data['id']
+            try:
+                _id_company = company_data['id']
+            except KeyError as ker:
+                conn.rollback()
+                return {'error' : 'A problem occurred when saving the document.'}
+
+            if len(_additional_emails) > 0:
+                try:
+                    save_additional_emails(_key_mh, _additional_emails, conn)
+                except DatabaseError as dbe:
+                    conn.rollback()
+                    return {'error': str(dbe)}
 
             try:
                 save_document_lines(_lines,_id_company,_key_mh,conn)
             except DatabaseError as dbe:
                 conn.rollback()
                 return {'error' : str(dbe)}
-                conn.rollback()
             except KeyError as ker:
+                conn.rollback()
                 return {'error' : str(ker)}
 
             conn.commit()
@@ -164,7 +198,7 @@ def save_document_lines(lines, id_company, key_mh, conn):
             _net_tax = _line['impuestoNeto']
             _total_line = _line['totalLinea']
         except KeyError as ker:
-            raise KeyError('Missing property: ' + str(ker))
+            raise KeyError('Missing property in detalles: ' + str(ker))
 
         try:
             documents.save_document_line_info(id_company, _line_number, _quantity, _unity
@@ -192,7 +226,7 @@ def save_document_taxes(taxes, id_company, line_number, key_mh, conn):
             _rate = _tax['tarifa']
             _amount = _tax['monto']
         except KeyError as ker:
-            raise KeyError('Missing property: ' + str(ker))
+            raise KeyError('Missing property in impuesto: ' + str(ker))
         try:
             documents.save_document_line_taxes(id_company, line_number, _rate_code,
                                                     _code, _rate, _amount, key_mh, connection=conn)
@@ -201,6 +235,15 @@ def save_document_taxes(taxes, id_company, line_number, key_mh, conn):
 
     return True
 
+
+def save_additional_emails(key_mh, emails, conn):
+    for email in emails:
+        try:
+            documents.save_document_additional_email(key_mh, email, connection=conn)
+        except DatabaseError as dbe:
+            raise
+
+    return True
 
 def validate_documents():
     return
@@ -414,3 +457,24 @@ def consult_voucher_byid(company_user, clave):
     else:
         return {'error': 'Hacienda considered the query as unauthorized.'}
      # return {'status': response_status, 'message': response_text}
+
+def validate_email(email):
+    """
+    Validates an email by parsing it into an email.headerregistry.Address object.
+    
+    :param email: str - a string with the email to validate.
+    :returns: bool - True if no errors were raised.
+    :raises: ValueError - when 'email' is empty, 'email' is not a string, or email can't be parsed by Address, indicating the email is not valid.
+    """
+    if not email:
+        raise ValueError(str(email))
+
+    if not isinstance(email, str):
+        raise ValueError(str(email))
+
+    try:
+        Address(addr_spec=email)
+    except (ValueError, IndexError):
+        raise ValueError(email)
+
+    return True

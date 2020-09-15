@@ -4,7 +4,7 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
+# @todo: use the new email.message api
 
 def send_email(receiver, subject, content, file1, file2, file3,
                host, sender, password, port, encrypt_type,
@@ -13,6 +13,7 @@ def send_email(receiver, subject, content, file1, file2, file3,
         sender_email = sender
         
         # recipient circus 'cuz don't know python well enough
+        # use deque for this...
         receiver_email = receiver.pop(0)
         bccs = receiver.copy()
         receiver.insert(0,receiver_email)
