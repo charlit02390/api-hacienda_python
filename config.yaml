@@ -8,7 +8,7 @@ email:
     port: 587
     type: TLS
     user: cmonge@jackdevelopers.com
-    password: Jack1351#
+    password: 
 jwt_issuer: 'com.jackdevelopers.connexion'
 jwt_secret: 'Hernan-API'
 jwt_lifetime_seconds: 600

@@ -14,8 +14,11 @@ def route_get_company_byid(id):
 
 
 def route_save_company():
-    file = connexion.request.files['firma']
-    logo = connexion.request.files['logo']
+    try:
+        file = connexion.request.files['firma']
+        logo = connexion.request.files['logo']
+    except KeyError as ker:
+        return {'error' : 'Missing file on property: ' + str(ker)}
     body = connexion.request.form
     result = service.create_company(body, file.stream.read(), logo.stream.read())
     return result
@@ -27,8 +30,11 @@ def route_delete_company(id):
 
 
 def route_modify_company():
-    file = connexion.request.files['firma']
-    logo = connexion.request.files['logo']
+    try:
+        file = connexion.request.files['firma']
+        logo = connexion.request.files['logo']
+    except KeyError as ker:
+        return {'error' : 'Missing file on property: ' + str(ker)}
     body = connexion.request.form
     result = service.modify_company(body, file.stream.read(), logo.stream.read())
     return result

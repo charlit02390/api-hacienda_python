@@ -279,10 +279,12 @@ components:
                 monto_cargo:
                   type: string
             referencia:
-              type: object
-              properties:
-                num_factura:
-                  type: string
+              anyOf:
+               - type: string
+               - type: object
+                 properties:
+                   num_factura:
+                    type: string
             otros:
               type: object
               properties:
@@ -400,7 +402,7 @@ components:
             - user
             - password
             - port
-            - encrypy_type
+            - encrypt_type
       required:
         - data
     email:
@@ -433,12 +435,12 @@ components:
     email_mh:
       type: object
       properties:
-        company_id:
+        company_user:
           type: string
         key_mh:
           type: string
       required:
-        - company_id
+        - company_user
         - key_mh
     rspns_cabys:
       type: object

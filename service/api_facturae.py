@@ -64,7 +64,7 @@ def limit(str, limit):
     return (str[:limit - 3] + '...') if len(str) > limit else str
 
 
-def get_mr_sequencevalue(inv):
+def get_mr_sequencevalue(inv): # not used for now?
     '''Verificamos si el ID del mensaje receptor es válido'''
     mr_mensaje_id = int(inv.state_invoice_partner)
     if mr_mensaje_id < 1 or mr_mensaje_id > 3:
@@ -95,7 +95,7 @@ def get_mr_sequencevalue(inv):
     return {'detalle_mensaje': detalle_mensaje, 'tipo': tipo, 'tipo_documento': tipo_documento, 'sequence': sequence}
 
 
-def get_consecutivo_hacienda(tipo_documento, consecutivo, sucursal_id, terminal_id):
+def get_consecutivo_hacienda(tipo_documento, consecutivo, sucursal_id, terminal_id): # duplicated in utils_mh? not used here
     tipo_doc = fe_enums.TipoDocumento[tipo_documento]
 
     inv_consecutivo = str(consecutivo).zfill(10)
@@ -107,7 +107,7 @@ def get_consecutivo_hacienda(tipo_documento, consecutivo, sucursal_id, terminal_
     return consecutivo_mh
 
 
-def get_clave_hacienda(company_data, tipo_documento, consecutivo, sucursal_id, terminal_id, situacion='normal'):
+def get_clave_hacienda(company_data, tipo_documento, consecutivo, sucursal_id, terminal_id, situacion='normal'): # duplicated in utils_mh?
     tipo_doc = fe_enums.TipoDocumento[tipo_documento]
 
     '''Verificamos si el consecutivo indicado corresponde a un numero'''
@@ -225,7 +225,7 @@ def get_token_hacienda(_company_id, _user_mh, _pass_mh, env):
     return token_hacienda
 
 
-def refresh_token_hacienda(tipo_ambiente, token):
+def refresh_token_hacienda(tipo_ambiente, token): # duplicated in utils_mh... how many more funcs are duplicated??
     headers = {}
     data = {'client_id': tipo_ambiente,
             'client_secret': '',
@@ -254,7 +254,7 @@ def gen_xml_mr_43(clave, cedula_emisor, fecha_emision, id_mensaje,
                   codigo_actividad=False,
                   condicion_impuesto=False,
                   monto_total_impuesto_acreditar=False,
-                  monto_total_gasto_aplicable=False):
+                  monto_total_gasto_aplicable=False): # not used...
     '''Verificamos si la clave indicada corresponde a un numeros'''
     mr_clave = re.sub('[^0-9]', '', clave)
     if len(mr_clave) != 50:
@@ -529,7 +529,23 @@ def lines_xml(sb, lines, document_type, receiver_company):
         if document_type == 'FEE' and v.get('partidaArancelaria'):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
-        # sb.Append('<CodigoComercial>' + str(v['codigoProducto']) + '</CodigoComercial>')
+        code = v.get('codigo',v.get('codigoServicio',v.get('codigoProducto'))) # just in case...
+        if isinstance(code, str):
+            sb.Append('<Codigo>' + code + '</Codigo>')
+
+        com_codes = v.get('codigoComercial')
+        #if isinstance(com_codes, dict): # this could be used in case, when only one is sent, it's sent as an object instead of array... dunno...
+        #    com_codes = [com_codes]
+
+        if isinstance(com_codes, list) and len(com_codes) > 0:
+            try:
+                for cc in com_codes:
+                    sb.Append('<CodigoComercial>')
+                    sb.Append('<Tipo>' + str(cc['tipo']) + '</Tipo>')
+                    sb.Append('<Codigo>' + str(cc['codigo']) + '</Codigo>')
+                    sb.Append('</CodigoComercial>')
+            except KeyError as ker:
+                raise KeyError('Missing property in codigoComercial: ' + str(ker))
 
         sb.Append('<Cantidad>' + str(v['cantidad']) + '</Cantidad>')
         sb.Append('<UnidadMedida>' +
@@ -555,6 +571,21 @@ def lines_xml(sb, lines, document_type, receiver_company):
         # TODO: ¿qué es base imponible? ¿porqué podría ser diferente del subtotal?
         # if document_type != 'FEE':
         #   sb.Append('<BaseImponible>' + str(v['subtotal']) + '</BaseImponible>')
+        if document_type != 'FEE':
+            # BaseImponible only applies to Impuesto where Codigo = '07'... look ahead for this
+            uses_BaseImponible = False
+            _impuesto = v.get('impuesto')
+            if _impuesto:
+                for impuesto in _impuesto:
+                    if impuesto['codigo'] == '07':
+                        uses_BaseImponible = True
+                        break
+
+            if uses_BaseImponible:
+                try:
+                    sb.Append('<BaseImponible>' + str(v['baseImponible']) + '</BaseImponible>')
+                except KeyError as ker:
+                    raise KeyError('Missing property in detalles: ' + str(ker) + '. This is REQUIRED because the specified Tax Code is "07".')
 
         if v.get('impuesto'):
             for b in v['impuesto']:
@@ -627,10 +658,10 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
                 total_taxed, total_exone, total_untaxed, total_sales, total_return_iva, total_document):
     if document_type == 'FEC':
         issuing_company = receptor
-        activity_code = receptor['codigo_actividad']
-        receiver_company = company_data[0]
+        activity_code = receptor.get('codigoActividad', activity_code)
+        receiver_company = company_data
     else:
-        issuing_company = company_data[0]
+        issuing_company = company_data
         receiver_company = receptor
 
     sb = StringBuilder()
@@ -672,6 +703,18 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
         sb.Append('<MedioPago>' + payment_methods['codigo'] + '</MedioPago>')
 
     lines_xml(sb, lines, document_type, receiver_company)
+
+    # temp implementation, will change once this is clarified
+    # if otrosCargos is not a list, it's badly formatted, so we'll ignore it
+    if not isinstance(otrosCargos, list):
+        otrosCargos = None
+
+    # alternative implementation:
+    # if otrosCargos is a dictionary, only one was sent, so, change otrosCargos to a list and append the dict
+    #if isinstance(otrosCargos, dict):
+    #    otrosCargos = [otrosCargos]
+    #elif not isinstance(otrosCargos, list):
+    #    otrosCargos = None
 
     if otrosCargos:
         other_charges(sb, otrosCargos)
@@ -715,6 +758,11 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     sb.Append('<TotalComprobante>' + str(total_document) + '</TotalComprobante>')
     sb.Append('</ResumenFactura>')
 
+    # referencia is coming as a blank string when no reference is set... we want a dict (or, as hacienda specifies, a list of dicts)
+    if not isinstance(referencia, dict):
+        referencia = None
+
+
     if referencia:
         sb.Append('<InformacionReferencia>')
         sb.Append('<TipoDoc>' + str(referencia['tipoDocumento']) + '</TipoDoc>')
@@ -726,7 +774,21 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
 
     if invoice_comments:
         sb.Append('<Otros>')
-        sb.Append('<OtroTexto>' + str(invoice_comments['otroTexto']) + ' </OtroTexto>')
+        _other_text = invoice_comments.pop('otroTexto')
+        if isinstance(_other_text,list):
+            for _ot in _other_text:
+                sb.Append('<OtroTexto>' + str(_ot) + '</OtroTexto>')
+        else:
+            sb.Append('<OtroTexto>' + str(_other_text) + ' </OtroTexto>')
+
+        # killing off OtroContenido 'cuz not used. This section can handle it when it's relevant
+        _other_content = invoice_comments.pop('otroContenido')
+        # OtroContenido
+
+        # for wallmart stuff
+        for key, value in invoice_comments.items():
+            sb.Append('<OtroTexto codigo="' + str(key) + '">' + str(value) + '</OtroTexto>')
+
         sb.Append('</Otros>')
 
     sb.Append('</' + fe_enums.tagName[document_type] + '>')
@@ -842,7 +904,7 @@ def send_xml_fe(_company, _receptor, _key_mh, token, date, xml, env):
 
 
 # def schema_validator(xml_file, xsd_file) -> bool:
-def schema_validator(xml_file, xsd_file):
+def schema_validator(xml_file, xsd_file): # not currently in use
     """
     verifies a xml
     :param xml_invoice: Invoice xml
@@ -862,7 +924,7 @@ def schema_validator(xml_file, xsd_file):
 
 
 # Obtener Attachments para las Facturas Electrónicas
-def get_invoice_attachments(invoice, record_id):
+def get_invoice_attachments(invoice, record_id): # duplicated in utils_mh and not used?
     attachments = []
 
     attachment = invoice.env['ir.attachment'].search(
@@ -927,7 +989,7 @@ class StringBuilder:
         return self._file_str.getvalue()
 
 
-def consulta_clave(clave, token, tipo_ambiente):
+def consulta_clave(clave, token, tipo_ambiente): # duplicated in utils_mh... are this two files just copies of each other???
     endpoint = fe_enums.UrlHaciendaRecepcion[tipo_ambiente] + clave
 
     headers = {
@@ -962,7 +1024,7 @@ def consulta_clave(clave, token, tipo_ambiente):
     return response_json
 
 
-def get_economic_activities(company):
+def get_economic_activities(company): # not used... but, could be useful
     endpoint = "https://api.hacienda.go.cr/fe/ae?identificacion=" + company.vat
 
     headers = {
@@ -1004,13 +1066,13 @@ def consulta_documentos(number_electronic, env, token_m_h, date_cr, document_typ
     _logger.debug(response_json)
     estado_m_h = response_json.get('ind-estado')
 
-    if estado_m_h == 'aceptado':
+    if estado_m_h == 'aceptado': # ??????
         state_tributacion = estado_m_h
         date_acceptance = date_cr
     return response_json
 
 
-def send_message(inv, date_cr, xml, token, env):
+def send_message(inv, date_cr, xml, token, env): # duplicated in utils_mh... and not used....
     endpoint = fe_enums.UrlHaciendaRecepcion[env]
 
     vat = re.sub('[^0-9]', '', inv.partner_id.vat)
@@ -1049,7 +1111,7 @@ def send_message(inv, date_cr, xml, token, env):
         return {'status': response.status_code, 'text': response.text}
 
 
-def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_account_id=False):
+def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_account_id=False): # not used...
     try:
         invoice_xml = etree.fromstring(base64.b64decode(invoice.xml_supplier_approval))
         document_type = re.search('FacturaElectronica|NotaCreditoElectronica|NotaDebitoElectronica',

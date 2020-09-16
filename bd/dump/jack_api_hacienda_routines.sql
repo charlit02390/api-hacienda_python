@@ -1,13 +1,13 @@
--- MySQL dump 10.13  Distrib 8.0.19, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.17, for macos10.12 (x86_64)
 --
 -- Host: localhost    Database: jack_api_hacienda
 -- ------------------------------------------------------
--- Server version	8.0.19
+-- Server version	8.0.11
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
+/*!40101 SET NAMES utf8 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -16,18 +16,76 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Temporary view structure for view `vw_cabysxsac`
+--
+
+DROP TABLE IF EXISTS `vw_cabysxsac`;
+/*!50001 DROP VIEW IF EXISTS `vw_cabysxsac`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE VIEW `vw_cabysxsac` AS SELECT 
+ 1 AS `code`,
+ 1 AS `Codigo SAC`,
+ 1 AS `Descripcion Cabys`,
+ 1 AS `cantidad_codigos_cabys_sac`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Final view structure for view `vw_cabysxsac`
+--
+
+/*!50001 DROP VIEW IF EXISTS `vw_cabysxsac`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `vw_cabysxsac` AS select `ca`.`code` AS `code`,`cs`.`sac_version_2017` AS `Codigo SAC`,`ca`.`description` AS `Descripcion Cabys`,`cs`.`cantidad_codigos_cabys_sac` AS `cantidad_codigos_cabys_sac` from (`cabysxsac` `cs` join `cabys` `ca` on((`cs`.`codigo_cabys_sac` = `ca`.`code`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Dumping events for database 'jack_api_hacienda'
+--
+
+--
 -- Dumping routines for database 'jack_api_hacienda'
 --
+/*!50003 DROP PROCEDURE IF EXISTS `sp_CheckUser` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_CheckUser`(
+v_email varchar(50),
+v_password varchar(50)
+)
+BEGIN
+	Select * from users where email=v_email and password = v_password;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_createCompany` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
-use jack_api_hacienda;
-
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createCompany`(
 IN v_company_user varchar(45) ,
@@ -83,7 +141,7 @@ v_email,
 v_activity_code,
 v_is_active);
 
-END ;;companiescompanies
+END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -95,6 +153,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -151,6 +210,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -199,6 +259,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -240,6 +301,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -275,6 +337,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -305,14 +368,23 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteCompany`(
 v_company_id varchar(45))
 BEGIN
-	Delete from companies_mh where company_api = (select id from companies where company_user = v_company_id);
-	Delete from companies where company_user = v_company_id;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    	BEGIN
+        	ROLLBACK;
+            RESIGNAL;
+        END;
+
+	START TRANSACTION;
+		Delete from companies_mh where company_api = (select id from companies where company_user = v_company_id);
+		Delete from companies where company_user = v_company_id;
+	COMMIT;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -325,6 +397,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -344,14 +417,23 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteUser`(
 v_email varchar(45))
 BEGIN
-	Delete from users_companies where iduser = (select idusers from users where email = v_email);
-	Delete from users where email = v_email;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+    	ROLLBACK;
+        RESIGNAL;
+    END;
+
+	START TRANSACTION;
+		Delete from users_companies where iduser = (select idusers from users where email = v_email);
+		Delete from users where email = v_email;
+    COMMIT;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -364,6 +446,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -392,9 +475,9 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getCompanies`()
 BEGIN
-Select c.*, mh.user_mh, mh.pass_mh, mh.pin_sig, mh.env
-	from companies  c
-    left join companies_mh mh
+Select c.*, mh.user_mh, mh.pass_mh, mh.pin_sig, mh.env, mh.expiration_date
+	from companies  c 
+    left join companies_mh mh 
 		on mh.company_api = c.id ;
 END ;;
 DELIMITER ;
@@ -416,10 +499,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getCompanyInfo`(
 v_company_id varchar(45))
 BEGIN
 
-Select c.*, mh.user_mh, mh.pass_mh, mh.pin_sig, mh.env
-	from companies  c
-    left join companies_mh mh
-		on mh.company_api = c.id
+Select c.*, mh.user_mh, mh.pass_mh, mh.pin_sig, mh.env, mh.expiration_date, CONVERT(mh.logo USING utf8) as logo,  CONVERT(mh.signature USING utf8) as signature
+	from companies  c 
+    left join companies_mh mh 
+		on mh.company_api = c.id 
 	where   c.company_user  = v_company_id;
 
 END ;;
@@ -434,6 +517,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -442,11 +526,11 @@ v_company_id varchar(45))
 BEGIN
 
 Select c.company_user, csmtp.host, csmtp.user, csmtp.password, csmtp.port, csmtp.encrypt_type
-	from companies_smtp csmtp
+	from companies_smtp csmtp 
     inner join companies c
 		on c.id = csmtp.id_company
 	where   c.company_user  = v_company_id;
-
+    
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -466,7 +550,39 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentByKey`(
 v_key_mh varchar(50))
 BEGIN
-	SELECT * FROM jack_api_hacienda.documents where key_mh = v_key_mh;
+	Select cp.company_user, cp.name, d.key_mh, d.status, d.isSent, d.dateanswer, d.datesign, d.document_type, 
+d.dni_receiver, d.dni_type_receiver, d.total_document, d.email, d.email_costs, CONVERT(d.signxml USING utf8) signxml,
+CONVERT(d.answerxml USING utf8) answerxml , CONVERT(d.pdfdocument USING utf8) as pdfdocument 
+from documents d 
+inner join companies cp on d.company_id = cp.id  where d.key_mh = v_key_mh;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_getDocumentsReport` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsReport`(
+v_id_company varchar(50),
+v_type_document varchar(50)
+)
+BEGIN
+Select cp.company_user, d.key_mh, d.status, d.isSent, d.dateanswer, d.datesign, d.document_type, 
+d.dni_receiver, d.dni_type_receiver, d.total_document, d.email, d.email_costs, CONVERT(d.signxml USING utf8) signxml,
+CONVERT(d.answerxml USING utf8) answerxml , CONVERT(d.pdfdocument USING utf8) as pdfdocument
+from documents d 
+inner join companies cp on d.company_id = cp.id  
+where cp.company_user= v_id_company 
+and d.document_type = v_type_document;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -479,6 +595,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -486,7 +603,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getLogoCompany`(
 v_company_id varchar(45))
 BEGIN
 	Select mh.logo
-	from companies_mh mh
+	from companies_mh mh 
     inner join companies c on c.id = mh.company_api
 	where   c.company_user  = v_company_id;
 
@@ -510,10 +627,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getMHInfo`(
 v_company_id varchar(45))
 BEGIN
 
-Select c.identification_dni, mh.user_mh, mh.pass_mh, mh.signature, mh.pin_sig, mh.env
-	from companies  c
-    inner join companies_mh mh
-		on mh.company_api = c.id
+Select c.identification_dni, mh.user_mh, mh.pass_mh, mh.signature, mh.pin_sig, mh.env 
+	from companies  c 
+    inner join companies_mh mh 
+		on mh.company_api = c.id 
 	where   c.company_user  = v_company_id;
 
 END ;;
@@ -536,7 +653,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getSignCompany`(
 v_company_id varchar(45))
 BEGIN
 	Select mh.signature
-	from companies_mh mh
+	from companies_mh mh 
     inner join companies c on c.id = mh.company_api
 	where   c.company_user  = v_company_id;
 
@@ -552,6 +669,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -562,26 +680,7 @@ IN v_idcompany int
 BEGIN
 SELECT uc.*
 FROM users_companies uc inner join users u on idusers = iduser
-WHERE v_idcompany = uc.idcompany and v_email = u.email;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `sp_getUserEmail` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUsers`()
-BEGIN
-	SELECT *
-    FROM users u;
+WHERE v_idcompany = uc.idcompany and v_email = u.email; 
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -592,17 +691,18 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfo`(
 v_email varchar(45))
 BEGIN
 
-select u.idusers,u.name,u.email,r.id rol
-from users u
+select u.*,r.value rol
+from users u 
 inner join roles r on u.idrol = r.id
 where u.email = v_email;
 
@@ -618,6 +718,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -625,10 +726,30 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfoCompanies`(
 v_email varchar(45))
 BEGIN
 select c.id internalid, c.company_user idcompany, c.tradename tradename
-from users u
+from users u 
 inner join users_companies uc on u.idusers = uc.iduser
 inner join companies c on uc.idcompany = c.id
 where u.email = v_email;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_getUsers` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUsers`()
+BEGIN
+	SELECT *
+    FROM users u;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -641,9 +762,9 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
-
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ModifyCompany`(
 IN v_company_user varchar(45) ,
@@ -693,6 +814,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -724,6 +846,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -759,6 +882,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -788,6 +912,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -802,7 +927,7 @@ v_dni_type varchar(10),
 v_dni varchar(50),
 v_total_document float,
 v_total_taxes float,
-v_pdf blob,
+v_pdf longblob,
 v_email varchar(45),
 v_email_costs varchar(45)
 )
@@ -851,9 +976,9 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
-
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_saveMHInfo`(
 v_user_mh varchar(100),
@@ -923,6 +1048,111 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `usp_buscar_cabys` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_buscar_cabys`(
+    IN p_patron VARCHAR(100)
+)
+BEGIN
+	SELECT `code` AS codigo
+    	,description AS descripcion
+        ,tax AS impuesto
+	FROM cabys
+	WHERE CONCAT_WS(' ', cat8desc, description) REGEXP p_patron;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `usp_buscar_medicamento` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_buscar_medicamento`(
+    IN p_patron VARCHAR(100)
+)
+BEGIN
+	SELECT cabyscodigo AS `Codigo Cabys`
+    	,msprincipio AS `Principio Activo MS`
+        ,atccodigo AS `Codigo ATC`
+        ,atcprincipio AS `Principio ATC`
+        ,descripcion AS `Descripcion`
+   	FROM medicamento
+    WHERE CONCAT_WS(' ', msprincipio, atcprincipio, descripcion) REGEXP p_patron;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `usp_obtenerpersona_registrocivil` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_obtenerpersona_registrocivil`(
+    p_cedula VARCHAR(9)
+)
+BEGIN
+	SELECT `cedula`,
+		`codelec` AS `ubicacion`,
+		`expiracion`,
+		`nombre`,
+		`apellido1`,
+		`apellido2`
+	FROM `registrocivil`
+	WHERE `cedula` = p_cedula;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `usp_obtenersacs_cabysxsac` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_obtenersacs_cabysxsac`(
+    p_cod_cabys VARCHAR(13)
+)
+BEGIN
+	SELECT `code` AS `Codigo Cabys`,
+		`Codigo SAC`,
+    	`Descripcion Cabys`
+    FROM vw_cabysxsac
+    WHERE `code` = p_cod_cabys;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -933,4 +1163,48 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-28 22:14:36
+-- Dump completed on 2020-09-13 14:39:44
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_deleteUser_CompanyByUser`(
+	IN `p_user_email` VARCHAR(255)
+)
+BEGIN
+	DELETE FROM users_companies WHERE iduser = (SELECT idusers FROM users WHERE email = p_user_email);
+END$$
+DELIMITER ;
+
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_documentxemail`(
+	IN `p_key` VARCHAR(50), IN `p_email` VARCHAR(64)
+)
+BEGIN
+	DECLARE v_iddoc int;
+	SET v_iddoc = (SELECT id FROM documents WHERE key_mh = p_key);
+	IF v_iddoc IS NOT NULL THEN
+		INSERT INTO documentxemail(
+        	iddocument,
+        	email
+    	)
+   		VALUES (
+            v_iddoc,
+        	p_email
+    	);
+    END IF;
+END$$
+DELIMITER ;
+
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByDocKey_documentxemail`(
+	IN `p_key` VARCHAR(50)
+)
+BEGIN
+    DECLARE v_iddoc int;
+    SET v_iddoc = (SELECT id FROM documents WHERE key_mh = p_key);
+    IF v_iddoc IS NOT NULL THEN
+    	SELECT email FROM documentxemail WHERE iddocument = v_iddoc;
+    END IF;
+END$$
+DELIMITER ;

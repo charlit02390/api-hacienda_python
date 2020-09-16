@@ -44,11 +44,11 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
                                    , activity_code=activity_code, total_document_words=total_document_words
                                    , date=date
                                    , type_iden_receptor=re_idType_desc
-                                   , company=company_data[0])
+                                   , company=company_data)
     options = {
         '--encoding': 'utf-8'
     }
-    add_pdf_header(options, company_data[0], document_type, consecutive, date, logo, key_mh)
+    add_pdf_header(options, company_data, document_type, consecutive, date, logo, key_mh)
     try:
         pdf = pdfkit.from_string(main_content, False, css=css, options=options)
     finally:
