@@ -5,6 +5,8 @@ from enum import Enum
 # import messages #maybe make something with constants that translate into user messages...?
 from infrastructure import cabys
 from service import utils
+from helpers import errors
+from flask import g
 
 
 # Enums for memes... I mean, maps an enum value to a function from infrastructure
@@ -23,7 +25,6 @@ _MIN_LENGTH = 3
 # Takes a "query" string and formats (not right now...) it to be used as a pattern for searching.
 # Then, dispatches it to the correct function based on "where"...
 def search(data, where):
-    response = {'httpstatus' : 204, 'body' : None }
     # I think I'm already checking this in the yaml, but might as well...
     if 'query' in data:
         _query = data['query'].strip()
@@ -31,30 +32,34 @@ def search(data, where):
         if len(_query) >= _MIN_LENGTH:
             # Search. Asume all good
             # Dispatch to proper method depending on "where"
-            result = where(format(_query))
-            response = utils.buildResponseData(result, warningmsg='No matches were found for the query "' + _query + '".')
+            result = {'data' : where(format(_query))}
 
     else:
-        response = {'httpstatus' : 400, 'body' : [], 'error':'Error: there was no query specified in the request\'s body.'}
+        error = { 'message' : "There was no query specified in the request's body.",
+                 'error_code' : 21 }
+        result = {'http_status' : 400,
+                  'error': error }
 
-
+    response = utils.build_response_data(result, warn_msg='No matches were found for the query "' + _query + '".')
     return response
 
 
 # Finds (? should just be Get, prolly... dunno... whatvs) an identifier in the requested place/collection/infrastructure function... I don't know...
 def find(data, where):
-    response = {'httpstatus' : 200, 'body' : None}
     # Better safe than sorry...?
     if 'cabys' in data:
         _code = data['cabys'].strip()
         # Go. Dispatch the "where" method
-        result = where(_code)
-        response = utils.buildResponseData(result, warningmsg='The requested Cabys code "' + _code + '" was not found.')
+        result = { 'data' : where(_code)}
+
 
     else:
-        response = {'httpstatus' : 400, 'body' : [] , 'error':'Error: there was no Cabys code specified in the request\'s body.'}
+       error = { 'message' : "There was no Cabys code specified in the request's body.",
+                'error_code': 21} 
+       result = {'http_status' : 400,
+                 'error': error }
 
-
+    response = utils.build_response_data(result, warn_msg='The requested Cabys code "' + _code + '" was not found.')
     return response
 
 

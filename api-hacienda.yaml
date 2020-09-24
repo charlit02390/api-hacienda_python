@@ -536,6 +536,14 @@ components:
       required:
         - email
         - password
+  parameters:
+    debug:
+        name: {{debug_switch}}
+        in: query
+        required: false
+        description: A parameter that specifies if responses will return debug information on errors.
+        schema:
+            type: string
 paths:
   /api/companies:
     get:
@@ -1058,7 +1066,7 @@ paths:
         - cabys
       summary: Performs a search on the cabys collection returning matches for the requested query.
       operationId: routes.cabys.search_cabys
-      # once more, this body could be a query paramter... prolly... heck, it's even used more than just once, so it could be placed in components:
+      # once more, this body could be a query parameter... prolly... heck, it's even used more than just once, so it could be placed in components:
       # components:
       #   parameters:
       #     param_search:

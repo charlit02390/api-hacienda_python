@@ -5,117 +5,84 @@ import six
 from werkzeug.exceptions import Unauthorized
 
 from infrastructure import users
-from infrastructure.dbadapter import DatabaseError
+from infrastructure.dbadapter import DbAdapterError
 
 from jose import jwt, JWTError
+
+from service import utils
+from helpers.errors.enums import InputErrorCodes, AuthErrorCodes, InternalErrorCodes
+from helpers.errors.exceptions import InputError, AuthError, ServerError
+from helpers.utils import build_response_data # CONSIDER MAKING THIS A DECORATOR
 
 cfg = globalsettings.cfg
 
 
 def create_user(data):
-    try:
-        _email = data['email']
-        _password = data['password']
-        _name = data['name']
-        _idrol = data['idrol']
-        _idcompanies = data['idcompanies']
-    except KeyError as ker:
-        return {'error' : 'Missing property: ' + str(ker)}
+    _email = data['email']
+    _password = data['password']
+    _name = data['name']
+    _idrol = data['idrol']
+    _idcompanies = data['idcompanies']
 
-    try:
-        user_exist = users.verify_email(_email)
-    except DatabaseError as dbe:
-        return {'error' : str(dbe)}
-
+    user_exist = users.verify_email(_email)
     if user_exist:
-        return {'message' : 'Given email is already registed.'}
+        raise InputError('Email {}'.format(_email), status=InputErrorCodes.DUPLICATE_RECORD)
 
-    try:
-        result = users.save_user(_email, _password, _name, _idrol, _idcompanies)
-    except DatabaseError as dbe:
-        return {'error' : "The user couldn't be created."} # or just... {'error' : str(dbe)}
-    except KeyError as ker:
-        return {'error' : str(ker)}
-    except TypeError as ter:
-        return {'error' : str(ter)}
+    users.save_user(_email, _password, _name, _idrol, _idcompanies)
 
-    return {'message' : 'User created successfully'}
+    return build_response_data({'message' : 'User created successfully'})
 
 
 def modify_user(data):
-    try:
-        _email = data['email']
-        _password = data['password']
-        _name = data['name']
-        _idrol = data['idrol']
-        _idcompanies = data['idcompanies']
-    except KeyError as ker:
-        return {'error' : str(ker)}
+    _email = data['email']
+    _password = data['password']
+    _name = data['name']
+    _idrol = data['idrol']
+    _idcompanies = data['idcompanies']
 
-    try:
-        users.modify_user(_email, _password, _name, _idrol, _idcompanies)
-    except DatabaseError as dbe:
-        return {'error' : str(dbe)}
-    except KeyError as ker:
-        return {'error' : str(ker)}
+    users.modify_user(_email, _password, _name, _idrol, _idcompanies)
 
-    return {'message' : 'User updated successfully'}
+    return build_response_data({'message' : 'User updated successfully'})
 
 
 def get_list_users(id_user=0):
     if id_user == 0:
-        result = {'users': users.get_users()}
+        result = { 'data': {'users': users.get_users()}}
     else:
-        result = {'user': users.get_user_data(id_user)}
-    return result
+        result = { 'data':{'user': users.get_user_data(id_user)}}
+
+    return build_response_data(result)
 
 
 def delete_user(id_user):
-    try:
-        result = users.delete_user_data(id_user)
-    except DatabaseError as dbe:
-        return {'error' : str(dbe)}
-
-    return result
+    users.delete_user_data(id_user)
+    return build_response_data({'message' : 'The user has been deleted successfully.'})
 
 
-def delete_user_companies(data): # scrap this?
-    try:
-        _email = data['email']
-        _idcompanies = list(id['id'] for id in data['idcompanies'])
-    except KeyError as ker:
-        return {'error' : 'Missing property ' + ker}
-
-    try:
-        users.delete_user_company(_email, _idcompanies)
-    except DatabaseError as dbe:
-        return {'error' : str(dbe)}
-
-    return {'message' : "The user's associated companies have been cleared."}
+def delete_user_companies(data):
+    _email = data['email']
+    users.delete_user_companies(_email)
+    return build_response_data({'message' : "The user's associated companies have been cleared."})
 
 
 def login(data):
-    try:
-        email = data['email']
-        password = data['password']
-    except KeyError as ker:
-        return {'error' : 'Missing property: ' + ker}
+    email = data['email']
+    password = data['password']
 
     user_check = users.check_user(email, password)
-    result = None
-    if '_error' in user_check:
-        result = {'error' : 'A problem occurred during the login proccess.'}
-    elif '_warning' in user_check:
-        result = {'error': 'the credentials are not correct please check the email or password'}
-    else:
-        try:
-            token = generate_token(email)
-        except Exception as ex:
-            result = {'error' : 'A problem occurred during the login proccess.'}
-        
-        result = {'token' : token, 'user' : user_check}
+    if not user_check:
+        raise AuthError(status=AuthErrorCodes.WRONG_CREDENTIALS)
 
-    return result
+
+    try:
+        token = generate_token(email)
+    except Exception as ex: # Internal Error Code: token generation error
+        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR,
+                            message='A problem was found while generating the JWT')
+        
+    result = { 'data' : {'token' : token, 'user' : user_check}}
+
+    return build_response_data(result)
 
 
 def generate_token(email):

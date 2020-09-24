@@ -2,7 +2,7 @@
 """
 import connexion
 from service import registry as service
-from service import utils
+from helpers import utils
 
 
 def route_get_person(id):
@@ -11,6 +11,6 @@ def route_get_person(id):
 
     :returns: dict - A dictionary to be serialized as json to be sent as response, alonside a status code.
     """
-    data = service.get_person(id)
-    response = utils.prepareResponse('persona', data)
-    return response, data['httpstatus']
+    params = connexion.request.json
+    response = service.get_person(id, params)
+    return utils.build_response(response)

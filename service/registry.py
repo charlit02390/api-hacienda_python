@@ -2,8 +2,7 @@
 """
 import json
 from infrastructure import registry
-from service import utils
-
+import helpers.utils
 
 def get_person(id: str) -> dict:
     """
@@ -19,8 +18,7 @@ def get_person(id: str) -> dict:
     # should prolly check the id length and restrict it to the proper length...
     # make a "constant" for length, which value should be 9...
     # TODO i guess... too lazy rn
-    result = registry.get_person(id)
-    response = utils.buildResponseData(result, dict, 'Person not found for the id: "' + id + '".')
+    result = { 'data' : registry.get_person(id) }
 
-
+    response = utils.build_response_data(result, 'Person not found for the id: "' + id + '".')
     return response

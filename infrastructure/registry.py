@@ -1,7 +1,8 @@
 """Module for manipulating data for table registrocivil in the database
 """
 from infrastructure import dbadapter as dbadp
-
+from helpers.errors.enums import DBErrorCodes
+from helpers.errors.exceptions import DatabaseError
 
 def get_person(id: str):
 	"""
@@ -11,4 +12,7 @@ def get_person(id: str):
 	:returns: dict - A dictionary, either with obtained data, or warning/error info.
 	"""
 	procname = 'usp_obtenerpersona_registrocivil'
-	return dbadp.fetchone_from_proc(procname, (id,))
+	try:
+		return dbadp.fetchone_from_proc(procname, (id,))
+	except dbadp.DbAdapterError as dbae:
+		raise DatabaseError(status=DBErrorCodes.DB_REGISTRY_SELECT_ONE) from dbae

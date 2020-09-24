@@ -9,6 +9,28 @@ import logging
 # todo: config logging, breaking returns into exception throws, documentation
 
 from extensions import mysql
+from helpers.errors.enums import DBAdapterErrorCodes
+from helpers.errors.exceptions import DatabaseError as IBDatabaseError
+
+
+class DbAdapterError(IBDatabaseError):
+    """Exception thrown when operations on the database fail."""
+    status = DBAdapterErrorCodes._BASE
+    message_dictionary = {
+        DBAdapterErrorCodes.DBA_CONNECTION : 'A problem occurred when attempting to connect to the database.',
+        DBAdapterErrorCodes.DBA_STATEMENT_EXECUTION : 'An issue was encountered during database operations.',
+        DBAdapterErrorCodes.DBA_NON_UNIQUE_OPERATION : 'An unintended behavior occured during the operation and execution was stopped.',
+        DBAdapterErrorCodes.DBA_FETCHING : 'An issue was encountered when reading data from the database.',
+        DBAdapterErrorCodes.DBA_GENERAL_DATABASE : 'An issue was encountered during database operations.'
+        }
+    default_message = 'An issue was encountered during database operations.'
+
+
+class NonUniqueResultError(Exception):
+    """Exception thrown when an operation on the database expected only affected row, but instead returned
+    either no rows, or more than one."""
+    pass
+
 
 
 class FetchType(Enum):
@@ -35,8 +57,10 @@ def fetchall_from_proc(procname: str, args: tuple=(), headers: list=None):
 
     :param procname: str - The name of the stored procedure to call.
     :param args: [optional] tuple - A tuple that contains the data so be sent as the called procedure's parameters.
-    :param headers: [optiona] list - A list that contains strings to be used as \"headers\" for the dictionaries produced for each row.
-    :returns: list[dict]|dict - A list composed of dictionaries for each row fetched from the stored procedure called; or a dictionary that contains warning or error data.
+    :param headers: [optiona] list - A list that contains strings to be used as "headers" for the dictionaries produced for each row.
+    :returns: list[dict]|None - A list composed of dictionaries for each row fetched from the stored procedure called;
+        or None if no data was found.
+    :raises: pymysql.err.DatabaseError - when a 'DatabaseError' is raised during data retrieval or an 'Exception' is raised.
     """
     return _fetch_from_proc(FetchType.ALL, True, procname, args, headers)
 
@@ -50,8 +74,10 @@ def fetchone_from_proc(procname: str, args: tuple=(), headers: list=None):
 
     :param procname: str - The name of the stored procedure to call.
     :param args: [optional] tuple - A tuple that contains the data so be sent as the called procedure's parameters.
-    :param headers: [optiona] list - A list that contains strings to be used as \"headers\" for the dictionaries produced for each row.
-    :returns: dict - A dictionary that contains the data fetched from the stored procedure called; or a dictionary that contains warning or error data.
+    :param headers: [optiona] list - A list that contains strings to be used as "headers" for the dictionary produced.
+    :returns: dict|None - A dictionary that contains the data fetched from the stored procedure called;
+        or None if no data was found.
+    :raises: pymysql.err.DatabaseError - when a 'DatabaseError' is raised during data retrieval or an 'Exception' is raised.
     """
     return _fetch_from_proc(FetchType.ONE, False, procname, args, headers)
     
@@ -63,16 +89,21 @@ def _fetch_from_proc(fetchtype: FetchType, buffered: bool, procname: str, args: 
     This function behaves differently depending on the fetchtype and buffered parameters given. Needs some more testing...
 
     :param fetchtype: FetchType - How the cursor will fetch the data. Refer to the FetchType class for more information.
-    :param buffered: bool - Determines the type of cursor to use: True for buffered cursor, which pulls all the data into memory and provides some utility functions not available in a unbuffered cursor; False for unbuffered, which consumes less memory, but has other limitations.
+    :param buffered: bool - Determines the type of cursor to use:
+        True for buffered cursor, which pulls all the data into memory and provides some utility functions not available in an unbuffered cursor;
+        False for unbuffered, which consumes less memory, but has other limitations.
     :param procname: str - The name of the stored procedure to call.
     :param args: [optional] tuple - A tuple that contains the data so be sent as the called procedure's parameters.
-    :param headers: [optiona] list - A list that contains strings to be used as \"headers\" for the dictionaries produced for each row.
-    :returns: dict|list[dict]|gen - A dictionary if an error or warning happens, or if FetchType.ONE was used; a list composed of dictionaries if FetchType.ALL was used; or, a generator object if FetchType.ALL_UNBUFFERED was used and buffered was set to False.
+    :param headers: [optiona] list - A list that contains strings to be used as "headers" for the dictionaries produced for each row.
+    :returns: dict|list[dict]|gen|None - A dictionary if 'FetchType.ONE' was used;
+        a list composed of dictionaries if 'FetchType.ALL' was used;
+        a generator object if 'FetchType.ALL_UNBUFFERED' was used and "buffered" was set to False;
+        or None if no data was found.
+    :raises: pymysql.err.DatabaseError - when a 'DatabaseError' is raised during data retrieval or an 'Exception' is raised.
     """
-    data = {'_warning' : fetchtype.value['_warning']}
-    conn = None
+    data = [] if fetchtype is FetchType.ALL else None
+    conn = connectToMySql()
     try:
-        conn = mysql.connect()
         cursortype = None
         if buffered:
             cursortype = cursors.Cursor
@@ -101,13 +132,16 @@ def _fetch_from_proc(fetchtype: FetchType, buffered: bool, procname: str, args: 
                 data = cursor.fetchall_unbuffered()
 
             # gotta raise an exception for when no proper fetching was done... but... too lazy rn
+    except DatabaseError as dbe:
+        logging.error(str(dbe)) # todo
+        raise DbAdapterError(status=DBAdapterErrorCodes.DBA_FETCHING) from dbe
 
     except Exception as e:
-        data = {'_error' : str(e)}
+        logging.error(str(e)) # todo
+        raise DbAdapterError(status=DBAdapterErrorCodes.DBA_GENERAL_DATABASE) from e
 
     finally:
-        if conn is not None:
-            conn.close()
+        conn.close()
 
 
     return data
@@ -123,7 +157,9 @@ def execute_proc(proc_name: str, args: tuple=(), conn=None, assert_unique: bool=
     :param proc_name: str - The procedure name to be executed.
     :param args: [optional] tuple - The arguments to be sent to the procedure.
     :param conn: [optional] object - An instance of a PyMySQL database connection to get a cursor from.
-    :param assert_unique: [optional] bool - True if the affected rows by the procedure call MUST be one(1); a different value will raise an exception. Default is False.
+    :param assert_unique: [optional] bool - True if the affected rows by the procedure call MUST be one(1) - a different value for affected rows will raise an exception;
+        False if affected rows doesn't need to be checked.
+        Default is False.
     :returns: bool - True when execution completed and no exceptions were raised.
     :raises pymysql.err.DatabaseError: when an error occurs.
     """
@@ -140,7 +176,9 @@ def execute_sql(sql_statement: str, args: tuple=(), conn=None, assert_unique: bo
     :param sql_statement: str - a query string with SQL Statements. %s can be used as placeholder for arguments.
     :param args: [optional] tuple - the arguments to be parsed into the query string.
     :param conn: [optional] object - an instance of a PyMySQL database connection to get a cursor from.
-    :param assert_unique: [optional] bool - True if the affected rows by the procedure call MUST be one(1); a different value will raise an exception. Default is False.
+    :param assert_unique: [optional] bool - True if the affected rows by the procedure call MUST be one(1) - a different value for affected rows will raise an exception;
+        False if affected rows doesn't need to be checked.
+        Default is False.
     :returns: bool - True when execution completed and no exceptions were raised.
     :raises pymysql.err.DatabaseError: when an error occurs.
     """
@@ -157,8 +195,11 @@ def _execute(exec_string:str, args: tuple=(), conn=None, assert_unique: bool=Fal
     :param exec_string: str - A string containing either SQL Statements or the name of a Procedure.
     :param args: [optional] tuple - The arguments to be sent to the 'exec_string'
     :param conn: [optional] object - An instance of a PyMySQL database connection to get a cursor from.
-    :param assert_unique: [optional] bool - True if the affected rows by the procedure call MUST be one(1); a different value will raise an exception. Default is False.
-    :param callproc: [optional] bool - Set to True in order to execute 'exec_string' as an Stored Procedure. Else, 'exec_string' will be executed as an SQL Statement.
+    :param assert_unique: [optional] bool - True if the affected rows by the procedure call MUST be one(1) - a different value for affected rows will raise an exception;
+        False if affected rows doesn't need to be checked.
+        Default is False.
+    :param callproc: [optional] bool - Set to True in order to execute 'exec_string' as an Stored Procedure.
+        Else, 'exec_string' will be executed as an SQL Statement.
     :returns: bool - True when execution completed and no exceptions were raised.
     :raises pymysql.err.DatabaseError: when an error occurs.
     """
@@ -170,27 +211,35 @@ def _execute(exec_string:str, args: tuple=(), conn=None, assert_unique: bool=Fal
 
     try:
         with conn.cursor() as cur:
-            affected = -1
-            if callproc:
-                cur.callproc(exec_string, args)
-                affected = cur.rowcount
-            else:
-                affected = cur.execute(exec_string, args)
+            if assert_unique:
+                affected = -1
+                if callproc:
+                    cur.callproc(exec_string, args)
+                    affected = cur.rowcount
+                else:
+                    affected = cur.execute(exec_string, args)
 
-            if assert_unique and affected != 1:
-                _log_unique_assertion_failure(affected < 1, callproc, exec_string, str(args))
-                if self_managed:
-                    conn.rollback()
-                raise DatabaseError('An unintended behavior occured during the operation and execution was stopped.')
+                if affected != 1:
+                    errmsg = _log_unique_assertion_failure(affected < 1, callproc, exec_string, str(args))
+                    if self_managed:
+                        conn.rollback()
+                    raise NonUniqueResultError(errmsg)
+            elif callproc:
+                cur.callproc(exec_string, args)
+            else:
+                cur.execute(exec_string, args)
 
             if self_managed:
                 conn.commit()
 
+    except NonUniqueResultError as nure:
+        logging.error(str(nure)) # todo
+        raise DbAdapterError(str(nure), status=DBAdapterErrorCodes.DBA_NON_UNIQUE_OPERATION) from nure
     except DatabaseError as e:
-        logging.error(str(e)) # todo
+        logging.error(str(dbe)) # todo
         if self_managed:
             conn.rollback()
-        raise DatabaseError('There was a problem with the operation on the database.')
+        raise DbAdapterError(status=DBAdapterErrorCodes.DBA_STATEMENT_EXECUTION) from e
 
     finally:
         if self_managed:
@@ -204,12 +253,15 @@ def _log_unique_assertion_failure(no_rows_affected: bool, is_proc: bool, exec_st
     """
     Logs a custom message when 'unique_assertion' failed.
 
-    :param no_rows_affected: bool - True if no rows were affected; False if more than one.
-    :param is_proc: bool - True if assertion failed on a stored procedure; False for SQL Statements.
+    :param no_rows_affected: bool - True if no rows were affected;
+        False if more than one.
+    :param is_proc: bool - True if assertion failed on a stored procedure;
+        False for SQL Statements.
     :param exec_string: str - the operation that failed the assertion.
     :param args: str - the arguments used in the operation that failed assertion.
     :returns: str - the custom message built from the arguments received.
     """
+
     message_main = ''
     message_reason = ''
     message_detail = ''
@@ -243,8 +295,9 @@ def connectToMySql():
     conn = None
     try:
         conn = mysql.get_db() # mysql.connect()
+        conn.ping()
     except (OperationalError, InternalError) as e:
         logging.error(str(e)) # todo
-        raise DatabaseError('A problem occured when attempting to connect to the database.')
+        raise DbAdapterError(status=DBAdapterErrorCodes.DBA_CONNECTION) from e
     
     return conn

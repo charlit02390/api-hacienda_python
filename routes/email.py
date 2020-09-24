@@ -1,7 +1,7 @@
 import connexion
 import json
 from service import emails as service
-
+from helpers import utils
 
 def route_send_email():
     file1 = connexion.request.files.get('file1')
@@ -9,10 +9,10 @@ def route_send_email():
     file3 = connexion.request.files.get('file3')
     body = connexion.request.form
     result = service.send_custom_email(body, file1, file2, file3)
-    return result
+    return utils.build_response(result)
 
 
 def send_email_fe():
     body = json.loads(connexion.request.data)
     result = service.sent_email_fe(body)
-    return result
+    return utils.build_response(result)

@@ -12,6 +12,8 @@ from infrastructure import companies
 from OpenSSL import crypto
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from helpers.errors.exceptions import InputError
+from helpers.errors.enums import InputErrorCodes
 
 
 try:
@@ -467,5 +469,8 @@ def p12_expiration_date(p12file,password):
         data = crypto.dump_certificate(crypto.FILETYPE_PEM, pkcs12.get_certificate())
         cert = x509.load_pem_x509_certificate(data, default_backend())
         return cert.not_valid_after
-    except Exception as e:
-        return {'error': str(e)}
+    except crypto.Error as crypte:
+        if crypte.args[2] == 'mac verify failure':
+            raise InputError(status=InputErrorCodes.P12_PIN_MISMATCH) from crypte
+        else:
+            raise
