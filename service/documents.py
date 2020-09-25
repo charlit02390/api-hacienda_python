@@ -135,8 +135,7 @@ def create_document(data):
         try:
             pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
                                      datecr.strftime("%d-%m-%Y"), _sale_condition,
-                                     _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed,
-                                     _total_serv_exone,
+                                     _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                                      _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                                      _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                                      _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
@@ -350,7 +349,7 @@ def consult_document(company_user, key_mh):
         return {'error': str(dbe)}
 
     result = dict()
-    if response_status == 'aceptado':
+    if response_status == 'aceptado' and document_data['document_type'] != "TE":
         try:
             emails.sent_email_fe(document_data)
         except Exception as ex:  # todo be more specific about exceptions
