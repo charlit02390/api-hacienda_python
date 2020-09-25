@@ -121,7 +121,7 @@ def create_document(data):
 
     xmlencoded = base64.b64encode(xml_sign)
 
-    pdfencoded = None;                                      #
+    pdfencoded = None;  # Por si no es tiquete que guarde nada como pdf
     if _type_document != 'TE':
 
         _logo = companies.get_logo_data(_company_user)
@@ -132,12 +132,11 @@ def create_document(data):
                 'error': 'No logo was found for the Company.'}  # this shouldn't happen at all, 'cuz we've validated that the company exists above, but... never hurts to leave here, I guess...
 
         _logo = _logo['logo'].decode('utf-8')
-
         try:
-
             pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
                                      datecr.strftime("%d-%m-%Y"), _sale_condition,
-                                     _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
+                                     _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed,
+                                     _total_serv_exone,
                                      _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                                      _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                                      _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
@@ -181,13 +180,13 @@ def create_document(data):
                 return {'error': str(dbe)}
 
         try:
-            save_document_lines(_lines,_id_company,_key_mh,conn)
+            save_document_lines(_lines, _id_company, _key_mh, conn)
         except DatabaseError as dbe:
             conn.rollback()
-            return {'error' : str(dbe)}
+            return {'error': str(dbe)}
         except KeyError as ker:
             conn.rollback()
-            return {'error' : str(ker)}
+            return {'error': str(ker)}
 
         conn.commit()
     finally:
@@ -351,7 +350,7 @@ def consult_document(company_user, key_mh):
         return {'error': str(dbe)}
 
     result = dict()
-    if response_status == 'aceptado' and document_data['document_type'] != "TE":
+    if response_status == 'aceptado':
         try:
             emails.sent_email_fe(document_data)
         except Exception as ex:  # todo be more specific about exceptions
@@ -472,7 +471,7 @@ def consult_voucher_byid(company_user, clave):
 def validate_email(email):
     """
     Validates an email by parsing it into an email.headerregistry.Address object.
-    
+
     :param email: str - a string with the email to validate.
     :returns: bool - True if no errors were raised.
     :raises: ValueError - when 'email' is empty, 'email' is not a string, or email can't be parsed by Address, indicating the email is not valid.
