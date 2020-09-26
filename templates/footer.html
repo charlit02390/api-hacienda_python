@@ -1,20 +1,60 @@
-<style>
- .footer{
-    clear: both;
-    position: relative;
-    left: 0;
-    bottom: 0;
-    width: 99%;
-    border-style:solid;
-    border-width:2px;
-    border-color:gray;
-    heigth-min:100px;
-}
-</style>
-<footer>
-    <div>
-        <b>Observaciones:</b>
-    </div>
-    <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
-</footer>
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <script>
+        function subst() {
+			var vars = {};
+			var query_strings_from_url = document.location.search.substring(1).split('&');
+			for (var query_string in query_strings_from_url) {
+				if (query_strings_from_url.hasOwnProperty(query_string)) {
+					var temp_var = query_strings_from_url[query_string].split('=', 2);
+					vars[temp_var[0]] = decodeURI(temp_var[1]);
+				}
+            }
+
+            var currentPage = document.getElementById('currPage');
+            var lastPage = document.getElementById('lastPage')
+            currentPage.textContent = vars['page'];
+            lastPage.textContent = vars['topage'];
+        }
+    </script>
+    <style>
+		footer {
+            font-size: small
+		}
+
+		p {
+            text-align: center;
+            margin: 2px 7px
+		}
+
+		.page-count {
+            position: absolute;
+            left: 14px;
+            bottom: 0;
+		}
+    </style>
+</head>
+    <body onload="subst()">
+        <footer>
+            <div class="container">
+                <p>
+                Este documento constituye factura comercial con titulo ejecutivo de acuerdo al art. 460 del C&oacutedigo de Comercio que podr&aacute
+                hacerse efectivo el d&iacutea de su vencimiento y en caso de ejecuci&oacuten, renuncio a mi domicilio y los tr&aacutemites de juicio ejecutivo.
+                CONFIRMACIONES: Para enviar confirmaciones de dep&oacutesito Correo: {{email}}
+                </p>
+                <div>
+                    <p>
+                        <b>Observaciones:</b>
+                    </p>
+                    {%for note in notes%}
+                    <p>{{note}}</p>
+                    {%endfor%}
+                    <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
+                    <div class="page-count">Página <span id="currPage"></span> de <span id="lastPage"></span></div>
+                </div>
+            </div>
+        </footer>
+	</body>
 </html>

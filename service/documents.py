@@ -1,6 +1,7 @@
 from . import api_facturae
 from . import fe_enums
 from . import makepdf
+from . import utils
 
 import base64
 
@@ -9,7 +10,7 @@ from infrastructure import companies
 from infrastructure import documents
 from infrastructure.dbadapter import DbAdapterError, connectToMySql
 from email.headerregistry import Address
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import g
 
 from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, InternalErrorCodes
@@ -82,22 +83,13 @@ def create_document(data):
     _reference = data['referencia']
     _others = data['otros']
 
-    _data_issued_date = data['fechafactura']
-    try:
-        _issued_date = datetime.strptime(_data_issued_date, '%d-%m-%YT%H:%M:%S%z')
-    except ValueError as ver:
-        try: 
-            _issued_date = datetime.fromisoformat(_data_issued_date)
-        except ValueError as ver:
-            raise ValidationError(_data_issued_date, 'fechafactura',
-                                  status=ValidationErrorCodes.INVALID_DATETIME_FORMAT)
-
+    _issued_date = parse_datetime(data['fechafactura'])
 
     _datestr = api_facturae.get_time_hacienda()
     datecr = api_facturae.get_time_hacienda(True)
 
     try:
-        xml = api_facturae.gen_xml_v43(company_data, _type_document, _key_mh, _consecutive, _issued_date.isoformat(), _sale_condition,
+        xml = api_facturae.gen_xml_v43(company_data, _type_document, _key_mh, _consecutive, _issued_date.strftime('%d-%m-%Y'), _sale_condition,
                                    _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                                    _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                                    _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
@@ -121,6 +113,8 @@ def create_document(data):
     if not _logo:
         raise InputError(status=InputErrorCodes.NO_RECORD_FOUND, message='No logo was found for the Company.')
 
+    additional_pdf_fields = build_additional_pdf_fields(data)
+
     _logo = _logo['logo'].decode('utf-8')
     try:
         pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
@@ -129,7 +123,8 @@ def create_document(data):
                              _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                              _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
                              _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
-                             _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo);
+                             _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo,
+                             additional_pdf_fields);
     except Exception as ex: #TODO : be more specific about exceptions
         raise # TODO : return {'error' : 'A problem occured when creating the PDF File for the document.'} # INTERNAL ERROR
     #Prueba de creacion de correo
@@ -412,3 +407,62 @@ def validate_email(email):
         raise ValidationError(email, status=ValidationErrorCodes.INVALID_EMAIL)
 
     return True
+
+def build_additional_pdf_fields(data):
+    DATETIME_DISPLAY_FORMAT = '%d-%m-%Y'
+
+    fields = {}
+    order_num = data.get('numReferencia')
+    if order_num:
+        fields['order_num'] = order_num
+
+    sale_condition = data['condicionVenta']
+    if sale_condition == '02':
+        issued_date = parse_datetime(data['fechafactura'])
+        term_days = data['plazoCredito']
+        due_date = data.get('numFecha')
+        if isinstance(due_date, str) and due_date.strip():
+            fields['due_date'] = parse_datetime(due_date).strftime(DATETIME_DISPLAY_FORMAT)
+        else:
+            fields['due_date'] = (issued_date + timedelta(days=int(term_days))).strftime(DATETIME_DISPLAY_FORMAT)
+        fields['credit_term'] = term_days
+
+    currency = data['codigoTipoMoneda']
+    if currency['tipoMoneda'] != 'CRC':
+        fields['currency_exchange'] = utils.stringRound(currency['tipoCambio'])
+
+    details = data['detalles']
+    for line in details:
+        exemption_found = False
+        for tax in line.get('impuesto', []):
+            exemption = tax.get('exoneracion')
+            if exemption:
+                fields['exemption'] = {
+                    'doc_type': fe_enums.ExemptionDocType[exemption['Tipodocumento']],
+                    'doc_number': exemption['NumeroDocumento'],
+                    'issuer': exemption['NombreInstitucion'],
+                    'issued_date': exemption['FechaEmision'],
+                    'percentage': exemption['porcentajeExoneracion'],
+                    'total_amount': data['totalExonerado']
+                    }
+                exemption_found = True
+                break
+        if exemption_found:
+            break
+
+    return fields
+
+
+def parse_datetime(value):
+    EXPECTED_DATETIME_FORMAT = '%d-%m-%YT%H:%M:%S%z'
+    parsed = None
+    try:
+        parsed = datetime.strptime(value, EXPECTED_DATETIME_FORMAT)
+    except ValueError:
+        try: 
+            parsed = datetime.fromisoformat(value)
+        except ValueError as ver:
+            raise ValidationError(value, 'fechafactura',
+                                  status=ValidationErrorCodes.INVALID_DATETIME_FORMAT) from ver
+
+    return parsed

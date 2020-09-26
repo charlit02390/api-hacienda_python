@@ -131,3 +131,14 @@ saleConditions = {
     '09' : 'Pago del servicios prestados al Estado',
     '99' : 'Otros: '
     }
+
+ExemptionDocType = {
+    '01' : 'Compras autorizadas',
+    '02' : 'Ventas exentas a diplomáticos',
+    '03' : 'Autorizado por Ley especial',
+    '04' : 'Exenciones Dirección General de Hacienda',
+    '05' : 'Transitorio V',
+    '06' : 'Transitorio IX',
+    '07' : 'Transitorio XVII',
+    '99' : 'Otros'
+    }

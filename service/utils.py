@@ -5,8 +5,6 @@ import pytz
 from connexion.exceptions import OAuthProblem
 from configuration import globalsettings
 
-from num2words import num2words
-
 from io import BytesIO as StringIO
 
 cfg = globalsettings.cfg
@@ -22,10 +20,33 @@ try:
 except ImportError:
     from xml.etree import ElementTree
 
+# end me
+from num2words.lang_ES_CO import Num2Word_ES
+from helpers.errors.exceptions import InputError
+from helpers.errors.enums import InputErrorCodes
+
+class Num2Words_ES_CR(Num2Word_ES):
+    CURRENCY_FORMS = {
+            'EUR': (('euro', 'euros'), ('céntimo', 'céntimos')),
+            'ESP': (('peseta', 'pesetas'), ('céntimo', 'céntimos')),
+            'USD': (('dolar', 'dólares'), ('centavo', 'centavos')),
+            'PEN': (('sol', 'soles'), ('céntimo', 'céntimos')),
+            'CRC': (('colón', 'colones'), ('céntimo', 'céntimos')),
+            }
+
+    def num2words(self, val, currency='CRC'):
+        if not isinstance(val, float):
+            try:
+                val = float(val)
+            except ValueError as ver: # assuming totalComprobante is the only place where we are using this function... too lazy to properly change this... for now...
+                raise InputError('totalComprobante', str(ver), status=InputErrorCodes.INCORRECT_TYPE)
+
+        return self.to_currency(val, currency=currency)
+
 
 # REPRESENTACION DE NUMERO EN PALABRAS
-def numToWord(n):
-    return num2words(n, lang='es') + " colones"
+def numToWord(n, curr):
+    return Num2Words_ES_CR().num2words(n, curr)
 
 
 # REDONDEA UN NUMERO FLOAT EN FORMATO STRING
