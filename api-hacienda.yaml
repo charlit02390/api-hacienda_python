@@ -116,7 +116,7 @@ components:
               type: string
             consecutivo:
               type: string
-            clave:
+            clavelarga:
               type: string
             terminal:
               type: string
@@ -124,13 +124,13 @@ components:
               type: string
             fecha:
               type: string
-            codigo_actividad:
+            codigoActividad:
               type: string
             otro_telefono:
               type: string
-            condicion_venta:
+            condicionVenta:
               type: string
-            plazo_credito:
+            plazoCredito:
               type: string
             num_fecha:
               type: string
@@ -167,7 +167,7 @@ components:
                   type: string
                 correo_gasto:
                   type: string
-            medio_pago:
+            medioPago:
               type: array
               properties:
                 codigo:
@@ -192,7 +192,7 @@ components:
                   type: string
                 detalle:
                   type: string
-                precio_unitario:
+                precioUnitario:
                   type: string
                 monto_total:
                   type: string
@@ -218,7 +218,7 @@ components:
                       type: string
                     factor_iva:
                       type: string
-                impuesto_neto:
+                impuestoNeto:
                   type: string
                 total_linea:
                   type: string
@@ -226,46 +226,46 @@ components:
                   type: string
                 base_imponible:
                   type: string
-            codigo_moneda:
+            codigoTipoMoneda:
               type: object
               properties:
-                tipo_moneda:
+                tipoMoneda:
                   type: string
                 tipo_cambio:
                   type: string
-            total_serv_gravados:
+            totalServGravados:
               type: string
-            total_serv_exentos:
+            totalServExentos:
               type: string
-            total_serv_exonerado:
+            totalServExonerado:
               type: string
-            total_mercan_gravados:
+            totalMercanciasGravados:
               type: string
-            total_mercan_exentos:
+            totalMercanciasExentos:
               type: string
-            total_mercan_exonerada:
+            totalMercExonerada:
               type: string
-            total_gravados:
+            totalGravados:
               type: string
-            total_exentos:
+            totalExentos:
               type: string
-            total_exonerados:
+            totalExonerado:
               type: string
-            total_ventas:
+            totalVentas:
               type: string
-            total_descuentos:
+            totalDescuentos:
               type: string
-            total_ventas_netas:
+            totalVentasNetas:
               type: string
-            total_impuestos:
+            totalImpuestos:
               type: string
-            total_iva_devuelto:
+            totalIVADevuelto:
               type: string
-            total_otros_cargos:
+            totalOtrosCargos:
               type: string
-            total_comprobante:
+            totalComprobantes:
               type: string
-            otros_cargos:
+            otrosCargos:
               type: array
               properties:
                 tipo_documento:
