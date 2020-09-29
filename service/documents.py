@@ -109,30 +109,29 @@ def create_document(data):
 
     xmlencoded = base64.b64encode(xml_sign)
     
-    pdfencoded = None;  # Por si no es tiquete que guarde nada como pdf
+    pdfencoded = None;  # Por si ES tiquete que guarde nada como pdf
     if _type_document != 'TE':
-	    _logo = companies.get_logo_data(_company_user)
-	    if not _logo:
-	        raise InputError(status=InputErrorCodes.NO_RECORD_FOUND, message='No logo was found for the Company.')
-	
-	    additional_pdf_fields = build_additional_pdf_fields(data)
-	
-	    _logo = _logo['logo'].decode('utf-8')
-	    try:
-	        pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
-	                             _issued_date.strftime("%d-%m-%Y"), _sale_condition,
-	                             _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
-	                             _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
-	                             _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
-	                             _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
-	                             _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo,
-	                             additional_pdf_fields);
-	    except Exception as ex: #TODO : be more specific about exceptions
-	        raise # TODO : return {'error' : 'A problem occured when creating the PDF File for the document.'} # INTERNAL ERROR
-	    #Prueba de creacion de correo
-	    #emails.sent_email(pdf, xml_sign)
-	
-	    pdfencoded = base64.b64encode(pdf);
+        _logo = companies.get_logo_data(_company_user)
+        if not _logo:
+            raise InputError(status=InputErrorCodes.NO_RECORD_FOUND, message='No logo was found for the Company.')
+
+        additional_pdf_fields = build_additional_pdf_fields(data)
+
+        _logo = _logo['logo'].decode('utf-8')
+        try:
+            pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
+	                                _issued_date.strftime("%d-%m-%Y"), _sale_condition,
+	                                _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
+	                                _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
+	                                _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
+	                                _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
+	                                _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo,
+	                                additional_pdf_fields);
+        except Exception as ex: #TODO : be more specific about exceptions
+            raise # TODO : return {'error' : 'A problem occured when creating the PDF File for the document.'} # INTERNAL ERROR
+        #Prueba de creacion de correo
+        #emails.sent_email(pdf, xml_sign)
+        pdfencoded = base64.b64encode(pdf);
 
     # Managing connection here...
     conn = connectToMySql()
