@@ -235,11 +235,11 @@ def _execute(exec_string:str, args: tuple=(), conn=None, assert_unique: bool=Fal
     except NonUniqueResultError as nure:
         logging.error(str(nure)) # todo
         raise DbAdapterError(str(nure), status=DBAdapterErrorCodes.DBA_NON_UNIQUE_OPERATION) from nure
-    except DatabaseError as e:
+    except DatabaseError as dbe:
         logging.error(str(dbe)) # todo
         if self_managed:
             conn.rollback()
-        raise DbAdapterError(status=DBAdapterErrorCodes.DBA_STATEMENT_EXECUTION) from e
+        raise DbAdapterError(status=DBAdapterErrorCodes.DBA_STATEMENT_EXECUTION) from dbe
 
     finally:
         if self_managed:
