@@ -12,14 +12,15 @@ import smtplib
 import ssl
 from infrastructure.dbadapter import DatabaseError
 import logging
+from helpers.errors.enums import InputErrorCodes
+from helpers.errors.exceptions import InputError
+from helpers.utils import build_response_data
 
 cfg = globalsettings.cfg
 
 
 def sent_email_fe(data):
     smtp_data = company_smtp.get_company_smtp(data['company_user'])
-    if '_error' in smtp_data: # not gonna raise or return an error here... just log that something happened in the database... let's just use the fallback smtp
-        logging.error("A problem occurred when attempting to fetch the company's SMTP.")
 
     if smtp_data.get('host'):
         host = smtp_data['host']
@@ -35,6 +36,9 @@ def sent_email_fe(data):
         encrypt_type = cfg['email']['type']
 
     document = documents.get_document(data['key_mh'])
+    if not document:
+        raise InputError('document', data['key_mh'], status=InputErrorCodes.NO_RECORD_FOUND)
+
     primaryRecipient = document['email']
     receivers = [primaryRecipient]
     additionalRecipients = documents.get_additional_emails(data['key_mh'])
@@ -58,15 +62,12 @@ def sent_email_fe(data):
 
 def send_custom_email(data, file1, file2, file3):
     smtp_data = company_smtp.get_company_smtp(data['company_id'])
-    # this is a custom email from the SMTP of the company. Can't have fallbacks:
-    if '_error' in smtp_data:
-        raise DatabaseError("A problem occurred when attempting to fetch the company's SMTP.")
-    elif '_warning' in smtp_data:
-        return {'error' : "The company doesn't have a SMTP configured."}
+    if not smtp_data:
+        raise InputError('company SMTP', data['company_id'], InputErrorCodes.NO_RECORD_FOUND)
 
     receivers = data.getlist('receivers')
     if not receivers[0]:
-        return {'error' : "No primary recipient was specified."}
+        raise InputError(status=InputErrorCodes.MISSING_PROPERTY, message='No recipient(s) specified.')
 
     subject = data['subject']
     content = data['content']
@@ -93,9 +94,9 @@ def send_custom_email(data, file1, file2, file3):
     password = smtp_data['password']
     port = smtp_data['port']
     encrypt_type = smtp_data['encrypt_type']
-    result = send_email(receivers, subject, content, file1, file2, file3, host, sender, password, port,
+    send_email(receivers, subject, content, file1, file2, file3, host, sender, password, port,
                         encrypt_type, name_file1, name_file2, name_file3)
-    return result
+    return build_response_data({'message': 'email sent successfully'})
 
 
 def sent_email(pdf, signxml): # not used. Prolly a prototype to infrastructure.email.send_email

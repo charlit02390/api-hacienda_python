@@ -1,44 +1,37 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8"/>
-    </head>
+<head>
+    <meta charset="utf-8" />
+    <style>
+        .image {
+            margin-top: 20px;
+            margin-right: 20px;
+            max-width: 150px;
+            max-height: 150px;
+        }
+
+        .container {
+            font-size: small
+        }
+
+        .table {
+            font-size: small;
+            margin-top: 20px;
+        }
+
+        .header table {
+            font-size: small
+        }
+
+        .invoice-info {
+            position: absolute;
+            top: 0;
+            right: 14px;
+            text-align: right
+        }
+    </style>
+</head>
     <body>
-        <style>
-            .image {
-                margin-top: 20px;
-                margin-right: 20px;
-                max-width: 150px;
-                max-height: 150px;
-            }
-
-			.container {
-				font-size: 0.85rem;
-			}
-
-			.table {
-				font-size: 0.85rem;
-                margin-top: 20px;
-			}
-
-			.text-left {
-				text-align: left !important
-			}
-
-			.text-right {
-				text-align: right !important
-			}
-
-			.header table {
-                font-size: 1rem
-			}
-
-			.invoice-info {
-                position: absolute;
-                top: 0;
-                right: 0;
-			}
-        </style>
         <div class="container">
             <table class="header table">
                 <tr>
@@ -64,12 +57,6 @@
                             </tr>
                             <tr>
                                 <td>
-                                </td>
-                                <td>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
                                     Correo electr&oacutenico: {{company.email}}
                                 </td>
                             </tr>
@@ -90,23 +77,7 @@
                             </tr>
                             <tr>
                                 <td>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
                                     <b>Fecha:</b> {{date}}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
                                 </td>
                             </tr>
                         </table>
@@ -114,3 +85,5 @@
                 </tr>
             </table>
         </div>
+    </body>
+</html>

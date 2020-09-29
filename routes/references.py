@@ -4,15 +4,12 @@ import json
 from flask import request
 
 from service import references as service
-
+from helpers import utils
 
 def generated_key():
     body = json.loads(connexion.request.data)
-    try:
-        result = service.generate_key(body['data'])
-    except KeyError as ker:
-        result = {'error' : 'Missing property: ' + str(ker)}
-    return result
+    result = service.generate_key(body['data'])
+    return utils.build_response(result)
 
 
 def get_token():

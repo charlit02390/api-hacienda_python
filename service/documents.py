@@ -1,22 +1,26 @@
 from . import api_facturae
 from . import fe_enums
 from . import makepdf
+from . import utils
 
 import base64
 
 from service import emails
 from infrastructure import companies
 from infrastructure import documents
-from infrastructure.dbadapter import DatabaseError, connectToMySql
+from infrastructure.dbadapter import DbAdapterError, connectToMySql
 from email.headerregistry import Address
+from datetime import datetime, timedelta
+from flask import g
+
+from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, InternalErrorCodes
+from helpers.errors.exceptions import InputError, ValidationError, ServerError
+from helpers.utils import build_response_data
 
 
 def create_document(data):
-    try:
-        _company_user = data['nombre_usuario']
-    except KeyError as ker:
-        return {'error': 'Missing property: ' + str(ker)}
-
+    _company_user = data['nombre_usuario']
+    
     company_data = companies.get_company_data(_company_user)
     if '_error' in company_data:
         return {'error': 'A problem occurred when obtaining the data for the company.'}
@@ -192,7 +196,7 @@ def create_document(data):
         conn.close()
 
     return {'message': 'Document successfully created.'}
-
+  
 
 def save_document_lines(lines, id_company, key_mh, conn):
     for _line in lines:
@@ -221,7 +225,6 @@ def save_document_lines(lines, id_company, key_mh, conn):
                 raise
             except KeyError as ker:
                 raise
-
     return True
 
 
@@ -245,10 +248,7 @@ def save_document_taxes(taxes, id_company, line_number, key_mh, conn):
 
 def save_additional_emails(key_mh, emails, conn):
     for email in emails:
-        try:
-            documents.save_document_additional_email(key_mh, email, connection=conn)
-        except DatabaseError as dbe:
-            raise
+        documents.save_document_additional_email(key_mh, email, connection=conn)
 
     return True
 
@@ -347,7 +347,6 @@ def consult_document(company_user, key_mh):
         documents.update_document(company_user, key_mh, response_text, response_status, date)
     except DatabaseError as dbe:
         return {'error': str(dbe)}
-
     result = dict()
     if response_status == 'aceptado' and document_data['document_type'] != "TE":
         try:
@@ -385,9 +384,9 @@ def consult_document_notdatabase(company_user, key_mh, document_type):
     response_text = response_json.get('respuesta-xml')
 
     if response_text:
-        return {'message': response_status, 'xml-respuesta': response_text}
+        return build_response_data({'message' : response_status, 'data' : {'xml-respuesta' : response_text} })
     else:
-        return {'error': 'A problem was found with the data received by Hacienda.'}
+        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR) # TODO : new code: 2 bad data hacienda
 
 
 def processing_documents(company_user, key_mh, is_consult):
@@ -400,21 +399,19 @@ def processing_documents(company_user, key_mh, is_consult):
 
 def document_report(company_user, document_type):
     result = documents.get_documentsreport(company_user, document_type)
-    return {'documents': result}
+    return result
 
 
 def consult_vouchers(company_user, emisor, receptor, offset, limit):
     company_data = companies.get_company_data(company_user)
-    if '_error' in company_data:
-        return {'error': 'A problem occurred when attempting to get the company from the database'}
-    elif '_warning' in company_data:
-        return {'error': "The specified company wasn't found in the database."}
+    if not company_data:
+        raise InputError('company', company_user, status=InputErrorCodes.NO_RECORD_FOUND)
 
     try:
         token_m_h = api_facturae.get_token_hacienda(company_user, company_data['user_mh'], company_data['pass_mh'],
-                                                    company_data['env'])
-    except Exception as ex:  # todo: be more specific with exceptions
-        return {'error': 'A problem occurred when attempting to get the token from Hacienda.'}
+                                                 company_data['env'])
+    except Exception as ex: #TODO : be more specific with exceptions
+        raise # TODO : new InternalErrorCode 3 token. return {'error' : 'A problem occurred when attempting to get the token from Hacienda.'} # INTERNAL ERROR
 
     parameters = {}
     if emisor is not None:
@@ -435,36 +432,36 @@ def consult_vouchers(company_user, emisor, receptor, offset, limit):
     response_text = response_json.get('text')
 
     if 200 <= response_status <= 206:
-        return {'Comprobantes': response_text}
+        return build_response_data({'data' : {'Comprobantes' : response_text}})
+
     else:
-        return {'error': 'Hacienda considered the query as unauthorized.'}
+        raise ServerError(InternalErrorCodes.INTERNAL_ERROR) # TODO : Hacienda Unauthorized
+        # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
 
 
 def consult_voucher_byid(company_user, clave):
     company_data = companies.get_company_data(company_user)
-    if '_error' in company_data:
-        return {'error': 'A problem occurred when attempting to get the company from the database'}
-    elif '_warning' in company_data:
-        return {'error': "The specified company wasn't found in the database."}
+    if not company_data:
+        raise InputError('company', company_user, status=InputErrorCodes.NO_RECORD_FOUND)
 
     try:
         token_m_h = api_facturae.get_token_hacienda(company_user, company_data['user_mh'], company_data['pass_mh'],
-                                                    company_data['env'])
-    except Exception as ex:  # todo: be more specific with exceptions
-        return {'error': 'A problem occurred when attempting to get the token from Hacienda.'}
+                                                company_data['env'])
+    except Exception as ex: #TODO : be more specific with exceptions
+        raise # TODO : hacienda token error return {'error' : 'A problem occurred when attempting to get the token from Hacienda.'} # INTERNAL ERROR
 
     try:
         response_json = api_facturae.get_voucher_byid(clave, token_m_h)
-    except Exception as ex:  # todo: be more specific with exceptions
-        return {'error': "A problem occurred when attempting to fetch the specified document."}
+    except Exception as ex: #TODO : be more specific with exceptions
+        raise # TODO : Internal get voucher error return {'error' : "A problem occurred when attempting to fetch the specified document."} # INTERNAL ERROR
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
-    if response_status == 200:
-        return {'Comprobante': response_text}
+    if response_status == 200:        
+        return build_response_data({ 'data' : {'Comprobante' : response_text} })
     else:
-        return {'error': 'Hacienda considered the query as unauthorized.'}
-    # return {'status': response_status, 'message': response_text}
+        raise ServerError(InternalErrorCodes.INTERNAL_ERROR)
+        # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
 
 
 def validate_email(email):
@@ -476,14 +473,75 @@ def validate_email(email):
     :raises: ValueError - when 'email' is empty, 'email' is not a string, or email can't be parsed by Address, indicating the email is not valid.
     """
     if not email:
-        raise ValueError(str(email))
+        raise ValidationError(status=ValidationErrorCodes.INVALID_EMAIL,
+                              message='Empty Email')
 
     if not isinstance(email, str):
-        raise ValueError(str(email))
+        raise ValidationError(status=ValidationErrorCodes.INVALID_EMAIL,
+                              message='Email is not a string')
 
     try:
         Address(addr_spec=email)
     except (ValueError, IndexError):
-        raise ValueError(email)
+        raise ValidationError(email, status=ValidationErrorCodes.INVALID_EMAIL)
 
     return True
+
+def build_additional_pdf_fields(data):
+    DATETIME_DISPLAY_FORMAT = '%d-%m-%Y'
+
+    fields = {}
+    order_num = data.get('numReferencia')
+    if order_num:
+        fields['order_num'] = order_num
+
+    sale_condition = data['condicionVenta']
+    if sale_condition == '02':
+        issued_date = parse_datetime(data['fechafactura'])
+        term_days = data['plazoCredito']
+        due_date = data.get('numFecha')
+        if isinstance(due_date, str) and due_date.strip():
+            fields['due_date'] = parse_datetime(due_date).strftime(DATETIME_DISPLAY_FORMAT)
+        else:
+            fields['due_date'] = (issued_date + timedelta(days=int(term_days))).strftime(DATETIME_DISPLAY_FORMAT)
+        fields['credit_term'] = term_days
+
+    currency = data['codigoTipoMoneda']
+    if currency['tipoMoneda'] != 'CRC':
+        fields['currency_exchange'] = utils.stringRound(currency['tipoCambio'])
+
+    details = data['detalles']
+    for line in details:
+        exemption_found = False
+        for tax in line.get('impuesto', []):
+            exemption = tax.get('exoneracion')
+            if exemption:
+                fields['exemption'] = {
+                    'doc_type': fe_enums.ExemptionDocType[exemption['Tipodocumento']],
+                    'doc_number': exemption['NumeroDocumento'],
+                    'issuer': exemption['NombreInstitucion'],
+                    'issued_date': exemption['FechaEmision'],
+                    'percentage': exemption['porcentajeExoneracion'],
+                    'total_amount': data['totalExonerado']
+                    }
+                exemption_found = True
+                break
+        if exemption_found:
+            break
+
+    return fields
+
+
+def parse_datetime(value):
+    EXPECTED_DATETIME_FORMAT = '%d-%m-%YT%H:%M:%S%z'
+    parsed = None
+    try:
+        parsed = datetime.strptime(value, EXPECTED_DATETIME_FORMAT)
+    except ValueError:
+        try: 
+            parsed = datetime.fromisoformat(value)
+        except ValueError as ver:
+            raise ValidationError(value, 'fechafactura',
+                                  status=ValidationErrorCodes.INVALID_DATETIME_FORMAT) from ver
+
+    return parsed

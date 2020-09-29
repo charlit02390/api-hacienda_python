@@ -18,6 +18,9 @@ import phonenumbers
 from xml.sax.saxutils import escape
 from .xades.context2 import XAdESContext2, PolicyId2, create_xades_epes_signature
 
+from helpers.errors.enums import InternalErrorCodes
+from helpers.errors.exceptions import ServerError
+
 try:
     from lxml import etree
 except ImportError:
@@ -32,7 +35,7 @@ _logger = logging.getLogger(__name__)
 
 
 def sign_xml(cert, password, xml,
-             policy_id='https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.2/ResolucionComprobantesElectronicosDGT-R-48-2016_4.2.pdf'):
+             policy_id='https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.3/Resoluci%C3%B3n_General_sobre_disposiciones_t%C3%A9cnicas_comprobantes_electr%C3%B3nicos_para_efectos_tributarios.pdf'):
     root = etree.fromstring(xml)
     signature = create_xades_epes_signature()
 
@@ -217,9 +220,10 @@ def get_token_hacienda(_company_id, _user_mh, _pass_mh, env):
             else:
                 _logger.error(
                     'MAB - token_hacienda failed.  error: %s', response.status_code)
+                raise Exception('MAB - token_hacienda failed.  error: %s' % response.status_code)
 
         except requests.exceptions.RequestException as e:
-            raise Warning(
+            raise Exception(
                 'Error Obteniendo el Token desde MH. Excepcion %s' % e)
 
     return token_hacienda
@@ -244,7 +248,7 @@ def refresh_token_hacienda(tipo_ambiente, token): # duplicated in utils_mh... ho
         token_hacienda = response_json.get('access_token')
         return token_hacienda
     except ImportError:
-        raise Warning('Error Refrescando el Token desde MH')
+        raise Exception('Error Refrescando el Token desde MH')
 
 
 def gen_xml_mr_43(clave, cedula_emisor, fecha_emision, id_mensaje,
@@ -750,10 +754,7 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     sb.Append('<TotalDescuentos>' + str(total_descuento) + '</TotalDescuentos>')
     sb.Append('<TotalVentaNeta>' + str(base_total) + '</TotalVentaNeta>')
     sb.Append('<TotalImpuesto>' + str(total_impuestos) + '</TotalImpuesto>')
-
-    # TODO: Hay que calcular el TotalIVADevuelto
-    # sb.Append('<TotalIVADevuelto>' + str(¿de dónde sacamos esto?) + '</TotalIVADevuelto>')
-
+    sb.Append('<TotalIVADevuelto>' + str(total_return_iva) + '</TotalIVADevuelto>')
     sb.Append('<TotalOtrosCargos>' + str(totalOtrosCargos) + '</TotalOtrosCargos>')
     sb.Append('<TotalComprobante>' + str(total_document) + '</TotalComprobante>')
     sb.Append('</ResumenFactura>')
@@ -820,7 +821,7 @@ def get_voucher_byid(clave, token):
             # return respuesta_hacienda
 
     except ImportError:
-        raise Warning('Error consultando el comprobante')
+        raise Exception('Error consultando el comprobante')
 
 
 def get_vouchers(token, parameters):
@@ -849,7 +850,7 @@ def get_vouchers(token, parameters):
             # return respuesta_hacienda
 
     except ImportError:
-        raise Warning('Error consultando los comprobantes')
+        raise Exception('Error consultando los comprobantes')
 
 
 # Funcion para enviar el XML al Ministerio de Hacienda
@@ -900,7 +901,7 @@ def send_xml_fe(_company, _receptor, _key_mh, token, date, xml, env):
             # return respuesta_hacienda
 
     except ImportError:
-        raise Warning('Error enviando el XML al Ministerior de Hacienda')
+        raise Exception('Error enviando el XML al Ministerior de Hacienda')
 
 
 # def schema_validator(xml_file, xsd_file) -> bool:
@@ -998,7 +999,7 @@ def consulta_clave(clave, token, tipo_ambiente): # duplicated in utils_mh... are
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
-    _logger.error('MAB - consulta_clave - url: %s' % endpoint)
+    _logger.debug('MAB - consulta_clave - url: %s' % endpoint)
 
     try:
         # response = requests.request("GET", url, headers=headers)
@@ -1006,7 +1007,7 @@ def consulta_clave(clave, token, tipo_ambiente): # duplicated in utils_mh... are
         ############################
     except requests.exceptions.RequestException as e:
         _logger.error('Exception %s' % e)
-        return {'status': -1, 'text': 'Excepcion %s' % e}
+        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR) # TODO : new internal error code 4 hacienda key query
 
     if 200 <= response.status_code <= 299:
         response_json = {
@@ -1014,13 +1015,13 @@ def consulta_clave(clave, token, tipo_ambiente): # duplicated in utils_mh... are
             'ind-estado': response.json().get('ind-estado'),
             'respuesta-xml': response.json().get('respuesta-xml')
         }
-    elif 400 <= response.status_code <= 499:
-        response_json = {'status': 400, 'ind-estado': 'error'}
+    #elif 400 <= response.status_code <= 499: # don't know the purpose of this?
+       # response_json = {'status': 400, 'ind-estado': 'error'}
     else:
-        _logger.error('MAB - consulta_clave failed.  error: %s',
-                      response.status_code)
-        response_json = {'status': response.status_code,
-                         'text': 'token_hacienda failed: %s' % response.reason}
+        _logger.error("""MAB - consulta_clave failed.
+        Status code: {}
+        Reason: {}""".format(response.status_code, response.reason))
+        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)
     return response_json
 
 
@@ -1100,6 +1101,7 @@ def send_message(inv, date_cr, xml, token, env): # duplicated in utils_mh... and
 
     except requests.exceptions.RequestException as e:
         _logger.info('Exception %s' % e)
+        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)
         return {'status': 400, 'text': u'Excepción de envio XML'}
         # raise Exception(e)
 

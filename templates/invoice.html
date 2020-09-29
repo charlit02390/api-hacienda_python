@@ -1,128 +1,174 @@
-﻿		<br>
-		<div class="container">
-			<table class="table table-sm">
-				<tr>
-					<td>
-						<b>Clave del Comprobante:</b>
-					</td>
-					<td colspan="4">
-						{{key_mh}}
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<b>Cliente:</b>
-					</td>
-					<td colspan="4">
-						{{receiver.nombre}}
-					</td>
-				</tr>
-				<tr>
-					<td> <b>{{type_iden_receptor}}:</b> </td>
-					<td colspan="2">
-						{{receiver.numeroIdentificacion}}
-					</td>
-					<td> <b>Condici&oacuten de Venta:</b> </td>
-					<td>
-						{{sale_condition}}
-					</td>
-				</tr>
-				<tr>
-					<td> <b>Tel&eacutefono:</b> </td>
-					<td colspan="2">
-						{{receiver.telefono}}
-					</td>
-					<td> <b>Medio(s) de Pago:</b> </td>
-					<td>
-						{{payment_method}}
-					</td>
-				</tr>
-				<tr>
-					<td> <b>Correo:</b> </td>
-					<td colspan="2">
-						{{receiver.correo}}
-					</td>
-					<td> <b>Moneda:</b> </td>
-					<td>
-						{{currency.tipoMoneda}}
-					</td>
-				</tr>
-				<tr>
-					<td> <b>Direcci&oacuten:</b> </td>
-					<td colspan="2">
-						{{receiver.otrasSenas}}
-					</td>
-					<td> <b>Act. Ecónomica:</b> </td>
-					<td>
-						{{activity_code}}
-					</td>
-				</tr>
-			</table>
-			<table class="table table-sm table-striped">
-				<thead class="thead-dark">
-					<tr>
-						<th scope="col" class="text-left">C&oacutedigo</th>
-						<th scope="col" class="text-left">Producto</th>
-						<th scope="col" class="text-right">Cantidad</th>
-						<th scope="col" class="text-right">Precio</th>
-						<th scope="col" class="text-right">Impuestos</th>
-						<th scope="col" class="text-right">Total</th>
-					</tr>
-				</thead>
-				<tbody>
-					{%for line in lines %}
-					<tr>
-						<td scope="row" class="text-left">{{line.codigo_comercial}}</td>
-						<td class="text-left">{{line.detalle}}</td>
-						<td class="text-right">{{line.cantidad}}</td>
-						<td class="text-right">{{line.precioUnitario}}</td>
-						<td class="text-right">{{line.impuestoNeto}}</td>
-						<td class="text-right">{{line.subtotal}}</td>
-					</tr>
-					{%endfor%}
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<style>
+		.text-left {
+			text-align: left !important
+		}
 
-				</tbody>
-			</table>
-			<div style="text-align: center"><p> ****** Ultima Linea *******</p></div>
-			<table class="table table-sm">
-				<tr>
-					<td>
-						{{total_document_words}}
-					</td>
-					<td>
-						<table class="table">
-							<tr>
-								<td scope="row">Sub Total:</td>
-								<td>{{currencySymbol}} {{total_sales}}</td>
-							</tr>
-							<tr>
-								<td scope="row">Descuento:</td>
-								<td>{{currencySymbol}} {{total_discounts}}</td>
-							</tr>
-							<tr>
-								<td scope="row">IVA:</td>
-								<td>{{currencySymbol}} {{total_taxes}}</td>
-							</tr>
-							<tr>
-								<td scope="row">Total Factura:</td>
-								<td>{{currencySymbol}} {{total_document}}</td>
-							</tr>
-						</table>
-					</td>
-				</tr>
+		.text-right {
+			text-align: right !important
+		}
 
-			</table>
-		</div>
-		<footer>
-			<div class="container">
+		.container {
+			font-size: small
+		}
+
+		.table {
+			font-size: small;
+			margin-top: 20px;
+		}
+
+		.new-page {
+			page-break-before: always
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<table class="table table-sm">
+			<tr>
+				<td>
+					<b>Clave:</b>
+				</td>
+				<td colspan="4">
+					{{key_mh}}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<b>Cliente:</b>
+				</td>
+				<td colspan="4">
+					{{receiver.nombre}}
+				</td>
+			</tr>
+			<tr>
+				<td> <b>{{type_iden_receptor}}:</b> </td>
+				<td colspan="2">
+					{{receiver.numeroIdentificacion}}
+				</td>
+				<td> <b>Condici&oacuten:</b> </td>
+				<td>
+					{{sale_condition}}{% if due_date %} - {{credit_term}} dias - Vence: {{due_date}}{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td> <b>Tel&eacutefono:</b> </td>
+				<td colspan="2">
+					{{receiver.telefono}}
+				</td>
+				<td> <b>Medio(s) de Pago:</b> </td>
+				<td>
+					{{payment_method}}
+				</td>
+			</tr>
+			<tr>
+				<td> <b>Correo:</b> </td>
+				<td colspan="2">
+					{{receiver.correo}}
+				</td>
+				<td> <b>Moneda:</b> </td>
+				<td>
+					{{currency.tipoMoneda}}{% if currency_exchange %} T.c. {{currency_exchange}}{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td> <b>Direcci&oacuten:</b> </td>
+				<td colspan="2">
+					{{receiver.otrasSenas}}
+				</td>
+				{% if order_num %}
+				<td> <b>Nro. de Orden</b> </td>
+				<td>
+					{{order_num}}
+				</td>
+				{# in order to preserve some of the displayed styles??? #}
+				{% else %}
+				<td></td>
+				<td></td>
+				{% endif %}
+			</tr>
+		</table>
+		<table class="table table-sm table-striped">
+			<thead class="thead-dark">
+				<tr>
+					<th scope="col" class="text-left">#</th>
+					<th scope="col" class="text-left">C&oacutedigo</th>
+					<th scope="col" class="text-left">Producto</th>
+					<th scope="col" class="text-right">Cantidad</th>
+					<th scope="col" class="text-right">Precio</th>
+					<th scope="col" class="text-right">Impuestos</th>
+					<th scope="col" class="text-right">IVA</th>
+					<th scope="col" class="text-right">Total</th>
+				</tr>
+			</thead>
+			<tbody>
+				{%for line in lines %}
+				<tr>
+					<td scope="row" class="text-left">{{line.numero}}</td>
+					<td class="text-left">{{line.codigo}}</td>
+					<td class="text-left">{{line.detalle}}</td>
+					<td class="text-right">{{line.cantidad}}</td>
+					<td class="text-right">{{line.precioUnitario}}</td>
+					<td class="text-right">{{line.impuestoNeto}}</td>
+					<td class="text-right">{{line.impuesto[0].tarifa|int}}</td>
+					<td class="text-right">{{line.totalLinea}}</td>
+				</tr>
+				{%endfor%}
+
+			</tbody>
+		</table>
+		<div style="text-align: center"><p> ****** Ultima Linea *******</p></div>
+		<table class="table table-sm">
+			<tr>
+				<td>
+					{{total_document_words}}
+				</td>
+				<td>
+					<table class="table">
+						<tr>
+							<td scope="row">Sub Total:</td>
+							<td>{{currencySymbol}} {{total_sales}}</td>
+						</tr>
+						<tr>
+							<td scope="row">Descuento:</td>
+							<td>{{currencySymbol}} {{total_discounts}}</td>
+						</tr>
+						<tr>
+							<td scope="row">IVA:</td>
+							<td>{{currencySymbol}} {{total_taxes}}</td>
+						</tr>{% if total_returned_iva %}
+						<tr>
+							<td scope="row">IVA Devuelto:</td>
+							<td>{{currencySymbol}} {{total_returned_iva}}</td>
+						</tr>
+						{% endif %}
+						<tr>
+							<td scope="row">Total Factura:</td>
+							<td>{{currencySymbol}} {{total_document}}</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+
+		</table>
+		{% if exemption %}
+		<div class="new-page">
+			<hr />
+			<div>
 				<p>
-					Este documento constituye factura comercial con titulo ejecutivo de acuerdo al art. 460 del C&oacutedigo de Comercio que podr&aacute
-					hacerse efectivo el d&iacutea de su vencimiento y en caso de ejecuci&oacuten, renuncio a mi domicilio y los tr&aacutemites de juicio ejecutivo.
-					CONFIRMACIONES: Para enviar confirmaciones de dep&oacutesito Correo: {{company.email}}
+					Esta factura está exonerada con base en el documento tipo "{{exemption.doc_type}}". <br />
+					Número exoneración o autorizacion: {{exemption.doc_number}}. <br />
+					Con fecha de emisión del día {{exemption.issued_date}}.<br />
+					Emitido por {{exemption.issuer}}.<br />
+					Por un porcentaje del {{exemption.percentage}}%. Siendo el total de lo exonerado por un monto de {{currencySymbol}}{{exemption.total_amount|float|round(2)}}.
 				</p>
-				<b>Observaciones:</b>
-				<p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
 			</div>
-		</footer>
-	</body>
+			<hr />
+		</div>
+		{% endif %}
+	</div>
+</body>
 </html>
