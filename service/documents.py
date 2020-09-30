@@ -89,7 +89,7 @@ def create_document(data):
     datecr = api_facturae.get_time_hacienda(True)
 
     try:
-        xml = api_facturae.gen_xml_v43(company_data, _type_document, _key_mh, _consecutive, _issued_date.strftime('%d-%m-%Y'), _sale_condition,
+        xml = api_facturae.gen_xml_v43(company_data, _type_document, _key_mh, _consecutive, _issued_date.isoformat(), _sale_condition,
                                    _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
                                    _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
                                    _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
@@ -116,14 +116,15 @@ def create_document(data):
             raise InputError(status=InputErrorCodes.NO_RECORD_FOUND, message='No logo was found for the Company.')
 
         additional_pdf_fields = build_additional_pdf_fields(data)
-
+        # don't know how we are calling this property, so just trying stuff out.
+        pdf_notes = data.get('notas', data.get('observaciones', data.get('piedepagina',[])))
         _logo = _logo['logo'].decode('utf-8')
         try:
             pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
 	                                _issued_date.strftime("%d-%m-%Y"), _sale_condition,
 	                                _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
 	                                _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
-	                                _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, _others,
+	                                _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, pdf_notes,
 	                                _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
 	                                _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo,
 	                                additional_pdf_fields);
@@ -272,7 +273,7 @@ def consult_document(company_user, key_mh):
 
     documents.update_document(company_user, key_mh, response_text, response_status, date)
 
-    result = dict()
+    result = {'data' : {}}
     if response_status == 'aceptado' and document_data['document_type'] != "TE":
         try:
             emails.sent_email_fe(document_data)
