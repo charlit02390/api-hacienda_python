@@ -760,8 +760,8 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     sb.Append('</ResumenFactura>')
 
     # referencia is coming as a blank string when no reference is set... we want a dict (or, as hacienda specifies, a list of dicts)
-    if not isinstance(referencia, dict):
-        referencia = None
+    #if not isinstance(referencia, dict):
+    #    referencia = None
 
 
     if referencia:

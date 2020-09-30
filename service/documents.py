@@ -83,7 +83,12 @@ def create_document(data):
     _reference = data['referencia']
     _others = data['otros']
 
-    _issued_date = parse_datetime(data['fechafactura'])
+    _issued_date = parse_datetime(data['fechafactura'], 'fechafactura')
+
+    if not isinstance(_reference, dict):
+        _reference = None
+    elif _reference:
+        _reference['fecha'] = parse_datetime(_reference['fecha'], 'referencia => fecha').isoformat()
 
     _datestr = api_facturae.get_time_hacienda()
     datecr = api_facturae.get_time_hacienda(True)
@@ -414,19 +419,32 @@ def build_additional_pdf_fields(data):
     DATETIME_DISPLAY_FORMAT = '%d-%m-%Y'
 
     fields = {}
-    order_num = data.get('numReferencia')
+    ref_num = data.get('numReferencia')
+    if ref_num:
+        fields['ref_num'] = ref_num
+
+    order_num = data.get('numOrden', data.get('numFecha', '')).strip();
+    # just making sure "order_num" ain't suddenly a date...
+    try:
+        parse_datetime(order_num, 'numOrden/numFecha')
+        order_num = None
+    except ValidationError:
+        pass
+
     if order_num:
         fields['order_num'] = order_num
 
     sale_condition = data['condicionVenta']
     if sale_condition == '02':
-        issued_date = parse_datetime(data['fechafactura'])
+        issued_date = parse_datetime(data['fechafactura'], 'fechafactura')
         term_days = data['plazoCredito']
-        due_date = data.get('numFecha')
-        if isinstance(due_date, str) and due_date.strip():
-            fields['due_date'] = parse_datetime(due_date).strftime(DATETIME_DISPLAY_FORMAT)
-        else:
-            fields['due_date'] = (issued_date + timedelta(days=int(term_days))).strftime(DATETIME_DISPLAY_FORMAT)
+        # MARKED FOR DEATH : scraped in favor of not having to guess a date in the json...
+        #due_date = None # data.get('numFecha') 
+        #if isinstance(due_date, str) and due_date.strip():
+        #    fields['due_date'] = parse_datetime(due_date).strftime(DATETIME_DISPLAY_FORMAT)
+        #else:
+        # END MFD
+        fields['due_date'] = (issued_date + timedelta(days=int(term_days))).strftime(DATETIME_DISPLAY_FORMAT)
         fields['credit_term'] = term_days
 
     currency = data['codigoTipoMoneda']
@@ -443,7 +461,7 @@ def build_additional_pdf_fields(data):
                     'doc_type': fe_enums.ExemptionDocType[exemption['Tipodocumento']],
                     'doc_number': exemption['NumeroDocumento'],
                     'issuer': exemption['NombreInstitucion'],
-                    'issued_date': exemption['FechaEmision'],
+                    'issued_date': parse_datetime(exemption['FechaEmision'], 'exoneracion => FechaEmision').isoformat(),
                     'percentage': exemption['porcentajeExoneracion'],
                     'total_amount': data['totalExonerado']
                     }
@@ -455,16 +473,27 @@ def build_additional_pdf_fields(data):
     return fields
 
 
-def parse_datetime(value):
-    EXPECTED_DATETIME_FORMAT = '%d-%m-%YT%H:%M:%S%z'
+def parse_datetime(value, field):
+    if isinstance(value, datetime):
+        return value
+
+    EXPECTED_DATETIME_FORMATS = (
+        '%d-%m-%YT%H:%M:%S%z',
+        '%d/%m/%Y'
+        )
     parsed = None
-    try:
-        parsed = datetime.strptime(value, EXPECTED_DATETIME_FORMAT)
-    except ValueError:
+    for format in EXPECTED_DATETIME_FORMATS:
+        try:
+            parsed = datetime.strptime(value, format)
+            break
+        except ValueError:
+            pass
+
+    if not parsed: # if we still couldn't parse it, try isoformat
         try: 
             parsed = datetime.fromisoformat(value)
         except ValueError as ver:
-            raise ValidationError(value, 'fechafactura',
+            raise ValidationError(value, field,
                                   status=ValidationErrorCodes.INVALID_DATETIME_FORMAT) from ver
 
     return parsed

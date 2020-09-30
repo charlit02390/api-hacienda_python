@@ -52,7 +52,12 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     options = {
         '--encoding': 'utf-8'
     }
-    add_pdf_header(options, company_data, document_type, consecutive, date, logo, key_mh)
+    header_data = {'company' : company_data, 'type' : document_type, 'consecutive' : consecutive,
+                   'date' : date, 'logo' : logo, 'key_mh' : key_mh,
+                   'type_iden_company' : fe_enums.tipoCedulaPDF.get(company_data.get('type_identification'), 'Tipo de identificación no especificada'),
+                   'ref_num' : additionalFields['ref_num']
+                  }
+    add_pdf_header(options, header_data)
     add_pdf_footer(options, {"notes" : invoice_comments or [], "email" : company_data['email']})
     try:
         pdf = pdfkit.from_string(main_content, False, css=css, options=options)
@@ -62,13 +67,11 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
     return pdf
 
 
-def add_pdf_header(options, company_data, document_type, consecutive, date,  logo, key_mh):
+def add_pdf_header(options, data):
     with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as header:
         options['--header-html'] = header.name
-        type_iden_company = fe_enums.tipoCedulaPDF.get(company_data.get('type_identification'), 'Tipo de identificación no especificada')
         header.write(
-            render_template("header.html", company=company_data, type_iden_company=type_iden_company,
-                            type=document_type, consecutive=consecutive, date=date, logo=logo, key_mh=key_mh).encode('utf-8')
+            render_template("header.html", **data).encode('utf-8')
         )
     return
 
