@@ -4,6 +4,7 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from mimetypes import guess_type
 # @todo: use the new email.message api
 
 def send_email(receiver, subject, content, file1, file2, file3,
@@ -89,7 +90,12 @@ def send_email(receiver, subject, content, file1, file2, file3,
     
 
 def create_email_files(file, filename):
-    part = MIMEBase("application", "octet-stream")
+    type = guess_type(filename);
+    if not type:
+        part = MIMEBase("application", "octet-stream")
+    else:
+        type = type[0].split('/')
+        part = MIMEBase(type[0], type[1])
     part.set_payload(file)
 
     # Encode file in ASCII characters to send by email

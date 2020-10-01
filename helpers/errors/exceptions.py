@@ -125,7 +125,9 @@ class ValidationError(InputError):
         enums.ValidationErrorCodes.INVALID_DATETIME_FORMAT : r'''The date value - {} - in "{}" is not any of these expected formats:
              YYYY-MM-DDThh:mi:ss[Z|(+|-)hh:mm]
              or
-             DD-MM-YYYYThh:mi:ss[Z|(+|-)hh:mm]''',
+             DD-MM-YYYYThh:mi:ss[Z|(+|-)hh:mm]
+             or
+             DD/MM/YYYY''',
         enums.ValidationErrorCodes.INVALID_EMAIL : 'Invalid email: {}'
         }
     default_message = 'Invalid data.'

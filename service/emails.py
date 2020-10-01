@@ -55,9 +55,9 @@ def sent_email_fe(data):
     file2 = base64.b64decode(document['signxml'])
     file3 = base64.b64decode(document['answerxml'])
 
-    result = send_email(receivers, subject, body, file1, file2, file3, host, sender, password, port,
+    send_email(receivers, subject, body, file1, file2, file3, host, sender, password, port,
                         encrypt_type, name_file1, name_file2, name_file3)
-    return result
+    return build_response_data({'message' : 'Email successfully sent.'})
 
 
 def send_custom_email(data, file1, file2, file3):

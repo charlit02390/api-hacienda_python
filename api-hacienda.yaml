@@ -266,18 +266,33 @@ components:
             totalComprobantes:
               type: string
             otrosCargos:
-              type: array
-              properties:
-                tipo_documento:
-                  type: string
-                numero_identidad_tercero:
-                  type: string
-                detalle:
-                  type: string
-                porcentaje:
-                  type: string
-                monto_cargo:
-                  type: string
+              anyOf:
+               - type: object
+                 properties:
+                   tipo_documento:
+                     type: string
+                   numero_identidad_tercero:
+                     type: string
+                   detalle:
+                     type: string
+                   porcentaje:
+                     type: string
+                   monto_cargo:
+                     type: string
+               - type: array
+                 items:
+                   type: object
+                   properties:
+                     tipo_documento:
+                       type: string
+                     numero_identidad_tercero:
+                       type: string
+                     detalle:
+                       type: string
+                     porcentaje:
+                       type: string
+                     monto_cargo:
+                       type: string
             referencia:
               anyOf:
                - type: string
