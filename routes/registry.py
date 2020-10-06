@@ -12,5 +12,5 @@ def route_get_person(id):
     :returns: dict - A dictionary to be serialized as json to be sent as response, alonside a status code.
     """
     params = connexion.request.json
-    response = service.get_person(id, params)
+    response = service.get_person(id)
     return utils.build_response(response)
