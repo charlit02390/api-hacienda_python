@@ -13,7 +13,6 @@ def create_company(data, file, logo):
     # verify company first, 'cuz can't save a company that already exists.
     _company_user = data['id_compania']
 
-    is_debug = g.is_debug
     company_exists = True
     company_exists = companies.verify_company(_company_user)
 

@@ -470,7 +470,8 @@ def p12_expiration_date(p12file,password):
         cert = x509.load_pem_x509_certificate(data, default_backend())
         return cert.not_valid_after
     except crypto.Error as crypte:
-        if crypte.args[2] == 'mac verify failure':
+        excStr = str(crypte)
+        if excStr.find('mac verify failure'):
             raise InputError(status=InputErrorCodes.P12_PIN_MISMATCH) from crypte
         else:
             raise
