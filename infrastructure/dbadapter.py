@@ -294,7 +294,7 @@ def connectToMySql():
     """
     conn = None
     try:
-        conn = mysql.get_db() # mysql.connect()
+        conn =  mysql.connect() #mysql.get_db()
         conn.ping()
     except (OperationalError, InternalError) as e:
         logging.error(str(e)) # todo

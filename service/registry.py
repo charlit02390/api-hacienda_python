@@ -2,7 +2,7 @@
 """
 import json
 from infrastructure import registry
-import helpers.utils
+from helpers import utils
 
 def get_person(id: str) -> dict:
     """
@@ -20,5 +20,5 @@ def get_person(id: str) -> dict:
     # TODO i guess... too lazy rn
     result = { 'data' : registry.get_person(id) }
 
-    response = utils.build_response_data(result, 'Person not found for the id: "' + id + '".')
+    response = utils.build_response_data(result, warn_msg='Person not found for the id: "' + id + '".')
     return response

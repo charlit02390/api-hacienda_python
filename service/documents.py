@@ -328,7 +328,7 @@ def processing_documents(company_user, key_mh, is_consult):
 
 def document_report(company_user, document_type):
     result = documents.get_documentsreport(company_user, document_type)
-    return result
+    return build_response_data({'data' : { 'documents' : result}})
 
 
 def consult_vouchers(company_user, emisor, receptor, offset, limit):
