@@ -105,7 +105,7 @@ def delete_user_data(id_user):
     procedure = 'sp_deleteUser'
     args = (id_user,)
     try:
-        dba.execute_proc(proc_name=procedure,args=args,assert_unique=True)
+        dba.execute_proc(proc_name=procedure,args=args)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
                                 status=DBErrorCodes.DB_USER_DELETE) from dbae

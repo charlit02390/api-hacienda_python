@@ -99,8 +99,7 @@ def delete_company_data(company_user):
     procedure = 'sp_deleteCompany'
     args = (company_user,)
     try:
-        dba.execute_proc(proc_name=procedure,args=args,
-                         assert_unique=True)
+        dba.execute_proc(proc_name=procedure,args=args)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
                                  status=DBErrorCodes.DB_COMPANY_DELETE) from dbae
