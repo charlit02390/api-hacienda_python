@@ -4,6 +4,7 @@ from . import makepdf
 from . import utils
 
 import base64
+import logging
 
 from service import emails
 from infrastructure import companies
@@ -17,6 +18,7 @@ from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, Internal
 from helpers.errors.exceptions import InputError, ValidationError, ServerError
 from helpers.utils import build_response_data
 
+docLogger = logging.getLogger(__name__)
 
 def create_document(data):
     _company_user = data['nombre_usuario']
@@ -79,9 +81,9 @@ def create_document(data):
     _total_return_iva = data['totalIVADevuelto']
     _total_other_charges = data['totalOtrosCargos']
     _total_document = data['totalComprobantes']
-    _other_charges = data['otrosCargos']
-    _reference = data['referencia']
-    _others = data['otros']
+    _other_charges = data.get('otrosCargos')
+    _reference = data.get('referencia')
+    _others = data.get('otros')
 
     _issued_date = parse_datetime(data['fechafactura'], 'fechafactura')
 
@@ -283,9 +285,10 @@ def consult_document(company_user, key_mh):
         try:
             emails.sent_email_fe(document_data)
         except Exception as ex: #TODO : be more specific about exceptions
+            docLogger.warning("***Email couldn't be sent for some reason:***", exc_info=ex)
             result['data']['warning'] = 'A problem occurred when attempting to send the email.' # WARNING
 
-    result['message'] = response_status
+    result['data']['message'] = response_status
     result['data']['xml-respuesta'] = response_text
     return build_response_data(result)
     

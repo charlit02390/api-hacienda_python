@@ -424,9 +424,7 @@ components:
       type: object
       properties:
         receivers:
-          type: array
-          items:
-            type: string
+          type: string
         company_id:
           type: string
         subject:
