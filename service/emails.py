@@ -65,7 +65,7 @@ def send_custom_email(data, file1, file2, file3):
     if not smtp_data:
         raise InputError('company SMTP', data['company_id'], InputErrorCodes.NO_RECORD_FOUND)
 
-    receivers = data.getlist('receivers')
+    receivers = data['receivers'].split(',');
     if not receivers[0]:
         raise InputError(status=InputErrorCodes.MISSING_PROPERTY, message='No recipient(s) specified.')
 
