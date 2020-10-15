@@ -1,11 +1,15 @@
 from flask import Flask, jsonify
 from extensions import mysql
 from configuration import globalsettings
+from routes import scheduler
 import connexion
+
 from helpers import debugging
 from helpers.errors import handlers as errorhandlers
 
 app = Flask(__name__)
+
+
 cfg = globalsettings.cfg
 
 app.config['MYSQL_DATABASE_USER'] = cfg['mysql']['user']
@@ -21,5 +25,13 @@ app.add_api('api-hacienda.yaml',arguments=spec_args)
 # Sets custom error handlers for application error responses.
 errorhandlers.register_flask_app_handlers(app)
 
-app.run(host='localhost', port=3005)
+
+def print_values():
+    print('every 5 seconds')
+
+
+if __name__ == '__main__':
+    scheduler.scheduled_jobs()
+    app.run(host='localhost', port=3005)
+
 

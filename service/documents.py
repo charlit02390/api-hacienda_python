@@ -201,7 +201,11 @@ def save_additional_emails(key_mh, emails, conn):
     return True
 
 def validate_documents():
-    return
+    results = documents.get_documents(0);
+    for document in results:
+        validate_document(document['company_user'],document['key_mh'])
+    return "Success Job";
+
 
 
 def validate_document(company_user, key_mh):
@@ -249,7 +253,10 @@ def validate_document(company_user, key_mh):
 
 
 def consult_documents():
-    return
+    results = documents.get_documents(1);
+    for document in results:
+        consult_document(document['company_user'], document['key_mh'])
+    return "Success Job";
 
 
 def consult_document(company_user, key_mh):

@@ -93,25 +93,22 @@ def get_document(key_mh):
         raise DatabaseError(status=DBErrorCodes.DB_DOCUMENT_SELECT_ONE) from dbae
 
 
-
-def get_documents(company_id, state): # wtf is this? MARKED FOR DEATH
+def get_documents_company(company_id, state): # wtf is this? MARKED FOR DEATH
     procedure = 'sp_getDocumentByCompany'
     args = (company_id, state)
     return dba.fetchall_from_proc(procname=procedure,args=args)
 
 
-
-def get_documents(state): # and this???  MARKED FOR DEATH
-    procedure = 'sp_getDocuments'
-    args = (state,)
-    docs = dba.fetchall_from_proc(procname=procedure,args=args)
-    if isinstance(docs, dict):
-        if '_error' in docs:
-            raise dba.DbAdapterError('A problem occurred when attempting to fetch documents by their state.')
-        elif '_warning' in docs:
-            return []
-
-    return True
+def get_documents(state):
+    try:
+        if state == 0:
+            procedure = 'sp_getDocumentsValidate'
+            return dba.fetchall_from_proc(procname=procedure)
+        else:
+            procedure = 'sp_getDocumentsConsult'
+            return dba.fetchall_from_proc(procname=procedure)
+    except dba.DbAdapterError as dbae:
+        raise DatabaseError(status=DBErrorCodes.DB_DOCUMENT_JOBS) from dbae
 
 
 
