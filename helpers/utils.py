@@ -23,9 +23,9 @@ def build_response_data(result: dict, warn_msg: str = 'No data was found', error
 
     if 'error' in result:
         error = result['error']
-        response['http_status'] = result['http_status'] if 'http_status' in result else 500
-        response['status'] = error['code'] if 'code' in error else 400
-        response['error'] = error['message'] if 'message' in error else error_msg
+        response['http_status'] = result.get('http_status', error.get('http_status', 500))
+        response['status'] = error.get('code', error.get('status', 400))
+        response['details'] = error.get('message', error.get('details', error_msg))
         if 'debug' in error:
             response['debug'] = error['debug']
     elif 'data' in result:
@@ -34,11 +34,11 @@ def build_response_data(result: dict, warn_msg: str = 'No data was found', error
             response['data'] = data
         else:
             response['message'] = warn_msg
-    elif 'message' in result:
+    
+    if 'message' in result:
         message = result['message']
         response['message'] = message if message else warn_msg
-    else:
-        response['message'] = warn_msg
+
 
     if 'headers' in result:
         headers = result['headers']

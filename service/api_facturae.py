@@ -533,7 +533,7 @@ def lines_xml(sb, lines, document_type, receiver_company):
         if document_type == 'FEE' and v.get('partidaArancelaria'):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
-        code = v.get('codigo',v.get('codigoServicio',v.get('codigoProducto'))) # just in case...
+        code = v.get('cabys', v.get('codigo', v.get('codigoServicio', v.get('codigoProducto')))) # just in case...
         if isinstance(code, str):
             sb.Append('<Codigo>' + code + '</Codigo>')
 
@@ -754,7 +754,8 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     sb.Append('<TotalDescuentos>' + str(total_descuento) + '</TotalDescuentos>')
     sb.Append('<TotalVentaNeta>' + str(base_total) + '</TotalVentaNeta>')
     sb.Append('<TotalImpuesto>' + str(total_impuestos) + '</TotalImpuesto>')
-    sb.Append('<TotalIVADevuelto>' + str(total_return_iva) + '</TotalIVADevuelto>')
+    if document_type not in ('FEC', 'FEE'): # change this to a constant or something
+        sb.Append('<TotalIVADevuelto>' + str(total_return_iva) + '</TotalIVADevuelto>')
     sb.Append('<TotalOtrosCargos>' + str(totalOtrosCargos) + '</TotalOtrosCargos>')
     sb.Append('<TotalComprobante>' + str(total_document) + '</TotalComprobante>')
     sb.Append('</ResumenFactura>')
@@ -864,7 +865,7 @@ def send_xml_fe(_company, _receptor, _key_mh, token, date, xml, env):
     # xml is coming as bytes: json.dumps cannot serialize bytes by default, so let's try converting it to a string
     if isinstance(xml, bytes):
         # assuming this has to already be a b64 encoded byte-like object
-        xml = xml.decode('utf-8');
+        xml = xml.decode('utf-8')
 
     data = {'clave': _key_mh,
             'fecha': date,
