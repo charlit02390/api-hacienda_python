@@ -1016,12 +1016,30 @@ def consulta_clave(clave, token, tipo_ambiente): # duplicated in utils_mh... are
             'ind-estado': response.json().get('ind-estado'),
             'respuesta-xml': response.json().get('respuesta-xml')
         }
-    #elif 400 <= response.status_code <= 499: # don't know the purpose of this?
-       # response_json = {'status': 400, 'ind-estado': 'error'}
+    elif 400 <= response.status_code <= 499: # now I know, but making it better?
+        cause = response.headers.get('X-Error-Cause')
+        if not cause:
+            cause = 'Error'
+            _logger.warning("""**Undocumented Hacienda response:**
+            Endpoint: {}
+            Http Status: {}
+            Request Headers: {}
+            Response Headers: {}
+            Response Body: {}
+            """.format(endpoint, response.status_code,
+                       str(response.request.headers),
+                       str(response.headers), response.text))
+        response_json = {'status': response.status_code, 'ind-estado': cause}
     else:
         _logger.error("""MAB - consulta_clave failed.
         Status code: {}
-        Reason: {}""".format(response.status_code, response.reason))
+        Reason: {}
+        Request Headers: {}
+        Response Headers: {}
+        Response Body: {}
+        """.format(response.status_code, response.reason,
+                   str(response.request.headers),
+                   str(response.headers), response.text))
         raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)
     return response_json
 
