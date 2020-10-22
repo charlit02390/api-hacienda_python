@@ -626,30 +626,30 @@ def other_charges(sb, otrosCargos):
     sb.Append('<OtrosCargos>')
     for otro_cargo in otrosCargos:
         sb.Append('<TipoDocumento>' +
-                  otrosCargos[otro_cargo]['tipoDocumento'] +
+                  otro_cargo['tipoDocumento'] +
                   '</TipoDocumento>')
 
-        if otrosCargos[otro_cargo].get('numeroIdentidadTercero'):
+        if otro_cargo.get('numeroIdentidadTercero'):
             sb.Append('<NumeroIdentidadTercero>' +
-                      str(otrosCargos[otro_cargo]['numeroIdentidadTercero']) +
+                      str(otro_cargo['numeroIdentidadTercero']) +
                       '</NumeroIdentidadTercero>')
 
-        if otrosCargos[otro_cargo].get('nombreTercero'):
+        if otro_cargo.get('nombreTercero'):
             sb.Append('<NombreTercero>' +
-                      otrosCargos[otro_cargo]['nombreTercero'] +
+                      otro_cargo['nombreTercero'] +
                       '</NombreTercero>')
 
         sb.Append('<Detalle>' +
-                  otrosCargos[otro_cargo]['detalle'] +
+                  otro_cargo['detalle'] +
                   '</Detalle>')
 
-        if otrosCargos[otro_cargo].get('porcentaje'):
+        if otro_cargo.get('porcentaje'):
             sb.Append('<Porcentaje>' +
-                      str(otrosCargos[otro_cargo]['porcentaje']) +
+                      str(otro_cargo['porcentaje']) +
                       '</Porcentaje>')
 
         sb.Append('<MontoCargo>' +
-                  str(otrosCargos[otro_cargo]['montoCargo']) +
+                  str(otro_cargo['montoCargo']) +
                   '</MontoCargo>')
     sb.Append('</OtrosCargos>')
 
