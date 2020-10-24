@@ -533,7 +533,7 @@ def lines_xml(sb, lines, document_type, receiver_company):
         if document_type == 'FEE' and v.get('partidaArancelaria'):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
-        code = v.get('codigo',v.get('codigoServicio',v.get('codigoProducto'))) # just in case...
+        code = v.get('cabys', v.get('codigo', v.get('codigoServicio', v.get('codigoProducto')))) # just in case...
         if isinstance(code, str):
             sb.Append('<Codigo>' + code + '</Codigo>')
 
@@ -626,30 +626,30 @@ def other_charges(sb, otrosCargos):
     sb.Append('<OtrosCargos>')
     for otro_cargo in otrosCargos:
         sb.Append('<TipoDocumento>' +
-                  otrosCargos[otro_cargo]['tipoDocumento'] +
+                  otro_cargo['tipoDocumento'] +
                   '</TipoDocumento>')
 
-        if otrosCargos[otro_cargo].get('numeroIdentidadTercero'):
+        if otro_cargo.get('numeroIdentidadTercero'):
             sb.Append('<NumeroIdentidadTercero>' +
-                      str(otrosCargos[otro_cargo]['numeroIdentidadTercero']) +
+                      str(otro_cargo['numeroIdentidadTercero']) +
                       '</NumeroIdentidadTercero>')
 
-        if otrosCargos[otro_cargo].get('nombreTercero'):
+        if otro_cargo.get('nombreTercero'):
             sb.Append('<NombreTercero>' +
-                      otrosCargos[otro_cargo]['nombreTercero'] +
+                      otro_cargo['nombreTercero'] +
                       '</NombreTercero>')
 
         sb.Append('<Detalle>' +
-                  otrosCargos[otro_cargo]['detalle'] +
+                  otro_cargo['detalle'] +
                   '</Detalle>')
 
-        if otrosCargos[otro_cargo].get('porcentaje'):
+        if otro_cargo.get('porcentaje'):
             sb.Append('<Porcentaje>' +
-                      str(otrosCargos[otro_cargo]['porcentaje']) +
+                      str(otro_cargo['porcentaje']) +
                       '</Porcentaje>')
 
         sb.Append('<MontoCargo>' +
-                  str(otrosCargos[otro_cargo]['montoCargo']) +
+                  str(otro_cargo['montoCargo']) +
                   '</MontoCargo>')
     sb.Append('</OtrosCargos>')
 
@@ -754,7 +754,8 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     sb.Append('<TotalDescuentos>' + str(total_descuento) + '</TotalDescuentos>')
     sb.Append('<TotalVentaNeta>' + str(base_total) + '</TotalVentaNeta>')
     sb.Append('<TotalImpuesto>' + str(total_impuestos) + '</TotalImpuesto>')
-    sb.Append('<TotalIVADevuelto>' + str(total_return_iva) + '</TotalIVADevuelto>')
+    if document_type not in ('FEC', 'FEE'): # change this to a constant or something
+        sb.Append('<TotalIVADevuelto>' + str(total_return_iva) + '</TotalIVADevuelto>')
     sb.Append('<TotalOtrosCargos>' + str(totalOtrosCargos) + '</TotalOtrosCargos>')
     sb.Append('<TotalComprobante>' + str(total_document) + '</TotalComprobante>')
     sb.Append('</ResumenFactura>')
@@ -864,7 +865,7 @@ def send_xml_fe(_company, _receptor, _key_mh, token, date, xml, env):
     # xml is coming as bytes: json.dumps cannot serialize bytes by default, so let's try converting it to a string
     if isinstance(xml, bytes):
         # assuming this has to already be a b64 encoded byte-like object
-        xml = xml.decode('utf-8');
+        xml = xml.decode('utf-8')
 
     data = {'clave': _key_mh,
             'fecha': date,
@@ -1015,12 +1016,30 @@ def consulta_clave(clave, token, tipo_ambiente): # duplicated in utils_mh... are
             'ind-estado': response.json().get('ind-estado'),
             'respuesta-xml': response.json().get('respuesta-xml')
         }
-    #elif 400 <= response.status_code <= 499: # don't know the purpose of this?
-       # response_json = {'status': 400, 'ind-estado': 'error'}
+    elif 400 <= response.status_code <= 499: # now I know, but making it better?
+        cause = response.headers.get('X-Error-Cause')
+        if not cause:
+            cause = 'Error'
+            _logger.warning("""**Undocumented Hacienda response:**
+            Endpoint: {}
+            Http Status: {}
+            Request Headers: {}
+            Response Headers: {}
+            Response Body: {}
+            """.format(endpoint, response.status_code,
+                       str(response.request.headers),
+                       str(response.headers), response.text))
+        response_json = {'status': response.status_code, 'ind-estado': cause}
     else:
         _logger.error("""MAB - consulta_clave failed.
         Status code: {}
-        Reason: {}""".format(response.status_code, response.reason))
+        Reason: {}
+        Request Headers: {}
+        Response Headers: {}
+        Response Body: {}
+        """.format(response.status_code, response.reason,
+                   str(response.request.headers),
+                   str(response.headers), response.text))
         raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)
     return response_json
 

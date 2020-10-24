@@ -108,12 +108,12 @@
 				{%for line in lines %}
 				<tr>
 					<td scope="row" class="text-left">{{line.numero}}</td>
-					<td class="text-left">{{line.codigo}}</td>
+					<td class="text-left">{{line.cabys}}</td>
 					<td class="text-left">{{line.detalle}}</td>
 					<td class="text-right">{{line.cantidad}}</td>
 					<td class="text-right">{{line.precioUnitario}}</td>
 					<td class="text-right">{{line.impuestoNeto}}</td>
-					<td class="text-right">{{line.impuesto[0].tarifa|int}}</td>
+					<td class="text-right">{% if line.impuesto %}{{line.impuesto[0].tarifa|int}}{% else %}0{% endif %}</td>
 					<td class="text-right">{{line.totalLinea}}</td>
 				</tr>
 				{%endfor%}
