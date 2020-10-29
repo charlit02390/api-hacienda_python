@@ -184,6 +184,7 @@ class DatabaseError(ServerError):
         enums.DBErrorCodes.DB_DOCUMENT_SELECT_ONE : "An issue was found while obtaining the document's data.",
         enums.DBErrorCodes.DB_DOCUMENT_SELECT_BY_COMPANY_AND_TYPE : "An issue was found while trying to obtain the documents for the company.",
         enums.DBErrorCodes.DB_DOCUMENT_SELECT_ADDITIONAL_EMAILS_BY_KEY : "An issue was found while trying to obtain the additional emails registered for the document.",
+        enums.DBErrorCodes.DB_DOCUMENT_JOBS : "An issue was found while querying documents from the database during a scheduled job. Action involved: {}",
         enums.DBErrorCodes.DB_USER_CREATE : "The user couldn't be created. {}",
         enums.DBErrorCodes.DB_USER_COMPANIES_LINK : "Couldn't assign the user's companies. {}",
         enums.DBErrorCodes.DB_USER_COMPANIES_UNLINK : "The user couldn't be updated. {}",
@@ -193,7 +194,9 @@ class DatabaseError(ServerError):
         enums.DBErrorCodes.DB_USER_COMPANIES_SELECT_ALL : "A problem occured when attempting to obtain the user's companies.",
         enums.DBErrorCodes.DB_USER_SELECT_ALL : "An issue was found while trying to obtain the users' data.",
         enums.DBErrorCodes.DB_USER_EMAIL_VERIFY : "A problem occured when attempting to verify the user by their email.",
-        enums.DBErrorCodes.DB_USER_VERIFY : "An issue was found while trying to verify the user."
+        enums.DBErrorCodes.DB_USER_VERIFY : "An issue was found while trying to verify the user.",
+        enums.DBErrorCodes.DB_MESSAGE_CREATE : "An issue was found while trying to create the message. {}",
+        enums.DBErrorCodes.DB_MESSAGE_UPDATE_ANSWER : "An issue was found while trying to update a message from an Hacienda answer. {}"
         }
     default_message = 'A problem was encountered during database operations.'
 

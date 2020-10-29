@@ -142,3 +142,15 @@ ExemptionDocType = {
     '07' : 'Transitorio XVII',
     '99' : 'Otros'
     }
+
+MessageCodeDesc = {
+    '1': 'Aceptado',
+    '2': 'Aceptación parcial',
+    '3': 'Rechazado'
+    }
+
+MessageCodeAcronym = {
+    '1': 'MRA',
+    '2': 'MRP',
+    '3': 'MRR'
+    }
