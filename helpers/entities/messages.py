@@ -1,18 +1,20 @@
+from collections import OrderedDict
+from abc import ABC, abstractmethod
 
 from lxml import etree
 
 from .numerics import DecimalMoney
 from .strings import IDN
 
-class Message:
+class Message(ABC):
     _XML_ROOT_TAG = 'Mensaje'
-    _XML_TAG_MAP = {
+    _XML_TAG_MAP = OrderedDict({
         'key': 'Clave',
         'code': 'Mensaje',
         'detail': 'DetalleMensaje',
         'taxTotalAmount': 'MontoTotalImpuesto',
         'invoiceTotalAmount': 'TotalFactura'
-        }
+        })
     _XML_HACIENDA_NAMESPACE = ''
     _XML_HACIENDA_SCHEMA_LOCATION = ''
     _XMLNS_DS = 'http://www.w3.org/2000/09/xmldsig#'
@@ -25,6 +27,8 @@ class Message:
     taxTotalAmount: DecimalMoney
     invoiceTotalAmount: DecimalMoney
 
+    def __init__(self, *args, **kwargs):
+        self._order_tag_map()
 
     def toXml(self):
         nsmap = {
@@ -52,6 +56,10 @@ class Message:
                               pretty_print=True,
                               xml_declaration=True)
 
+    @abstractmethod
+    def _order_tag_map(self):
+        raise NotImplementedError('func _order_tag_map is not implemented.')
+
 
 class RecipientMessage(Message):
     _XML_ROOT_TAG = 'MensajeReceptor'
@@ -76,5 +84,18 @@ class RecipientMessage(Message):
             'accreditTotalTaxAmount': 'MontoTotalImpuestoAcreditar',
             'applicableExpenseTotalAmount': 'MontoTotalDeGastoAplicable',
             'recipientIDN': 'NumeroCedulaReceptor',
-            'recipientSequenceNumber': 'NumConsecutivoReceptor'
+            'recipientSequenceNumber': 'NumeroConsecutivoReceptor'
             })
+        super().__init__()
+
+    def _order_tag_map(self):
+        key_order = ('key', 'issuerIDN', 'issueDate', 'code',
+                     'detail', 'activityCode', 'taxTerms',
+                     'accreditTotalTaxAmount',
+                     'applicableExpenseTotalAmount', 'taxTotalAmount',
+                     'invoiceTotalAmount', 'recipientIDN',
+                     'recipientSequenceNumber')
+
+        for key in key_order:
+            self._XML_TAG_MAP.move_to_end(key)
+

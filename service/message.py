@@ -9,12 +9,13 @@ from lxml import etree
 
 from . import api_facturae
 from . import fe_enums
-from helpers.utils import build_response_data
+from helpers.utils import build_response_data, run_and_summ_collec_job
 from helpers.entities.messages import RecipientMessage
 from helpers.entities.numerics import DecimalMoney
 from helpers.entities.strings import IDN, IDNType
 from helpers.errors.enums import InputErrorCodes
 from helpers.errors.exceptions import InputError
+from helpers.debugging import log_section
 from infrastructure import companies as dao_company
 from infrastructure import message as dao_message
 from infrastructure import company_smtp as dao_smtp
@@ -25,6 +26,7 @@ from configuration import globalsettings
 
 _logger = logging.getLogger(__name__)
 _data_statuses = (200, 206)
+_confirmation_statuses = (201, 202)
 
 cfg = globalsettings.cfg
 
@@ -66,7 +68,9 @@ def create(data: dict):
    dao_message.insert(company_id, message, encoded,
                     'creado', issuer_email=issuer_email)
 
-   return build_response_data({'message': 'Message successfully created.'})
+   result = process_message(message.key)
+
+   return build_response_data(result)
 
 
 def process_message(key_mh: str):
@@ -95,13 +99,17 @@ def process_message(key_mh: str):
         result = _handle_sent_message(company, message, mh_token)# query_message(key_mh, mh_token, company['env'])
 
     return build_response_data(result)
-   
+
 
 def send_mail(document: dict):
     smtp_data = dao_smtp.get_company_smtp(document['company_user'])
 
     if not smtp_data:
         smtp_data = cfg['email']
+    else:
+        smtp_data.pop('company_user')
+
+    smtp_data['sender'] = smtp_data.pop('user')
 
     primary_recipient = document.get('email') # using this as a way to tell between invoices and messages... # BIG TODO
     if primary_recipient:
@@ -111,6 +119,20 @@ def send_mail(document: dict):
 
     return build_response_data({'message': 'Email succesfully sent'})
 
+
+@log_section('Processing Messages')
+def job_process_messages():
+    collec_cb = dao_message.select_by_status
+    item_cb = process_message
+    item_id_key = 'key_mh'
+    collec_cb_args = ('procesando',)
+    item_cb_kwargs_map = {
+        'key_mh': 'key_mh'
+        }
+    return run_and_summ_collec_job(collec_cb,
+                                   item_cb, item_id_key,
+                                   collec_cb_args, {},
+                                   item_cb_kwargs_map)
 
 
 
@@ -143,24 +165,25 @@ def _handle_created_message(company: dict, message: dict, token: str):
         if info['error']['http_status'] == 400: # gotta update only if the response is 400...
             dao_message.update_from_answer(company_user,
                                            key, None, 'procesando',
-                                           _curr_datetime_cr())
+                                           None)
         return info
     elif 'unexpected' in info:
         return info
 
     dao_message.update_from_answer(company_user,
                                    key, None, 'procesando',
-                                   _curr_datetime_cr())
+                                   None)
 
     result = {
-        'message': 'Confirmación recibida exitosamente por Hacienda. Revisar este mismo url nuevamente para consultar su estado.',
+        'message': 'Confirmación recibida por Hacienda.',
         'data': info
         }
     return result
 
 
 def _handle_sent_message(company: dict, message:dict, token: str):
-    response = query_document(company['env'], message['key_mh'],
+    message_query_key = '-'.join((message['key_mh'], message['recipient_seq_number']))
+    response = query_document(company['env'], message_query_key,
                               token)
     info = _handle_hacienda_api_response(response)
     if 'error' in info or 'unexpected' in info:
@@ -168,9 +191,10 @@ def _handle_sent_message(company: dict, message:dict, token: str):
 
     status = info.get('ind-estado', '')
     answer_xml = info.get('respuesta-xml')
+    answer_date = info.get('fecha', _curr_datetime_cr(False))
     dao_message.update_from_answer(company['company_user'],
-                                   message['key_mh'], answer_xml, status,
-                                   _curr_datetime_cr())
+                                   message['key_mh'], answer_xml,
+                                   status, answer_date)
 
     result = {
         'data': {
@@ -264,7 +288,7 @@ def _handle_hacienda_api_response(response: requests.Response):
                     }
                 }
 
-    elif response.status_code in (201, 202): # response that confirms creation or reception of a resource. Typically from a post request
+    elif response.status_code in _confirmation_statuses: # response that confirms creation or reception of a resource. Typically from a post request
         location = response.headers.get('Location', '')
         info = {'location': location}
 
@@ -297,7 +321,7 @@ def _handle_hacienda_api_response(response: requests.Response):
                     }
                 }
 
-    elif response.status_code == 401:
+    elif response.status_code == 401: # unathorized response. Either the oauth token is bad or something else happened...
         _logger.error("""***Authorization challenge failed:
         Response Headers: {}
         Response Body: {}
@@ -356,7 +380,7 @@ def _send_mail_invoice(document: dict, smtp: dict):
     mail_data = {
         'subject': "Envio de {} número: {}".format(doc_type_desc,
                                                    doc_key),
-        'body': "Adjuntamos los datos de la {}".format(doc_type_desc),
+        'content': "Adjuntamos los datos de la {}".format(doc_type_desc),
         'name_file1': "{}_{}.pdf".format(doc_type_desc, doc_key),
         'name_file2': "{}_{}.xml".format(doc_type, doc_key),
         'name_file3': "AHC_{}.xml".format(doc_key),
@@ -372,23 +396,19 @@ def _send_mail_message(document: dict, smtp: dict):
     doc_key = document['key_mh']
     doc_message_code = document['code']
     doc_message_code_desc = fe_enums.MessageCodeDesc[doc_message_code]
-    doc_message_code_acron = fe_enums.MessageCodeAcronym[doc_message_code]
-
-    file1 = _utf_decode(document['signed_xml'])
-    file2 = _utf_decode(document['answer_xml'])
 
     mail_data = {
         'subject': 'Confirmación de documento número: {}'.format(
             doc_key),
-        'body': """Se adjunta el Mensaje Receptor y la respuesta de Hacienda para el documento número: {}
-Se confirma el documento con un estado de {}.""".format(
-            doc_key, doc_message_code_desc),
-        'name_file1': '{}_{}.xml'.format(doc_message_code_acron,
-                                         doc_key),
-        'name_file2': 'AHC_{}.xml'.format(doc_key),
+        'content': """Saludos cordiales,
+        
+        Se le informa que su documento emitido con clave: "{}", para el receptor con identificación: "{}", fue confirmado con un estado de: {}"""
+            .format(doc_key, document['recipient_idn'], doc_message_code_desc),
+        'name_file1': "",
+        'name_file2': "",
         'name_file3': "",
-        'file1': file1,
-        'file2': file2,
+        'file1': None,
+        'file2': None,
         'file3': None
         }
     return email.send_email(receiver=primary_recipient, **smtp,

@@ -28,8 +28,8 @@ def insert(company_id: str, message: RecipientMessage,
 
 
 def update_from_answer(company_id: str, message_key: str,
-           encoded_answer_xml: bytes, status: str, answer_date: str,
-           connection: Connection = None):
+                       encoded_answer_xml: bytes, status: str,
+                       answer_date: str, connection: Connection = None):
     procedure = 'usp_updateFromAnswer_message'
     args = (company_id, message_key, encoded_answer_xml,
             status, answer_date)

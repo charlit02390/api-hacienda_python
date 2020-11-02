@@ -1,4 +1,4 @@
-
+from traceback import format_exc
 
 def build_response_data(result: dict, warn_msg: str = 'No data was found', error_msg: str = 'An issue was found and the application had to be stopped.') -> dict:
     """
@@ -68,3 +68,48 @@ def build_response(data: dict):
         elements.append(data.pop('headers'))
 
     return tuple(elements)
+
+
+def run_and_summ_collec_job(collec_cb, item_cb,
+                                     item_id_key, collec_cb_args = (),
+                                     collec_cb_kwargs = {},
+                                     item_cb_kwargs_map = {}):
+    try:
+        collection = collec_cb(*collec_cb_args,
+                               **collec_cb_kwargs)
+    except Exception:
+        return """***Could not fetch collection:***
+Collection callback: {}
+Callback Args: {}
+Callback Kwargs: {}
+{}
+""".format(collec_cb.__qualname__, collec_cb_args,
+           collec_cb_kwargs, format_exc())
+
+    summary = {
+        'success': 0,
+        'errors': []
+        }
+    param_names = item_cb_kwargs_map.keys()
+    item_keys = item_cb_kwargs_map.values()
+    for item in collection:
+        params = dict(zip(param_names, (item[key] for key in item_keys)))
+        try:
+            item_cb(**params)
+            summary['success'] += 1
+        except Exception:
+            summary['errors'].append("""***An exception was found:***
+Item Id: {}
+Callback: {}
+Params: {}
+{}
+""".format(item[item_id_key], item_cb.__qualname__,
+           params, format_exc()))
+
+    summary_str = """-Successful counter: {}
+-Errors ({}):
+""".format(summary['success'], len(summary['errors']))
+    
+    summary_str += '\n'.join(summary['errors'])
+
+    return summary_str

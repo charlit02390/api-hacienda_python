@@ -1,3 +1,5 @@
+from functools import partial
+
 from . import api_facturae
 from . import fe_enums
 from . import makepdf
@@ -16,7 +18,8 @@ from flask import g
 
 from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, InternalErrorCodes
 from helpers.errors.exceptions import InputError, ValidationError, ServerError
-from helpers.utils import build_response_data
+from helpers.utils import build_response_data, run_and_summ_collec_job
+from helpers.debugging import log_section
 
 docLogger = logging.getLogger(__name__)
 
@@ -200,12 +203,12 @@ def save_additional_emails(key_mh, emails, conn):
 
     return True
 
-def validate_documents():
-    results = documents.get_documents(0);
-    for document in results:
-        validate_document(document['company_user'],document['key_mh'])
-    return "Success Job";
 
+@log_section('Validate Documents')
+def validate_documents():
+    item_cb = validate_document
+    collec_cb_args = (0,)
+    return _run_and_summ_docs_job(item_cb, collec_cb_args)
 
 
 def validate_document(company_user, key_mh):
@@ -252,11 +255,11 @@ def validate_document(company_user, key_mh):
     return build_response_data({'message' : return_message})
 
 
+@log_section('Consult Documents')
 def consult_documents():
-    results = documents.get_documents(1);
-    for document in results:
-        consult_document(document['company_user'], document['key_mh'])
-    return "Success Job";
+    item_cb = consult_document
+    collec_cb_args = (1,)
+    return _run_and_summ_docs_job(item_cb, collec_cb_args)
 
 
 def consult_document(company_user, key_mh):
@@ -507,3 +510,14 @@ def parse_datetime(value, field):
                                   status=ValidationErrorCodes.INVALID_DATETIME_FORMAT) from ver
 
     return parsed
+
+
+# if this fails horribly, I will rollback and apply a simpler solution...
+_run_and_summ_docs_job = partial(
+    run_and_summ_collec_job,
+    collec_cb=documents.get_documents,
+    item_id_key='key_mh',
+    item_cb_kwargs_map={
+        'company_user': 'company_user',
+        'key_mh': 'key_mh'
+        })
