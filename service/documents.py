@@ -125,7 +125,7 @@ def create_document(data):
         if not _logo:
             raise InputError(status=InputErrorCodes.NO_RECORD_FOUND, message='No logo was found for the Company.')
 
-        additional_pdf_fields = build_additional_pdf_fields(data)
+        additional_pdf_fields = _build_additional_pdf_fields(data)
         # don't know how we are calling this property, so just trying stuff out.
         pdf_notes = data.get('notas', data.get('observaciones', data.get('piedepagina',[])))
         _logo = _logo['logo'].decode('utf-8')
@@ -405,6 +405,25 @@ def consult_voucher_byid(company_user, clave):
         # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
 
 
+def get_pdf(key: str):
+    document = documents.get_document(key)
+    if not document:
+        raise InputError('document', key,
+                         status=InputErrorCodes.NO_RECORD_FOUND)
+
+    if document['pdfdocument']:
+        data = {'data': {'pdf': document['pdfdocument']}}
+    else:
+        data = {
+            'message': """The specified document does not have a PDF file.
+Document Type: {}
+*If the document type is not 'TE', please contact the API Admin.""".format(
+                                                                           document['document_type'])
+            }
+
+    return build_response_data(data)
+
+
 def validate_email(email):
     """
     Validates an email by parsing it into an email.headerregistry.Address object.
@@ -428,7 +447,7 @@ def validate_email(email):
 
     return True
 
-def build_additional_pdf_fields(data):
+def _build_additional_pdf_fields(data):
     DATETIME_DISPLAY_FORMAT = '%d-%m-%Y'
 
     fields = {}

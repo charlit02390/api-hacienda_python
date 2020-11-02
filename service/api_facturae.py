@@ -534,7 +534,7 @@ def lines_xml(sb, lines, document_type, receiver_company):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
         code = v.get('cabys', v.get('codigo', v.get('codigoServicio', v.get('codigoProducto')))) # just in case...
-        if isinstance(code, str):
+        if isinstance(code, str) and code:
             sb.Append('<Codigo>' + code + '</Codigo>')
 
         com_codes = v.get('codigoComercial')
@@ -720,7 +720,10 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     #elif not isinstance(otrosCargos, list):
     #    otrosCargos = None
 
-    if otrosCargos:
+    # end me, doing this for now.... TODO: validate the whole json before getting here...
+    if otrosCargos and len(otrosCargos) \
+        and isinstance(otrosCargos[0], dict) \
+        and otrosCargos[0].get('tipoDocumento'):
         other_charges(sb, otrosCargos)
 
     sb.Append('<ResumenFactura>')

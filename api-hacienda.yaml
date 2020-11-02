@@ -827,6 +827,28 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - api_key: []
+  /api/documents/{key}/pdf:
+    get:
+      tags:
+      - utilities
+      summary: Gets the api generated pdf for the specified document
+      operationId: routes.documents.get_pdf
+      parameters:
+      - name: key
+        in: path
+        description: the key for the document to fetch it's pdf
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Ok
+        401:
+          description: Unauthorized
+        404:
+          description: Not Found
+      security:
+      - api_key: []
   /api/references/key:
     post:
       tags:
@@ -1086,7 +1108,7 @@ paths:
         500:
           description: there was an error starting the facial recognition system
       security:
-        - jwt: []
+        - api_key: []
   /api/auth:
     get:
       tags:
