@@ -21,17 +21,13 @@ options = {'swagger_path': '/api/swagger_ui/'}
 spec_args = {'debug_switch' : debugging.DEBUG_SWITCH_NAME}
 app = connexion.App(__name__, specification_dir='./', options=options)
 app.add_api('api-hacienda.yaml',arguments=spec_args)
+app.app.config['JSON_SORT_KEYS'] = False
+app.app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 # Sets custom error handlers for application error responses.
 errorhandlers.register_flask_app_handlers(app)
 
 
-def print_values():
-    print('every 5 seconds')
-
-
 if __name__ == '__main__':
     scheduler.scheduled_jobs()
     app.run(host='localhost', port=3005)
-
-

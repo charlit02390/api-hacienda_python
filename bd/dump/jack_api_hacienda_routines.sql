@@ -1165,6 +1165,7 @@ DELIMITER ;
 
 -- Dump completed on 2020-09-13 14:39:44
 
+DROP PROCEDURE IF EXISTS usp_deleteUser_CompanyByUser;
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_deleteUser_CompanyByUser`(
 	IN `p_user_email` VARCHAR(255)
@@ -1175,6 +1176,7 @@ END$$
 DELIMITER ;
 
 
+DROP PROCEDURE IF EXISTS usp_insert_documentxemail;
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_documentxemail`(
 	IN `p_key` VARCHAR(50), IN `p_email` VARCHAR(64)
@@ -1195,7 +1197,7 @@ BEGIN
 END$$
 DELIMITER ;
 
-
+DROP PROCEDURE IF EXISTS usp_selectByDocKey_documentxemail;
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByDocKey_documentxemail`(
 	IN `p_key` VARCHAR(50)
@@ -1208,3 +1210,203 @@ BEGIN
     END IF;
 END$$
 DELIMITER ;
+
+-- ---------------------------------------
+-- Messages USPs --------------------
+-- ---------------------------------------
+DROP PROCEDURE IF EXISTS usp_insert_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_message` (
+	IN `p_company_id` VARCHAR(45),
+	IN `p_key_mh` VARCHAR(50),
+	IN `p_issuer_idn_num` VARCHAR(15),
+	IN `p_issuer_idn_type` VARCHAR(10),
+	IN `p_issue_date` DATETIME,
+	IN `p_code` VARCHAR(1),
+	IN `p_recipient_idn` VARCHAR(15),
+	IN `p_recipient_seq_number` VARCHAR(20),
+	IN `p_encd_xml` BLOB,
+	IN `p_status` VARCHAR(30),
+	IN `p_issuer_email` VARCHAR(128)
+)
+BEGIN
+	DECLARE v_idcomp INT;
+	SET v_idcomp = (SELECT id from companies WHERE company_user = p_company_id);
+	IF v_idcomp IS NOT NULL THEN
+		INSERT INTO `message` (
+			company_id,
+			key_mh,
+			status,
+			code,
+			issue_date,
+			issuer_idn_num,
+			issuer_idn_type,
+			issuer_email,
+			recipient_idn,
+			recipient_seq_number,
+			signed_xml)
+		VALUES (
+			v_idcomp,
+			`p_key_mh`,
+			`p_status`,
+			`p_code`,
+			`p_issue_date`,
+			`p_issuer_idn_num`,
+			`p_issuer_idn_type`,
+			`p_issuer_email`,
+			`p_recipient_idn`,
+			`p_recipient_seq_number`,
+			`p_encd_xml`
+		);
+	END IF;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_updateFromAnswer_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_updateFromAnswer_message` (
+	IN `p_company_id` VARCHAR(45),
+	IN `p_key_mh` VARCHAR(50),
+	IN `p_encd_answer_xml` BLOB,
+	IN `p_status` VARCHAR(30),
+	IN `p_answer_date` DATETIME
+)
+BEGIN
+	DECLARE v_idcomp INT;
+	SET v_idcomp = (SELECT id from companies WHERE company_user = p_company_id);
+	IF v_idcomp IS NOT NULL THEN
+		UPDATE `message`
+		SET	answer_xml	=	`p_encd_answer_xml`,
+			status	=	`p_status`,
+			answer_date =	`p_answer_date`
+		WHERE	v_idcomp = company_id
+			AND	key_mh	=	`p_key_mh`;
+	END IF;
+END$$
+DELIMITER ;
+
+
+DROP VIEW IF EXISTS vw_message;
+CREATE VIEW `vw_message`
+AS
+SELECT	msg.id,
+	msg.company_id,
+	cmp.company_user,
+	msg.key_mh,
+	msg.status,
+	msg.code,
+	msg.issue_date,
+	msg.issuer_idn_num,
+	msg.issuer_idn_type,
+	msg.issuer_email,
+	msg.recipient_idn,
+	msg.recipient_seq_number,
+	msg.signed_xml,
+	msg.answer_date,
+	msg.answer_xml,
+	cmp.is_active
+FROM	`message` AS msg INNER JOIN
+	companies as cmp ON msg.company_id = cmp.id;
+
+
+DROP PROCEDURE IF EXISTS usp_select_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_select_message` (
+	IN `p_key_mh` VARCHAR(50)
+)
+BEGIN
+	SELECT v_msg.*
+	FROM	`vw_message` AS v_msg
+	WHERE	v_msg.key_mh = p_key_mh;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_selectByCompany_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCompany_message` (
+	IN `p_company_user` VARCHAR(50),
+	IN `p_limit` INT UNSIGNED
+)
+BEGIN
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.company_user = ?';
+	IF `p_limit` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
+	END IF;
+	PREPARE stmt FROM @q;
+	SET @cmp_user = `p_company_user`;
+	EXECUTE stmt USING @cmp_user;
+	DEALLOCATE PREPARE stmt;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_selectByStatus_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByStatus_message` (
+	IN `p_status` VARCHAR(30),
+	IN `p_company_user` VARCHAR(50),
+	IN `p_limit` INT UNSIGNED
+)
+BEGIN
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.status = ?';
+	IF `p_company_user` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
+	END IF;
+	IF `p_limit` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
+	END IF;
+	PREPARE stmt FROM @q;
+	SET @status = `p_status`;
+	EXECUTE stmt USING @status;
+	DEALLOCATE PREPARE stmt;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_selectByCode_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCode_message` (
+	IN `p_code` VARCHAR(1),
+	IN `p_company_user` VARCHAR(50),
+	IN `p_limit` INT UNSIGNED
+)
+BEGIN
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.code = ?';
+	IF `p_company_user` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
+	END IF;
+	IF `p_limit` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
+	END IF;
+	PREPARE stmt FROM @q;
+	SET @code = `p_code`;
+	EXECUTE stmt USING @code;
+	DEALLOCATE PREPARE stmt;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_selectByIssuerIDN_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByIssuerIDN_message` (
+	IN `p_issuer_idn_num` VARCHAR(1),
+	IN `p_company_user` VARCHAR(50),
+	IN `p_limit` INT UNSIGNED
+)
+BEGIN
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.issuer_idn_num = ?';
+	IF `p_company_user` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
+	END IF;
+	IF `p_limit` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
+	END IF;
+	PREPARE stmt FROM @q;
+	SET @idn = `p_issuer_idn_num`;
+	EXECUTE stmt USING @idn;
+	DEALLOCATE PREPARE stmt;
+END$$
+DELIMITER ;
+-- ---------------------------------------

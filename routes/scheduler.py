@@ -1,5 +1,6 @@
 from flask_apscheduler import APScheduler
 from service import documents
+from service import message as model_message
 
 scheduler = APScheduler()
 
@@ -7,19 +8,13 @@ scheduler = APScheduler()
 def scheduled_jobs():
     scheduler.add_job(id='Validate documents', func=validate_documents, trigger='interval', seconds=300)
     scheduler.add_job(id='Consult documents', func=consult_documents, trigger='interval', seconds=600)
+    scheduler.add_job(id='Process Messages', func=model_message.job_process_messages, trigger='interval', seconds=1000)
     scheduler.start()
 
 
 def validate_documents():
-    print("Start Validate Documents")
-    result = documents.validate_documents()
-    print("End validate document" + "Result" + result)
+    documents.validate_documents()
 
 
 def consult_documents():
-    print("Start Cosult Documents")
-    result = documents.consult_documents()
-    print("End consult document" + "Result" + result)
-
-
-
+    documents.consult_documents()
