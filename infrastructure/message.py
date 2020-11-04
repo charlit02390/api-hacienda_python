@@ -44,6 +44,20 @@ def update_from_answer(company_id: str, message_key: str,
     return True
 
 
+def update_email_sent(message_key: str, email_sent: int,
+                      connection: Connection = None):
+    procedure = 'usp_updateEmailSent_message'
+    args = (message_key, email_sent)
+
+    try:
+        dba.execute_proc(proc_name=procedure, args=args,
+                         conn=connection, assert_unique=True)
+    except dba.DbAdapterError as dbae:
+        raise DatabaseError(dbae.get_message(),
+                            status=DBErrorCodes.DB_MESSAGE_UPDATE_EMAILSENT
+                            ) from dbae
+
+
 def select(key_mh: str):
     procedure = 'usp_select_message'
     args = (key_mh,)
@@ -63,9 +77,9 @@ def select_by_company(company_user: str, limit: int = None):
 
 
 def select_by_status(status: str, company_user: str = None,
-                     limit: int = 20):
+                     company_is_active: bool = None, limit: int = 20):
     procedure = 'usp_selectByStatus_message'
-    args = (status, company_user, limit)
+    args = (status, company_user, company_is_active, limit)
     try:
         return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:

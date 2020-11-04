@@ -103,6 +103,262 @@ components:
           - usuario_hacienda
           - firma
           - estado
+    doc_recipient:
+      type: object
+      properties:
+        tipoIdentificacion:
+          type: string
+          enum: # placehold_this
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+        numeroIdentificacion:
+          type: string
+        nombre:
+          type: string
+        provincia:
+          type: string
+        canton:
+          type: string
+        distrito:
+          type: string
+        barrio:
+          type: string
+        otrasSenas:
+          type: string
+        otrasSenasExtranjero:
+          type: string
+        codigoPais:
+          type: string
+        telefono:
+          type: string
+        website:
+          type: string
+        correo:
+          type: string
+        nombreComercial:
+          type: string
+        correo_gastos: # deprecated soon(TM); kept for compatibility reasons
+          type: string
+        correosAdicionales: # deprecates correo_gastos
+          type: array
+          items:
+            type: string
+      required:
+        - nombre
+    doc_otherCharges:
+      type: object
+      properties:
+        tipoDocumento:
+          type: string
+          enum: # placehold_this
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '99'
+        numeroIdentidadTercero:
+          type: string
+        nombreTercero:
+          type: string
+        detalle:
+          type: string
+        porcentaje:
+          type: string
+        montoCargo:
+          type: string
+      required:
+        - tipoDocumento
+        - detalle
+        - montoCargo
+    doc_reference:
+      type: object
+      properties:
+        tipoDocumento:
+          type: string
+          enum: # placehold_this
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '08'
+            - '09'
+            - '10'
+            - '11'
+            - '12'
+            - '13'
+            - '14'
+            - '15'
+            - '99'
+        numeroReferencia:
+          type: string
+        fecha:
+          type: string
+        codigo:
+          type: string
+          enum: # placehold_this
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '99'
+        razon:
+          type: string
+      required:
+        - tipoDocumento
+        - fecha
+    doc_detail_tax_exemption:
+      type: object
+      properties:
+        Tipodocumento:
+          type: string
+          enum: # placehold_this
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '99'
+        NumeroDocumento:
+          type: string
+        NombreInstitucion:
+          type: string
+        FechaEmision:
+          type: string
+        porcentajeExoneracion:
+          type: string
+        montoExoneracion:
+          type: string
+      required:
+        - Tipodocumento
+        - NumeroDocumento
+        - NombreInstitucion
+        - FechaEmision
+        - porcentajeExoneracion
+        - montoExoneracion
+    doc_detail_tax:
+      type: object
+      properties:
+        codigoTarifa:
+          type: string
+          enum: # placehold_this
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '08'
+        codigo:
+          type: string
+          enum: # placehold_this
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '08'
+            - '12'
+            - '99'
+        tarifa:
+          type: string
+        monto:
+          type: string
+        factorIVA:
+          type: string
+        montoExportacion:
+          type: string
+        exoneracion:
+          type: array
+          items:
+            $ref: '#/components/schemas/doc_detail_tax_exemption'
+      required:
+        - monto
+    doc_detail:
+      type: object
+      properties:
+        numero:
+          type: string
+        codigo:
+          type: string
+        cantidad:
+          type: string
+        codigoComercial:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo:
+                type: string
+                enum: # placehold_this
+                  - '01'
+                  - '02'
+                  - '03'
+                  - '04'
+                  - '99'
+              codigo:
+                type: string
+            required:
+              - tipo
+        unidadMedidaComercial:
+          type: string
+        unidad:
+          type: string
+        detalle:
+          type: string
+        precioUnitario:
+          type: string
+        montoTotal:
+          type: string
+        descuento:
+          type: array
+          items:
+            type: object
+            properties:
+              monto:
+                type: string
+              descripcionDescuento:
+                type: string
+            required:
+              - monto
+              - descripcionDescuento
+        subtotal:
+          type: string
+        impuesto:
+          type: array
+          items:
+            $ref: '#/components/schemas/doc_detail_tax'
+        impuestoNeto:
+          type: string
+        totalLinea:
+          type: string
+        partidaArancelaria:
+          type: string
+        baseImponible:
+          type: string
+      required:
+        - numero
+        - codigo
+        - cantidad
+        - unidad
+        - precioUnitario
+        - montoTotal
+        - subtotal
+        - impuestoNeto
+        - totalLinea
     document:
       type: object
       properties:
@@ -111,129 +367,90 @@ components:
           properties:
             tipo:
               type: string
+              enum: # placehold_this
+                - '1'
+                - '2'
+                - '3'
+                - '4'
+                - '8'
+                - '9'
             nombre_usuario:
               type: string
             situacion:
               type: string
             consecutivo:
               type: string
+              minLength: 20
+              maxLength: 20
             clavelarga:
               type: string
+              minLength: 50
+              maxLength: 50
             terminal:
               type: string
             sucursal:
               type: string
-            fecha:
+            fechafactura:
               type: string
             codigoActividad:
               type: string
+              minLength: 6
+              maxLength: 6
             otro_telefono:
               type: string
             condicionVenta:
               type: string
+              enum: #placehold_this
+                - '01'
+                - '02'
+                - '03'
+                - '04'
+                - '05'
+                - '06'
+                - '07'
+                - '08'
+                - '09'
+                - '99'
             plazoCredito:
               type: string
-            num_fecha:
+            numOrden:
               type: string
-            num_referencia:
+            numReferencia:
               type: string
             codigo_vendedor:
               type: string
             receptor:
-              type: object
-              properties:
-                tipo_identificacion:
-                  type: string
-                numero_identificacion:
-                  type: string
-                nombre:
-                  type: string
-                provincia:
-                  type: string
-                canton:
-                  type: string
-                distrito:
-                  type: string
-                otras_senas:
-                  type: string
-                cod_pais:
-                  type: string
-                telefono:
-                  type: string
-                website:
-                  type: string
-                correo:
-                  type: string
-                nombre_comercial:
-                  type: string
-                correo_gasto:
-                  type: string
+              $ref: '#/components/schemas/doc_recipient'
             medioPago:
               type: array
-              properties:
-                codigo:
-                  type: string
+              items:
+                type: object
+                properties:
+                  codigo:
+                    type: string
+                    enum: #placehold_this
+                      - '01'
+                      - '02'
+                      - '03'
+                      - '04'
+                      - '05'
+                      - '99'
+                required:
+                  - codigo
             detalles:
               type: array
-              properties:
-                numero:
-                  type: string
-                cantidad:
-                  type: string
-                codigo_comercial:
-                  type: array
-                  properties:
-                    tipo:
-                      type: string
-                    codigo:
-                      type: string
-                unidad_medidad_comercial:
-                  type: string
-                unidad:
-                  type: string
-                detalle:
-                  type: string
-                precioUnitario:
-                  type: string
-                monto_total:
-                  type: string
-                descuento:
-                  type: array
-                  properties:
-                    monto:
-                      type: string
-                    descripcion:
-                      type: string
-                subtotal:
-                  type: string
-                impuesto:
-                  type: array
-                  properties:
-                    codigo_tarifa:
-                      type: string
-                    codigo:
-                      type: string
-                    tarifa:
-                      type: string
-                    monto:
-                      type: string
-                    factor_iva:
-                      type: string
-                impuestoNeto:
-                  type: string
-                total_linea:
-                  type: string
-                partida_arancelaria:
-                  type: string
-                base_imponible:
-                  type: string
+              items:
+                $ref: '#/components/schemas/doc_detail'
             codigoTipoMoneda:
               type: object
               properties:
                 tipoMoneda:
                   type: string
-                tipo_cambio:
+                tipoCambio:
                   type: string
+              required:
+                - tipoMoneda
+                - tipoCambio
             totalServGravados:
               type: string
             totalServExentos:
@@ -268,46 +485,51 @@ components:
               type: string
             otrosCargos:
               anyOf:
-               - type: object
-                 properties:
-                   tipo_documento:
-                     type: string
-                   numero_identidad_tercero:
-                     type: string
-                   detalle:
-                     type: string
-                   porcentaje:
-                     type: string
-                   monto_cargo:
-                     type: string
-               - type: array
-                 items:
-                   type: object
-                   properties:
-                     tipo_documento:
-                       type: string
-                     numero_identidad_tercero:
-                       type: string
-                     detalle:
-                       type: string
-                     porcentaje:
-                       type: string
-                     monto_cargo:
-                       type: string
+              - type: object  # this is allowed, but ignored, for compatibility reasons
+              - type: array
+                items:
+                  $ref: '#/components/schemas/doc_otherCharges'
             referencia:
               anyOf:
-               - type: string
-               - type: object
-                 properties:
-                   num_factura:
-                    type: string
+                - type: string # allowed, but ignored, for compatibility reasons
+                - $ref: '#/components/schemas/doc_reference' # allowed for compatibility reasons
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/doc_reference'
             otros:
-              type: object
-              properties:
-                otro_texto:
+              anyOf:
+              - type: object
+                properties:
+                  otroTexto:
+                    type: string
+                  otroContenido:
+                    type: string
+                additionalProperties:
                   type: string
-                otro_contenido:
-                  type: string
+              - type: array
+                items:
+                  type: object
+                  properties:
+                    codigo:
+                      type: string
+                    texto:
+                      type: string
+                  additionalProperties:
+                    type: string
+          required:
+            - tipo
+            - nombre_usuario
+            - consecutivo
+            - clavelarga
+            - fechafactura
+            - codigoActividad
+            - condicionVenta
+            - medioPago
+            - detalles
+            - codigoTipoMoneda
+            - totalVentas
+            - totalVentasNetas
+            - totalComprobantes
     mh_validations:
       type: object
       properties:
@@ -369,11 +591,13 @@ components:
               type: integer
             idcompanies:
               type: array
-              properties:
-                id:
-                  type: integer
-              required:
-                - id
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                required:
+                  - id
           required:
             - email
             - password
@@ -389,11 +613,13 @@ components:
           type: string
         idcompanies:
           type: array
-          properties:
-            id:
-              type: integer
-          required:
-            - id
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+            required:
+              - id
       required:
         - email
         - idcompanies
@@ -561,7 +787,7 @@ components:
           anyOf:
           - type: object
           - type: array
-        details:
+        detail:
           type: string
         debug:
           type: string
@@ -572,8 +798,16 @@ components:
       properties:
         tipoIdentificacion:
           type: string
-          minLength: 1
-          maxLength: 1
+          enum: # placehold_this
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            # these ones are for compatibility reasons
+            - '1'
+            - '2'
+            - '3'
+            - '4'
         numeroIdentificacion:
           type: string
           minLength: 9
@@ -601,8 +835,10 @@ components:
               $ref: '#/components/schemas/idn'
             mensaje:
               type: string
-              minLength: 1
-              maxLength: 1
+              enum: # placehold_this
+                - '1'
+                - '2'
+                - '3'
             detalle:
               type: string
               maxLength: 160
@@ -621,12 +857,12 @@ components:
               maxLength: 6
             condicionImpuesto:
               type: string
-              enum:
-              - '01'
-              - '02'
-              - '03'
-              - '04'
-              - '05'
+              enum: # placehold_this
+                - '01'
+                - '02'
+                - '03'
+                - '04'
+                - '05'
             totalImpuestoAcreditar:
               type: string
             totalGastoAplicable:

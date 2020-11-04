@@ -83,6 +83,17 @@ def update_document(company_id, key_mh, answer_xml, status, date):
     return True
 
 
+def update_isSent(key_mh, isSent, connection=None):
+    procedure = 'usp_updateIsSent_documents'
+    args = (key_mh, isSent)
+    try:
+        dba.execute_proc(proc_name=procedure, args=args,
+                         assert_unique=True, conn=connection)
+    except dba.DbAdapterError as dbae:
+        raise DatabaseError(dbae.get_message(),
+                            status=enums.DBErrorCodes.DB_DOCUMENT_UPDATE_ISSENT
+                            ) from dbae
+
 
 def get_document(key_mh):
     procedure = 'sp_getDocumentByKey'

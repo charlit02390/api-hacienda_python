@@ -1044,6 +1044,19 @@ SET
 WHERE `key_mh` = v_key_mh and `company_id` = (Select id from companies where company_user = v_company_id) ;
 END ;;
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `usp_updateIsSent_documents`;
+DELIMITER $$
+CREATE PROCEDURE `usp_updateIsSent_documents` (
+	v_key_mh VARCHAR(50),
+	v_isSent TINYINT
+)
+BEGIN
+	UPDATE documents
+	SET	`isSent` = v_isSent
+	WHERE `key_mh` = v_key_mh;
+END $$
+DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
@@ -1287,6 +1300,20 @@ END$$
 DELIMITER ;
 
 
+DROP PROCEDURE IF EXISTS `usp_updateEmailSent_message`;
+DELIMITER $$
+CREATE PROCEDURE `usp_updateEmailSent_message` (
+	v_key_mh VARCHAR(50),
+	v_email_sent TINYINT
+)
+BEGIN
+	UPDATE message
+	SET	`email_sent` = v_email_sent
+	WHERE `key_mh` = v_key_mh;
+END$$
+DELIMITER ;
+
+
 DROP VIEW IF EXISTS vw_message;
 CREATE VIEW `vw_message`
 AS
@@ -1305,7 +1332,8 @@ SELECT	msg.id,
 	msg.signed_xml,
 	msg.answer_date,
 	msg.answer_xml,
-	cmp.is_active
+	cmp.is_active as company_is_active,
+	msg.email_sent
 FROM	`message` AS msg INNER JOIN
 	companies as cmp ON msg.company_id = cmp.id;
 
@@ -1347,12 +1375,16 @@ DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByStatus_message` (
 	IN `p_status` VARCHAR(30),
 	IN `p_company_user` VARCHAR(50),
+	IN `p_company_is_active` TINYINT UNSIGNED,
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
 	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.status = ?';
 	IF `p_company_user` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
+	END IF;
+	IF `p_company_is_active` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' AND v_msg.company_is_active = ', `p_company_is_active`);
 	END IF;
 	IF `p_limit` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
