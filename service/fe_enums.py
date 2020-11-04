@@ -148,3 +148,11 @@ MessageCodeDesc = {
     '2': 'Aceptación parcial',
     '3': 'Rechazado'
     }
+
+ServiceCodeTypes = {
+    '01': 'Código del producto del vendedor',
+    '02': 'Código del producto del comprador',
+    '03': 'Código del producto asignado por la industria',
+    '04': 'Código uso interno',
+    '99': 'Otros'
+    }

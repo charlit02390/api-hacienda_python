@@ -18,7 +18,8 @@ CREATE TABLE `message` (
 	`recipient_seq_number` VARCHAR(20) NOT NULL,
 	`signed_xml` BLOB NOT NULL,
 	`answer_date` DATETIME,
-	`answer_xml` BLOB
+	`answer_xml` BLOB,
+	`email_sent` TINYINT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ALTER TABLE `message` ADD CONSTRAINT `UQ_message` UNIQUE(key_mh);
 ALTER TABLE `message` ADD CONSTRAINT `FK_message_companies` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`);

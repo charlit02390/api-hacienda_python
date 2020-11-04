@@ -19,7 +19,7 @@ from xml.sax.saxutils import escape
 from .xades.context2 import XAdESContext2, PolicyId2, create_xades_epes_signature
 
 from helpers.errors.enums import InternalErrorCodes
-from helpers.errors.exceptions import ServerError
+from helpers.errors.exceptions import ServerError, HaciendaError
 
 try:
     from lxml import etree
@@ -389,6 +389,10 @@ def company_xml(sb, issuing_company, document_type):
                 sb.Append('<Numero>' + vat + '</Numero>')
                 sb.Append('</Identificacion>')
 
+            if issuing_company.get('nombreComercial'):
+                sb.Append('<NombreComercial>{}</NombreComercial>'
+                          .format(issuing_company['nombreComercial']))
+
             if document_type != 'FEE':
                 if issuing_company.get('provincia') and issuing_company.get('canton') and issuing_company.get(
                         'distrito'):
@@ -396,7 +400,7 @@ def company_xml(sb, issuing_company, document_type):
                     sb.Append('<Provincia>' + str(issuing_company['provincia'] or '') + '</Provincia>')
                     sb.Append('<Canton>' + str(issuing_company['canton'] or '') + '</Canton>')
                     sb.Append('<Distrito>' + str(issuing_company['distrito'] or '') + '</Distrito>')
-                    sb.Append('<Barrio>' + '01' + '</Barrio>')
+                    sb.Append('<Barrio>' + ('01' if not issuing_company.get('barrio') else str(issuing_company['barrio'])) + '</Barrio>')
                     sb.Append('<OtrasSenas>' + escape(str(issuing_company['otrasSenas'] or 'NA')) + '</OtrasSenas>')
                     sb.Append('</Ubicacion>')
                     sb.Append('<Telefono>')
@@ -492,6 +496,10 @@ def receptor_xml(sb, receiver_company, document_type):
                     sb.Append('<Numero>' + vat + '</Numero>')
                     sb.Append('</Identificacion>')
 
+                if receiver_company.get('nombreComercial'):
+                    sb.Append('<NombreComercial>{}</NombreComercial>'
+                              .format(receiver_company['nombreComercial']))
+
                 if document_type != 'FEE':
                     if receiver_company.get('provincia') and receiver_company.get('canton') and receiver_company.get(
                             'distrito'):
@@ -499,7 +507,7 @@ def receptor_xml(sb, receiver_company, document_type):
                         sb.Append('<Provincia>' + str(receiver_company['provincia'] or '') + '</Provincia>')
                         sb.Append('<Canton>' + str(receiver_company['canton'] or '') + '</Canton>')
                         sb.Append('<Distrito>' + str(receiver_company['distrito'] or '') + '</Distrito>')
-                        sb.Append('<Barrio>' + '01' + '</Barrio>')
+                        sb.Append('<Barrio>' + ('01' if not receiver_company.get('barrio') else str(receiver_company['barrio'])) + '</Barrio>')
                         sb.Append(
                             '<OtrasSenas>' + escape(str(receiver_company['otrasSenas'] or 'NA')) + '</OtrasSenas>')
                         sb.Append('</Ubicacion>')
@@ -533,7 +541,7 @@ def lines_xml(sb, lines, document_type, receiver_company):
         if document_type == 'FEE' and v.get('partidaArancelaria'):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
-        code = v.get('cabys', v.get('codigo', v.get('codigoServicio', v.get('codigoProducto')))) # just in case...
+        code = v.get('codigo', v.get('cabys', v.get('codigoServicio', v.get('codigoProducto')))) # just in case...
         if isinstance(code, str) and code:
             sb.Append('<Codigo>' + code + '</Codigo>')
 
@@ -554,6 +562,9 @@ def lines_xml(sb, lines, document_type, receiver_company):
         sb.Append('<Cantidad>' + str(v['cantidad']) + '</Cantidad>')
         sb.Append('<UnidadMedida>' +
                   str(v['unidad']) + '</UnidadMedida>')
+        if v.get('unidadMedidaComercial'):
+            sb.Append('<UnidadMedidaComercial>{}</UnidadMedidaComercial>'
+                      .format(v['unidadMedidaComercial']))
         sb.Append('<Detalle>' + v['detalle'] + '</Detalle>')
         sb.Append('<PrecioUnitario>' +
                   str(v['precioUnitario']) + '</PrecioUnitario>')
@@ -564,7 +575,7 @@ def lines_xml(sb, lines, document_type, receiver_company):
                 sb.Append('<MontoDescuento>' +
                           str(b['monto']) + '</MontoDescuento>')
                 # NaturalezaDescuento's text could come from a property called "descripcion" or "descripcionDescuento"
-                desc = b.get('descripcion') or b.get('descripcionDescuento')
+                desc = b.get('descripcion', b.get('descripcionDescuento'))
                 if desc:
                     sb.Append('<NaturalezaDescuento>' +
                               desc + '</NaturalezaDescuento>')
@@ -572,9 +583,7 @@ def lines_xml(sb, lines, document_type, receiver_company):
 
         sb.Append('<SubTotal>' + str(v['subtotal']) + '</SubTotal>')
 
-        # TODO: ¿qué es base imponible? ¿porqué podría ser diferente del subtotal?
-        # if document_type != 'FEE':
-        #   sb.Append('<BaseImponible>' + str(v['subtotal']) + '</BaseImponible>')
+
         if document_type != 'FEE':
             # BaseImponible only applies to Impuesto where Codigo = '07'... look ahead for this
             uses_BaseImponible = False
@@ -598,6 +607,10 @@ def lines_xml(sb, lines, document_type, receiver_company):
                 sb.Append('<CodigoTarifa>' + str(b['codigoTarifa']) + '</CodigoTarifa>')
                 sb.Append('<Tarifa>' + str(b['tarifa']) + '</Tarifa>')
                 sb.Append('<Monto>' + str(b['monto']) + '</Monto>')
+                # if tax code is '08', IVAFactor must be here, else everything is bad... # TODO
+                if b['codigo'] == '08':
+                    sb.Append('<FactorIVA>{}</FactorIVA>'.format(
+                        b['factorIVA']))
 
                 if document_type != 'FEE':
                     if b.get('exoneracion'):
@@ -1023,27 +1036,31 @@ def consulta_clave(clave, token, tipo_ambiente): # duplicated in utils_mh... are
         cause = response.headers.get('X-Error-Cause')
         if not cause:
             cause = 'Error'
-            _logger.warning("""**Undocumented Hacienda response:**
-            Endpoint: {}
-            Http Status: {}
-            Request Headers: {}
-            Response Headers: {}
-            Response Body: {}
-            """.format(endpoint, response.status_code,
+            _logger.warning("""**Error Hacienda response:**
+Endpoint: {}
+Http Status: {}
+Request Headers: {}
+Response Headers: {}
+Response Body: {}
+""".format(endpoint, response.status_code,
                        str(response.request.headers),
                        str(response.headers), response.text))
-        response_json = {'status': response.status_code, 'ind-estado': cause}
+        response_json = {'status': response.status_code, 'ind-estado': 'error'}
     else:
         _logger.error("""MAB - consulta_clave failed.
-        Status code: {}
-        Reason: {}
-        Request Headers: {}
-        Response Headers: {}
-        Response Body: {}
-        """.format(response.status_code, response.reason,
+Status code: {}
+Reason: {}
+Request Headers: {}
+Response Headers: {}
+Response Body: {}
+""".format(response.status_code, response.reason,
                    str(response.request.headers),
                    str(response.headers), response.text))
-        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)
+        raise HaciendaError(
+            http_status=response.status_code,
+            headers=response.headers,
+            body=response.text,
+            status=InternalErrorCodes.HACIENDA_ERROR)
     return response_json
 
 

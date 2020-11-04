@@ -4,6 +4,7 @@ import traceback
 
 from werkzeug.exceptions import HTTPException, InternalServerError, Unauthorized
 from flask import g
+from lxml import etree
 
 from helpers.debugging import DEBUG_G_VAR_NAME
 from . import enums
@@ -47,7 +48,7 @@ class IBError(HTTPException):
 
     def to_response(self):
         exc = { 'status' : self.status,
-              'details' : self.get_message() }
+              'detail' : self.get_message() }
         if g.get(DEBUG_G_VAR_NAME):
             exc['debug'] = self._build_debug_info(self)
 
@@ -74,6 +75,29 @@ class ServerError(IBError):
     message_dictionary = {
         enums.InternalErrorCodes.INTERNAL_ERROR : InternalServerError.description
         }
+
+class HaciendaError(IBError):
+    """
+    Class for errors thrown by Hacienda during a request.
+    HTTP Status code for this will be 502.
+    """
+    code = 502
+
+    def __init__(self, *args, http_status, headers, body, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.http_status = http_status
+        self.headers = headers
+        self.body = body
+
+    def get_message(self): # override
+        data = self.body
+        if 'html' in self.headers.get('content-type', ''):
+            htmldoc = etree.HTML(self.body)
+            data = htmldoc.findtext('.//title')
+
+        return """An error ocurred in Hacienda's Server during a request:
+HTTP Status: {}
+Data: {}""".format(self.http_status, data)
 
 
 class AuthError(IBError):
@@ -109,7 +133,8 @@ class InputError(IBError):
         enums.InputErrorCodes.INCORRECT_TYPE : 'Incorrect type in: {} => {}',
         enums.InputErrorCodes.DUPLICATE_RECORD : '{} is already registered in the system.',
         enums.InputErrorCodes.NO_RECORD_FOUND : 'Requested {} with identifier: "{}" was not found in the system.',
-        enums.InputErrorCodes.P12_PIN_MISMATCH : "The PIN provided for the p12 signature doesn't match."
+        enums.InputErrorCodes.P12_PIN_MISMATCH : "The PIN provided for the p12 signature doesn't match.",
+        enums.InputErrorCodes.INACTIVE_COMPANY: "The operation cannot be completed on an inactive company."
         }
     default_message = 'Received data is not properly formatted.'
 
@@ -185,6 +210,7 @@ class DatabaseError(ServerError):
         enums.DBErrorCodes.DB_DOCUMENT_SELECT_BY_COMPANY_AND_TYPE : "An issue was found while trying to obtain the documents for the company.",
         enums.DBErrorCodes.DB_DOCUMENT_SELECT_ADDITIONAL_EMAILS_BY_KEY : "An issue was found while trying to obtain the additional emails registered for the document.",
         enums.DBErrorCodes.DB_DOCUMENT_JOBS : "An issue was found while querying documents from the database during a scheduled job. Action involved: {}",
+        enums.DBErrorCodes.DB_DOCUMENT_UPDATE_ISSENT: "An issue was found while trying to set if the mail for the document was sent. {}",
         enums.DBErrorCodes.DB_USER_CREATE : "The user couldn't be created. {}",
         enums.DBErrorCodes.DB_USER_COMPANIES_LINK : "Couldn't assign the user's companies. {}",
         enums.DBErrorCodes.DB_USER_COMPANIES_UNLINK : "The user couldn't be updated. {}",
@@ -196,7 +222,8 @@ class DatabaseError(ServerError):
         enums.DBErrorCodes.DB_USER_EMAIL_VERIFY : "A problem occured when attempting to verify the user by their email.",
         enums.DBErrorCodes.DB_USER_VERIFY : "An issue was found while trying to verify the user.",
         enums.DBErrorCodes.DB_MESSAGE_CREATE : "An issue was found while trying to create the message. {}",
-        enums.DBErrorCodes.DB_MESSAGE_UPDATE_ANSWER : "An issue was found while trying to update a message from an Hacienda answer. {}"
+        enums.DBErrorCodes.DB_MESSAGE_UPDATE_ANSWER : "An issue was found while trying to update a message from an Hacienda answer. {}",
+        enums.DBErrorCodes.DB_MESSAGE_UPDATE_EMAILSENT: "An issue was found while trying to set if the email for the message was sent. {}"
         }
     default_message = 'A problem was encountered during database operations.'
 

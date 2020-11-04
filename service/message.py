@@ -9,7 +9,7 @@ from lxml import etree
 
 from . import api_facturae
 from . import fe_enums
-from helpers.utils import build_response_data, run_and_summ_collec_job
+from helpers.utils import build_response_data, run_and_summ_collec_job, get_smtp_error_code
 from helpers.entities.messages import RecipientMessage
 from helpers.entities.numerics import DecimalMoney
 from helpers.entities.strings import IDN, IDNType
@@ -32,45 +32,52 @@ cfg = globalsettings.cfg
 
 
 def create(data: dict):
-   if 'data' in data:
-       data = data['data']
+    if 'data' in data:
+        data = data['data']
 
-   message = RecipientMessage()
-   message.key = data['claveHacienda'] #ignore clavelarga?
+    company_id = data['nombre_usuario']
+    company = dao_company.get_company_data(company_id)
+    if not company:
+        raise InputError('company', company_id,
+                         status=InputErrorCodes.NO_RECORD_FOUND)
 
-   issuer = data['emisor']
-   message.issuerIDN = _get_idn(issuer)
+    if not company['is_active']:
+        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
 
-   recipient = data['receptor']
-   message.recipientIDN = _get_idn(recipient)
-   message.recipientSequenceNumber = data['consecutivo']
+    cert = company['signature']
+    password = company['pin_sig']
 
-   message.code = data['mensaje']
-   message.detail = data['detalle']
-   message.taxTotalAmount = DecimalMoney(data['montoImpuesto'])
-   message.invoiceTotalAmount = DecimalMoney(data['total'])
-   message.issueDate = _curr_datetime_cr()
+    message = RecipientMessage()
+    message.key = data['claveHacienda'] #ignore clavelarga?
+
+    issuer = data['emisor']
+    message.issuerIDN = _get_idn(issuer)
+
+    recipient = data['receptor']
+    message.recipientIDN = _get_idn(recipient)
+    message.recipientSequenceNumber = data['consecutivo']
+
+    message.code = data['mensaje']
+    message.detail = data['detalle']
+    message.taxTotalAmount = DecimalMoney(data['montoImpuesto'])
+    message.invoiceTotalAmount = DecimalMoney(data['total'])
+    message.issueDate = _curr_datetime_cr()
 
 
-   company_id = data['nombre_usuario']
-   company = dao_company.get_company_data(company_id)
-   cert = company['signature']
-   password = company['pin_sig']
+    signed = api_facturae.sign_xml(cert,
+                            password,
+                            message.toXml())
 
-   signed = api_facturae.sign_xml(cert,
-                         password,
-                         message.toXml())
+    encoded = b64encode(signed)
 
-   encoded = b64encode(signed)
+    issuer_email = data.get('correoEmisor')
 
-   issuer_email = data.get('correoEmisor')
-
-   dao_message.insert(company_id, message, encoded,
+    dao_message.insert(company_id, message, encoded,
                     'creado', issuer_email=issuer_email)
 
-   result = process_message(message.key)
+    result = process_message(message.key)
 
-   return build_response_data(result)
+    return build_response_data(result)
 
 
 def process_message(key_mh: str):
@@ -84,6 +91,9 @@ def process_message(key_mh: str):
     if not company:
         raise InputError('company', company_user,
                          status=InputErrorCodes.NO_RECORD_FOUND)
+
+    if not company['is_active']:
+        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
 
     try:
         mh_token = api_facturae.get_token_hacienda(company_user,
@@ -125,7 +135,7 @@ def job_process_messages():
     collec_cb = dao_message.select_by_status
     item_cb = process_message
     item_id_key = 'key_mh'
-    collec_cb_args = ('procesando',)
+    collec_cb_args = ('procesando', None, True)
     item_cb_kwargs_map = {
         'key_mh': 'key_mh'
         }
@@ -198,22 +208,29 @@ def _handle_sent_message(company: dict, message:dict, token: str):
 
     result = {
         'data': {
-            'message': status,
-            'xml-respuesta': answer_xml
+            'message': status
             }
         }
-    if status.lower() == 'aceptado' and message['issuer_email']: # should only send mail if one was given for the issuer
+    if status.lower() == 'aceptado' \
+        and message['issuer_email'] \
+        and message['email_sent'] is None: # should only send mail if one was given for the issuer
+        email_sent = 0
         try:
             send_mail(message)
         except Exception as ex:
             _logger.warning("***Email couldn't be sent for some reason:***",
                             exc_info=ex)
             result['data']['warning'] = 'A problem occurred when attempting to send email.'
-    elif status.lower() == 'rechazado' and answer_xml:
+            email_sent = get_smtp_error_code(ex)
+
+        dao_message.update_email_sent(message['key_mh'], email_sent)
+
+    if answer_xml:
         decoded = b64decode(answer_xml)
         parsed_answer_xml = etree.fromstring(decoded)
-        result['data']['details'] = parsed_answer_xml.findtext('{*}DetalleMensaje')
+        result['data']['detail'] = parsed_answer_xml.findtext('{*}DetalleMensaje') or ''
 
+    result['data']['xml-respuesta'] = answer_xml
     return result
 
 

@@ -6,6 +6,7 @@ class AuthErrorCodes(IntEnum):
     WRONG_CREDENTIALS = _BASE + 1
     WRONG_API_KEY = _BASE + 2
     WRONG_JWT = _BASE + 3
+    EXPIRED_JWT = _BASE + 4
 
 
 class InputErrorCodes(IntEnum):
@@ -15,6 +16,7 @@ class InputErrorCodes(IntEnum):
     DUPLICATE_RECORD = _BASE + 3
     NO_RECORD_FOUND = _BASE + 4
     P12_PIN_MISMATCH = _BASE + 5
+    INACTIVE_COMPANY = _BASE + 6
 
 
 class ValidationErrorCodes(IntEnum):
@@ -88,7 +90,7 @@ class DBErrorCodes(IntEnum):
     DB_DOCUMENT_SELECT_BY_COMPANY_AND_TYPE = _DOCUMENT + 9
     DB_DOCUMENT_SELECT_ADDITIONAL_EMAILS_BY_KEY = _DOCUMENT + 10
     DB_DOCUMENT_JOBS = _DOCUMENT + 11
-
+    DB_DOCUMENT_UPDATE_ISSENT = _DOCUMENT + 12
     #   END_DOCUMENT
 
     #   CABYS
@@ -115,6 +117,7 @@ class DBErrorCodes(IntEnum):
     DB_MESSAGE_SELECT_BY_STATUS = _MESSAGE + 8
     DB_MESSAGE_SELECT_BY_CODE = _MESSAGE + 9
     DB_MESSAGE_SELECT_BY_ISSUER_IDN = _MESSAGE + 10
+    DB_MESSAGE_UPDATE_EMAILSENT = _MESSAGE + 11
     #   END_MESSAGE
 
 
@@ -130,4 +133,5 @@ class DBAdapterErrorCodes(IntEnum):
 class InternalErrorCodes(IntEnum):
     _BASE = 9 * 100
     INTERNAL_ERROR = _BASE + 1
+    HACIENDA_ERROR = _BASE + 2
 # END_ENUMS

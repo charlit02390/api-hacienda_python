@@ -1,4 +1,5 @@
 from traceback import format_exc
+from smtplib import SMTPConnectError, SMTPNotSupportedError, SMTPAuthenticationError, SMTPSenderRefused, SMTPDataError, SMTPRecipientsRefused
 
 def build_response_data(result: dict, warn_msg: str = 'No data was found', error_msg: str = 'An issue was found and the application had to be stopped.') -> dict:
     """
@@ -30,7 +31,7 @@ def build_response_data(result: dict, warn_msg: str = 'No data was found', error
         error = result['error']
         response['http_status'] = result.get('http_status', error.get('http_status', 500))
         response['status'] = error.get('code', error.get('status', 400))
-        response['details'] = error.get('message', error.get('details', error_msg))
+        response['detail'] = error.get('message', error.get('details', error_msg))
         if 'debug' in error:
             response['debug'] = error['debug']
     elif 'data' in result:
@@ -111,3 +112,20 @@ Params: {}
     summary_str += '\n'.join(summary['errors'])
 
     return summary_str
+
+
+def get_smtp_error_code(exception: Exception):
+    if isinstance(exception, SMTPConnectError):
+        return 1
+    if isinstance(exception, SMTPNotSupportedError):
+        return 2
+    if isinstance(exception, SMTPAuthenticationError):
+        return 3
+    if isinstance(exception, SMTPSenderRefused):
+        return 4
+    if isinstance(exception, SMTPDataError):
+        return 5
+    if isinstance(exception, SMTPRecipientsRefused):
+        return 6
+    else:
+        return -1

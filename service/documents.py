@@ -15,10 +15,11 @@ from infrastructure.dbadapter import DbAdapterError, connectToMySql
 from email.headerregistry import Address
 from datetime import datetime, timedelta
 from flask import g
+from lxml import etree
 
 from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, InternalErrorCodes
 from helpers.errors.exceptions import InputError, ValidationError, ServerError
-from helpers.utils import build_response_data, run_and_summ_collec_job
+from helpers.utils import build_response_data, run_and_summ_collec_job, get_smtp_error_code
 from helpers.debugging import log_section
 
 docLogger = logging.getLogger(__name__)
@@ -29,6 +30,9 @@ def create_document(data):
     company_data = companies.get_company_data(_company_user)
     if not company_data:
         raise InputError('company', _company_user, status=InputErrorCodes.NO_RECORD_FOUND)
+
+    if not company_data['is_active']:
+        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
 
     signature = companies.get_sign_data(_company_user)
     if not signature:
@@ -56,33 +60,33 @@ def create_document(data):
             validate_email(mail)
 
     _type_document = fe_enums.TipoDocumentoApi[data['tipo']]
-    _situation = data['situacion']
+    _situation = data.get('situacion')
     _consecutive = data['consecutivo']
     _key_mh = data['clavelarga']
-    _terminal = data['terminal']
-    _branch = data['sucursal']
+    _terminal = data.get('terminal')
+    _branch = data.get('sucursal')
     _activity_code = data['codigoActividad']
-    _other_phone = data['otro_telefono']
+    _other_phone = data.get('otro_telefono')
     _sale_condition = data['condicionVenta']
     _credit_term = data['plazoCredito']
     _payment_methods = data['medioPago']
     _lines = data['detalles']
     _currency = data['codigoTipoMoneda']
-    _total_serv_taxed = data['totalServGravados']
-    _total_serv_untaxed = data['totalServExentos']
-    _total_serv_exone = data['totalServExonerado']
-    _total_merch_taxed = data['totalMercanciasGravados']
-    _total_merch_untaxed = data['totalMercanciasExentos']
-    _total_merch_exone = data['totalMercExonerada']
-    _total_taxed = data['totalGravados']
-    _total_untaxed = data['totalExentos']
-    _total_exone = data['totalExonerado']
+    _total_serv_taxed = data.get('totalServGravados','0.0000')
+    _total_serv_untaxed = data.get('totalServExentos','0.0000')
+    _total_serv_exone = data.get('totalServExonerado','0.0000')
+    _total_merch_taxed = data.get('totalMercanciasGravados','0.0000')
+    _total_merch_untaxed = data.get('totalMercanciasExentos','0.0000')
+    _total_merch_exone = data.get('totalMercExonerada','0.0000')
+    _total_taxed = data.get('totalGravados','0.0000')
+    _total_untaxed = data.get('totalExentos','0.0000')
+    _total_exone = data.get('totalExonerado','0.0000')
     _total_sales = data['totalVentas']
-    _total_discount = data['totalDescuentos']
+    _total_discount = data.get('totalDescuentos','0.0000')
     _total_net_sales = data['totalVentasNetas']
-    _total_taxes = data['totalImpuestos']
-    _total_return_iva = data['totalIVADevuelto']
-    _total_other_charges = data['totalOtrosCargos']
+    _total_taxes = data.get('totalImpuestos','0.0000')
+    _total_return_iva = data.get('totalIVADevuelto','0.0000')
+    _total_other_charges = data.get('totalOtrosCargos','0.0000')
     _total_document = data['totalComprobantes']
     _other_charges = data.get('otrosCargos')
     _reference = data.get('referencia')
@@ -220,6 +224,9 @@ def validate_document(company_user, key_mh):
     if not company_data:
         raise InputError('company', str(company_user), status=InputErrorCodes.NO_RECORD_FOUND)
 
+    if not company_data['is_active']:
+        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+
     date_cr= api_facturae.get_time_hacienda(False)
     date = api_facturae.get_time_hacienda(True)
 
@@ -241,7 +248,7 @@ def validate_document(company_user, key_mh):
 
     if 200 <= response_status <= 299:
         state_tributacion = 'procesando'
-        return_message = response_text
+        return_message = state_tributacion
     else:
         if response_text.find('ya fue recibido anteriormente') != -1:
             state_tributacion = 'procesando'
@@ -271,6 +278,9 @@ def consult_document(company_user, key_mh):
     if not company_data:
         raise InputError('company', company_user, status=InputErrorCodes.NO_RECORD_FOUND)
 
+    if not company_data['is_active']:
+        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+
     date = api_facturae.get_time_hacienda(True)
 
     try:
@@ -290,15 +300,30 @@ def consult_document(company_user, key_mh):
 
     documents.update_document(company_user, key_mh, response_text, response_status, date)
 
-    result = {'data' : {}}
-    if response_status == 'aceptado' and document_data['document_type'] != "TE":
+    result = {
+        'data' : {
+            'message': response_status
+            }
+        }
+    if response_status == 'aceptado' \
+        and document_data['document_type'] != "TE" \
+        and document_data['isSent'] is None:
+        mail_sent = 0
         try:
             emails.sent_email_fe(document_data)
         except Exception as ex: #TODO : be more specific about exceptions
             docLogger.warning("***Email couldn't be sent for some reason:***", exc_info=ex)
             result['data']['warning'] = 'A problem occurred when attempting to send the email.' # WARNING
+            # temp juggling insanity... nevermind, don't look at it...
+            mail_sent = get_smtp_error_code(ex)
 
-    result['data']['message'] = response_status
+        documents.update_isSent(key_mh, mail_sent)
+
+    if response_text:
+        decoded = base64.b64decode(response_text)
+        parsed_answer_xml = etree.fromstring(decoded)
+        result['data']['detail'] = parsed_answer_xml.findtext('{*}DetalleMensaje') or ''
+
     result['data']['xml-respuesta'] = response_text
     return build_response_data(result)
     
