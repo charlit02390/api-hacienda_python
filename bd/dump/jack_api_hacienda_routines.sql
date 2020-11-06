@@ -1079,7 +1079,7 @@ BEGIN
     	,description AS descripcion
         ,tax AS impuesto
 	FROM cabys
-	WHERE CONCAT_WS(' ', cat8desc, description) REGEXP p_patron;
+	WHERE CONCAT_WS(' ', `code`, cat8desc, description) REGEXP p_patron;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1279,22 +1279,24 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS usp_updateFromAnswer_message;
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_updateFromAnswer_message` (
-	IN `p_company_id` VARCHAR(45),
+	IN `p_company_user` VARCHAR(45),
 	IN `p_key_mh` VARCHAR(50),
+	IN `p_recipient_seq_number` VARCHAR(20),
 	IN `p_encd_answer_xml` BLOB,
 	IN `p_status` VARCHAR(30),
 	IN `p_answer_date` DATETIME
 )
 BEGIN
 	DECLARE v_idcomp INT;
-	SET v_idcomp = (SELECT id from companies WHERE company_user = p_company_id);
+	SET v_idcomp = (SELECT id from companies WHERE company_user = `p_company_user`);
 	IF v_idcomp IS NOT NULL THEN
 		UPDATE `message`
 		SET	answer_xml	=	`p_encd_answer_xml`,
 			status	=	`p_status`,
 			answer_date =	`p_answer_date`
-		WHERE	v_idcomp = company_id
-			AND	key_mh	=	`p_key_mh`;
+		WHERE	company_id = v_idcomp
+			AND	key_mh	=	`p_key_mh`
+			AND	recipient_seq_number = `p_recipient_seq_number`;
 	END IF;
 END$$
 DELIMITER ;
@@ -1303,13 +1305,15 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS `usp_updateEmailSent_message`;
 DELIMITER $$
 CREATE PROCEDURE `usp_updateEmailSent_message` (
-	v_key_mh VARCHAR(50),
-	v_email_sent TINYINT
+	p_key_mh VARCHAR(50),
+	p_recipient_seq_number VARCHAR(20),
+	p_email_sent TINYINT
 )
 BEGIN
 	UPDATE message
-	SET	`email_sent` = v_email_sent
-	WHERE `key_mh` = v_key_mh;
+	SET	`email_sent` = p_email_sent
+	WHERE `key_mh` = p_key_mh
+		AND `recipient_seq_number` = p_recipient_seq_number;
 END$$
 DELIMITER ;
 
@@ -1341,12 +1345,14 @@ FROM	`message` AS msg INNER JOIN
 DROP PROCEDURE IF EXISTS usp_select_message;
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_select_message` (
-	IN `p_key_mh` VARCHAR(50)
+	IN `p_key_mh` VARCHAR(50),
+	IN `p_recipient_seq_number` VARCHAR(20)
 )
 BEGIN
-	SELECT v_msg.*
-	FROM	`vw_message` AS v_msg
-	WHERE	v_msg.key_mh = p_key_mh;
+	SELECT vw_msg.*
+	FROM	`vw_message` AS vw_msg
+	WHERE	vw_msg.key_mh = p_key_mh
+		AND	vw_msg.recipient_seq_number = `p_recipient_seq_number`;
 END$$
 DELIMITER ;
 

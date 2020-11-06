@@ -560,7 +560,7 @@ def parse_datetime(value, field):
 _run_and_summ_docs_job = partial(
     run_and_summ_collec_job,
     collec_cb=documents.get_documents,
-    item_id_key='key_mh',
+    item_id_keys='key_mh',
     item_cb_kwargs_map={
         'company_user': 'company_user',
         'key_mh': 'key_mh'

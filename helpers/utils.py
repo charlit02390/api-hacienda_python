@@ -1,6 +1,8 @@
 from traceback import format_exc
 from smtplib import SMTPConnectError, SMTPNotSupportedError, SMTPAuthenticationError, SMTPSenderRefused, SMTPDataError, SMTPRecipientsRefused
 
+from .errors.enums import InternalErrorCodes
+
 def build_response_data(result: dict, warn_msg: str = 'No data was found', error_msg: str = 'An issue was found and the application had to be stopped.') -> dict:
     """
     Builds data for a response from the given result.
@@ -30,10 +32,20 @@ def build_response_data(result: dict, warn_msg: str = 'No data was found', error
     if 'error' in result:
         error = result['error']
         response['http_status'] = result.get('http_status', error.get('http_status', 500))
-        response['status'] = error.get('code', error.get('status', 400))
-        response['detail'] = error.get('message', error.get('details', error_msg))
+        response['status'] = error.get('code', error.get('status', InternalErrorCodes.INTERNAL_ERROR))
+        response['detail'] = error.get('message', error.get('detail', error.get('details', error_msg)))
         if 'debug' in error:
             response['debug'] = error['debug']
+
+    elif 'unexpected' in result: # meh
+        unexpected = result['unexpected']
+        response['http_status'] = unexpected['status']
+        response['status'] = InternalErrorCodes.HACIENDA_ERROR
+        response['detail'] = """Unexpected Response from Hacienda.
+Reason: {}
+Content: {}""".format(unexpected['reason'],
+                      unexpected['content'])
+
     elif 'data' in result:
         response['data'] = result['data']
 
@@ -70,7 +82,7 @@ def build_response(data: dict):
 
 
 def run_and_summ_collec_job(collec_cb, item_cb,
-                                     item_id_key, collec_cb_args = (),
+                                     item_id_keys, collec_cb_args = (),
                                      collec_cb_kwargs = {},
                                      item_cb_kwargs_map = {}):
     try:
@@ -102,7 +114,9 @@ Item Id: {}
 Callback: {}
 Params: {}
 {}
-""".format(item[item_id_key], item_cb.__qualname__,
+""".format(item[item_id_keys] if isinstance(item_id_keys, str) \
+    else (', '.join(item[key] for key in item_id_keys)),
+           item_cb.__qualname__,
            params, format_exc()))
 
     summary_str = """-Successful counter: {}

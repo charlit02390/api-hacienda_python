@@ -13,9 +13,7 @@ def create_company(data, file, logo):
     # verify company first, 'cuz can't save a company that already exists.
     _company_user = data['id_compania']
 
-    company_exists = True
     company_exists = companies.verify_company(_company_user)
-
     if company_exists:
         raise InputError('The company with ID: {}'.format(company_user),
                          status=InputErrorCodes.DUPLICATE_RECORD)

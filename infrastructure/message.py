@@ -28,11 +28,12 @@ def insert(company_id: str, message: RecipientMessage,
 
 
 def update_from_answer(company_id: str, message_key: str,
-                       encoded_answer_xml: bytes, status: str,
-                       answer_date: str, connection: Connection = None):
+                       message_rec_seq_num: str, encoded_answer_xml: bytes,
+                       status: str, answer_date: str,
+                       connection: Connection = None):
     procedure = 'usp_updateFromAnswer_message'
-    args = (company_id, message_key, encoded_answer_xml,
-            status, answer_date)
+    args = (company_id, message_key, message_rec_seq_num,
+            encoded_answer_xml, status, answer_date)
 
     try:
         dba.execute_proc(proc_name=procedure, args=args,
@@ -44,10 +45,10 @@ def update_from_answer(company_id: str, message_key: str,
     return True
 
 
-def update_email_sent(message_key: str, email_sent: int,
-                      connection: Connection = None):
+def update_email_sent(message_key: str, message_rec_seq_num: str,
+                      email_sent: int, connection: Connection = None):
     procedure = 'usp_updateEmailSent_message'
-    args = (message_key, email_sent)
+    args = (message_key, message_rec_seq_num, email_sent)
 
     try:
         dba.execute_proc(proc_name=procedure, args=args,
@@ -58,9 +59,9 @@ def update_email_sent(message_key: str, email_sent: int,
                             ) from dbae
 
 
-def select(key_mh: str):
+def select(key_mh: str, rec_seq_num: str = None):
     procedure = 'usp_select_message'
-    args = (key_mh,)
+    args = (key_mh, rec_seq_num)
     try:
         return dba.fetchone_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
