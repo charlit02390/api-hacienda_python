@@ -1,6 +1,8 @@
 from traceback import format_exc
 from smtplib import SMTPConnectError, SMTPNotSupportedError, SMTPAuthenticationError, SMTPSenderRefused, SMTPDataError, SMTPRecipientsRefused
 
+from flask import jsonify
+
 from .errors.enums import InternalErrorCodes
 
 def build_response_data(result: dict, warn_msg: str = 'No data was found', error_msg: str = 'An issue was found and the application had to be stopped.') -> dict:
@@ -68,17 +70,28 @@ def build_response(data: dict):
 
     :param data: dict - data to be converted into a return value for making a response.
     """
-    if not 'http_status' in data and not 'headers' in data:
-        return data
 
-    elements = [data]
+    if not 'http_status' in data and not 'headers' in data:
+        return jsonify(data)
+
     if 'http_status' in data:
-        elements.append(data.pop('http_status'))
+        http_status = data.pop('http_status')
 
     if 'headers' in data:
-        elements.append(data.pop('headers'))
+        headers = data.pop('headers')
 
-    return tuple(elements)
+    response = jsonify(data)
+    try:
+        response.status_code = http_status
+    except NameError:
+        pass
+
+    try:
+        response.headers = headers
+    except NameError:
+        pass
+
+    return response
 
 
 def run_and_summ_collec_job(collec_cb, item_cb,
