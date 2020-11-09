@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS `users`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `users` (
   `idusers` int(11) NOT NULL AUTO_INCREMENT,
-  `email` varchar(45) NOT NULL,
+  `email` varchar(128) NOT NULL,
   `password` varchar(45) DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL,
   `idrol` int(11) NOT NULL,
@@ -43,4 +43,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-09-13 14:39:43
+-- Dump completed on 2020-11-06 11:57:09

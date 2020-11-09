@@ -31,6 +31,34 @@ SET character_set_client = utf8;
 SET character_set_client = @saved_cs_client;
 
 --
+-- Temporary view structure for view `vw_message`
+--
+
+DROP TABLE IF EXISTS `vw_message`;
+/*!50001 DROP VIEW IF EXISTS `vw_message`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE VIEW `vw_message` AS SELECT 
+ 1 AS `id`,
+ 1 AS `company_id`,
+ 1 AS `company_user`,
+ 1 AS `key_mh`,
+ 1 AS `status`,
+ 1 AS `code`,
+ 1 AS `issue_date`,
+ 1 AS `issuer_idn_num`,
+ 1 AS `issuer_idn_type`,
+ 1 AS `issuer_email`,
+ 1 AS `recipient_idn`,
+ 1 AS `recipient_seq_number`,
+ 1 AS `signed_xml`,
+ 1 AS `answer_date`,
+ 1 AS `answer_xml`,
+ 1 AS `company_is_active`,
+ 1 AS `email_sent`*/;
+SET character_set_client = @saved_cs_client;
+
+--
 -- Final view structure for view `vw_cabysxsac`
 --
 
@@ -44,6 +72,24 @@ SET character_set_client = @saved_cs_client;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `vw_cabysxsac` AS select `ca`.`code` AS `code`,`cs`.`sac_version_2017` AS `Codigo SAC`,`ca`.`description` AS `Descripcion Cabys`,`cs`.`cantidad_codigos_cabys_sac` AS `cantidad_codigos_cabys_sac` from (`cabysxsac` `cs` join `cabys` `ca` on((`cs`.`codigo_cabys_sac` = `ca`.`code`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `vw_message`
+--
+
+/*!50001 DROP VIEW IF EXISTS `vw_message`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `vw_message` AS select `msg`.`id` AS `id`,`msg`.`company_id` AS `company_id`,`cmp`.`company_user` AS `company_user`,`msg`.`key_mh` AS `key_mh`,`msg`.`status` AS `status`,`msg`.`code` AS `code`,`msg`.`issue_date` AS `issue_date`,`msg`.`issuer_idn_num` AS `issuer_idn_num`,`msg`.`issuer_idn_type` AS `issuer_idn_type`,`msg`.`issuer_email` AS `issuer_email`,`msg`.`recipient_idn` AS `recipient_idn`,`msg`.`recipient_seq_number` AS `recipient_seq_number`,`msg`.`signed_xml` AS `signed_xml`,`msg`.`answer_date` AS `answer_date`,`msg`.`answer_xml` AS `answer_xml`,`cmp`.`is_active` AS `company_is_active`,`msg`.`email_sent` AS `email_sent` from (`message` `msg` join `companies` `cmp` on((`msg`.`company_id` = `cmp`.`id`))) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -66,7 +112,7 @@ SET character_set_client = @saved_cs_client;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_CheckUser`(
-v_email varchar(50),
+v_email varchar(128),
 v_password varchar(50)
 )
 BEGIN
@@ -97,10 +143,10 @@ IN v_state varchar(45),
 IN v_county varchar(45),
 IN v_district varchar(45),
 IN v_neighborhood varchar(45),
-IN v_address varchar(100),
+IN v_address varchar(255),
 IN v_code_phone int,
 IN v_phone int,
-IN v_email varchar(100),
+IN v_email varchar(128),
 IN v_activity_code varchar(45),
 IN v_is_active tinyint(4)
 )
@@ -162,7 +208,7 @@ v_id_company varchar(45),
 v_line_number varchar(45),
 v_quantity varchar(45),
 v_unity varchar(45),
-v_detail varchar(45),
+v_detail varchar(150),
 v_unit_price varchar(45),
 v_net_tax varchar(45),
 v_total_line varchar(45),
@@ -306,7 +352,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createUser`(
-v_email varchar(45),
+v_email varchar(128),
 v_password varchar(45),
 v_name varchar(100),
 v_idrol int
@@ -342,7 +388,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createUser_Company`(
-v_email varchar(45),
+v_email varchar(128),
 v_idcompany int
 )
 BEGIN
@@ -422,7 +468,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteUser`(
-v_email varchar(45))
+v_email varchar(128))
 BEGIN
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -451,7 +497,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteUserCompany`(
-v_email varchar(45),
+v_email varchar(128),
 v_idcompany int
 )
 BEGIN
@@ -561,6 +607,27 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_getDocumentsConsult` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`()
+BEGIN
+Select cp.company_user,  d.key_mh
+from documents d 
+inner join companies cp on d.company_id = cp.id where d.status = "procesando" limit 20;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_getDocumentsReport` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -583,6 +650,27 @@ from documents d
 inner join companies cp on d.company_id = cp.id  
 where cp.company_user= v_id_company 
 and d.document_type = v_type_document;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_getDocumentsValidate` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsValidate`()
+BEGIN
+	Select cp.company_user,  d.key_mh
+from documents d 
+inner join companies cp on d.company_id = cp.id where d.status = "creado" limit 20;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -674,7 +762,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserCompany_info`(
-IN v_email varchar(45),
+IN v_email varchar(128),
 IN v_idcompany int
 )
 BEGIN
@@ -698,7 +786,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfo`(
-v_email varchar(45))
+v_email varchar(128))
 BEGIN
 
 select u.*,r.value rol
@@ -723,7 +811,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfoCompanies`(
-v_email varchar(45))
+v_email varchar(128))
 BEGIN
 select c.id internalid, c.company_user idcompany, c.tradename tradename
 from users u 
@@ -776,10 +864,10 @@ IN v_state varchar(45),
 IN v_county varchar(45),
 IN v_district varchar(45),
 IN v_neighborhood varchar(45),
-IN v_address varchar(100),
+IN v_address varchar(255),
 IN v_code_phone int,
 IN v_phone int,
-IN v_email varchar(100),
+IN v_email varchar(128),
 IN v_activity_code varchar(45),
 IN v_is_active tinyint(4)
 )
@@ -887,7 +975,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ModifyUser`(
-IN v_email varchar(45),
+IN v_email varchar(128),
 IN v_password varchar(45),
 IN v_name varchar(100),
 IN v_idrol int
@@ -928,8 +1016,8 @@ v_dni varchar(50),
 v_total_document float,
 v_total_taxes float,
 v_pdf longblob,
-v_email varchar(45),
-v_email_costs varchar(45)
+v_email varchar(128),
+v_email_costs varchar(128)
 )
 BEGIN
 IF not exists (select id from documents where key_mh = v_key_mh) then
@@ -1113,6 +1201,60 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `usp_deleteUser_CompanyByUser` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_deleteUser_CompanyByUser`(
+	IN `p_user_email` VARCHAR(128)
+)
+BEGIN
+	DELETE FROM users_companies WHERE iduser = (SELECT idusers FROM users WHERE email = p_user_email);
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `usp_insert_documentxemail` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_documentxemail`(
+	IN `p_key` VARCHAR(50),
+	IN `p_email` VARCHAR(128)
+)
+BEGIN
+	DECLARE v_iddoc int;
+	SET v_iddoc = (SELECT id FROM documents WHERE key_mh = p_key);
+	IF v_iddoc IS NOT NULL THEN
+		INSERT INTO documentxemail(
+        	iddocument,
+        	email
+    	)
+   		VALUES (
+            v_iddoc,
+        	p_email
+    	);
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `usp_obtenerpersona_registrocivil` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -1166,6 +1308,31 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `usp_selectByDocKey_documentxemail` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByDocKey_documentxemail`(
+	IN `p_key` VARCHAR(50)
+)
+BEGIN
+    DECLARE v_iddoc int;
+    SET v_iddoc = (SELECT id FROM documents WHERE key_mh = p_key);
+    IF v_iddoc IS NOT NULL THEN
+    	SELECT email FROM documentxemail WHERE iddocument = v_iddoc;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -1176,53 +1343,7 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-09-13 14:39:44
-
-DROP PROCEDURE IF EXISTS usp_deleteUser_CompanyByUser;
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_deleteUser_CompanyByUser`(
-	IN `p_user_email` VARCHAR(255)
-)
-BEGIN
-	DELETE FROM users_companies WHERE iduser = (SELECT idusers FROM users WHERE email = p_user_email);
-END$$
-DELIMITER ;
-
-
-DROP PROCEDURE IF EXISTS usp_insert_documentxemail;
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_documentxemail`(
-	IN `p_key` VARCHAR(50), IN `p_email` VARCHAR(64)
-)
-BEGIN
-	DECLARE v_iddoc int;
-	SET v_iddoc = (SELECT id FROM documents WHERE key_mh = p_key);
-	IF v_iddoc IS NOT NULL THEN
-		INSERT INTO documentxemail(
-        	iddocument,
-        	email
-    	)
-   		VALUES (
-            v_iddoc,
-        	p_email
-    	);
-    END IF;
-END$$
-DELIMITER ;
-
-DROP PROCEDURE IF EXISTS usp_selectByDocKey_documentxemail;
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByDocKey_documentxemail`(
-	IN `p_key` VARCHAR(50)
-)
-BEGIN
-    DECLARE v_iddoc int;
-    SET v_iddoc = (SELECT id FROM documents WHERE key_mh = p_key);
-    IF v_iddoc IS NOT NULL THEN
-    	SELECT email FROM documentxemail WHERE iddocument = v_iddoc;
-    END IF;
-END$$
-DELIMITER ;
+-- Dump completed on 2020-11-06 11:57:11
 
 -- ---------------------------------------
 -- Messages USPs --------------------

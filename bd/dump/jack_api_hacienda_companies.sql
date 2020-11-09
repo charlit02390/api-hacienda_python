@@ -33,10 +33,10 @@ CREATE TABLE `companies` (
   `county` varchar(45) DEFAULT NULL,
   `district` varchar(45) DEFAULT NULL,
   `neighborhood` varchar(45) DEFAULT NULL,
-  `address` varchar(100) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
   `code_phone` int(11) DEFAULT NULL,
   `phone` int(11) DEFAULT NULL,
-  `email` varchar(100) DEFAULT NULL,
+  `email` varchar(128) DEFAULT NULL,
   `activity_code` varchar(45) DEFAULT NULL,
   `is_active` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -52,4 +52,4 @@ CREATE TABLE `companies` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-09-13 14:39:44
+-- Dump completed on 2020-11-06 11:57:11

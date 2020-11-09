@@ -29,7 +29,7 @@ CREATE TABLE `document_line` (
   `line_number` varchar(45) DEFAULT NULL,
   `quantity` varchar(45) DEFAULT NULL,
   `unity` varchar(45) DEFAULT NULL,
-  `detail` varchar(45) DEFAULT NULL,
+  `detail` varchar(150) DEFAULT NULL,
   `unit_price` varchar(45) DEFAULT NULL,
   `net_tax` varchar(45) DEFAULT NULL,
   `total_line` varchar(45) DEFAULT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE `document_line` (
   KEY `id_document_fk_idx` (`id_document`),
   CONSTRAINT `id_company_fk2` FOREIGN KEY (`id_company`) REFERENCES `companies` (`id`),
   CONSTRAINT `id_document_fk2` FOREIGN KEY (`id_document`) REFERENCES `documents` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -50,4 +50,4 @@ CREATE TABLE `document_line` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-09-13 14:39:44
+-- Dump completed on 2020-11-06 11:57:11
