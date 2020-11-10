@@ -6,10 +6,11 @@ scheduler = APScheduler()
 
 
 def scheduled_jobs():
-    scheduler.add_job(id='Validate documents', func=validate_documents, trigger='interval', seconds=300)
-    scheduler.add_job(id='Consult documents', func=consult_documents, trigger='interval', seconds=600)
-    scheduler.add_job(id='Process Messages', func=model_message.job_process_messages, trigger='interval', seconds=1000)
-    scheduler.start()
+    pass
+    #scheduler.add_job(id='Validate documents', func=validate_documents, trigger='interval', seconds=90)
+    #scheduler.add_job(id='Consult documents', func=consult_documents, trigger='interval', seconds=90)
+    #scheduler.add_job(id='Process Messages', func=model_message.job_process_messages, trigger='interval', seconds=1000)
+    #scheduler.start()
 
 
 def validate_documents():
