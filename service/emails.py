@@ -20,6 +20,7 @@ cfg = globalsettings.cfg
 
 
 def sent_email_fe(data):
+    #return
     smtp_data = company_smtp.get_company_smtp(data['company_user'])
 
     if smtp_data:
