@@ -21,7 +21,8 @@ class Find(Enum):
 _MIN_LENGTH = 3
 
 
-# Takes a "query" string and formats (not right now...) it to be used as a pattern for searching.
+# Takes a "query" string and formats it to be used as a pattern
+# for searching.
 # Then, dispatches it to the correct function based on "where"...
 def search(data, where):
     # I think I'm already checking this in the yaml, but might as well...
@@ -35,15 +36,21 @@ def search(data, where):
 
     else:
         error = { 'message' : "There was no query specified in the request's body.",
-                 'error_code' : 21 }
+                 'code' : 21 }
         result = {'http_status' : 400,
                   'error': error }
 
-    response = utils.build_response_data(result, warn_msg='No matches were found for the query "' + _query + '".')
+    response = utils.build_response_data(
+        result,
+        warn_msg=(
+            'No matches were found for the query "{}".'
+            ).format(_query))
     return response
 
 
-# Finds (? should just be Get, prolly... dunno... whatvs) an identifier in the requested place/collection/infrastructure function... I don't know...
+# Finds (? should just be Get, prolly... dunno... whatvs) an
+# identifier in the requested place/collection/infrastructure
+# function... I don't know...
 def find(data, where):
     # Better safe than sorry...?
     if 'cabys' in data:
@@ -54,11 +61,15 @@ def find(data, where):
 
     else:
        error = { 'message' : "There was no Cabys code specified in the request's body.",
-                'error_code': 21} 
+                'code': 21} 
        result = {'http_status' : 400,
                  'error': error }
 
-    response = utils.build_response_data(result, warn_msg='The requested Cabys code "' + _code + '" was not found.')
+    response = utils.build_response_data(
+        result,
+        warn_msg=(
+            'The requested Cabys code "{}" was not found.'
+        ).format(_code))
     return response
 
 

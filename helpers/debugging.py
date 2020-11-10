@@ -1,3 +1,7 @@
+"""
+Module that contains debugging utilities
+"""
+
 import functools
 from timeit import default_timer as timer
 
@@ -11,9 +15,20 @@ DEBUG_G_VAR_NAME = 'is_debug'
 
 
 def set_debug_mode(func):
+    """
+    Decorator for route functions. Sets an is_debug property to
+    flask's g variable, so the error handler can expose debugging
+    information to the request received.
+
+    :param func: function - the function to decorate
+    :returns: function - the decorated function
+    """
     @functools.wraps(func)
     def decoratored(*args, **kwargs):
-        debugVal = True if request.args.get(DEBUG_SWITCH_NAME, '') == DEBUG_SWITCH_KEYWORD else False
+        debugVal = True if \
+            request.args.get(DEBUG_SWITCH_NAME, '') \
+            == DEBUG_SWITCH_KEYWORD else \
+            False
         g.is_debug = debugVal
         
         return func(*args,**kwargs)
@@ -22,6 +37,17 @@ def set_debug_mode(func):
 
 
 def log_section(name: str, time_it: bool = False):
+    """
+    Decorator function for including a header and footer
+    to functions that summarize an operation.
+
+    :param name: str - the name of the section that will be logged.
+    :param time_it: [optional] bool - True if execution time for
+        the operation must be recorded and logged.
+        Default is False.
+
+    :returns: function - the decorated function
+    """
     def decoratored(func):
         @functools.wraps(func)
         def wrapper_log_section(*args, **kwargs):

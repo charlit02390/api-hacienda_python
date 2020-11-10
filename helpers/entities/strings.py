@@ -1,9 +1,12 @@
+"""
+Module with utilities for string types
+"""
 from abc import ABC, abstractmethod
 from enum import Enum
 from re import sub as regex_sub
 
 
-class IDNType(Enum):
+class IDNType(Enum): # valid Hacienda IDNTypes
     PID = '01'
     GID = '02'
     DIMEX = '03'
@@ -11,7 +14,16 @@ class IDNType(Enum):
 
 
 class IDN(ABC, object):
-    class IDTypeNotFound(Exception): pass
+    """
+    Abstract implementation for IDN strings.
+    Validates the given string to it's derived clases'
+    constraints and returns a proper instance.
+    """
+    class IDNTypeNotFound(Exception):
+        """
+        Exception raised when the specified IDNType to
+        instantiate has not been defined.
+        """
 
     __class_registry = {}
 
@@ -36,29 +48,41 @@ class IDN(ABC, object):
             subclass.validate_idn(instance)
             return instance
         else:
-            raise IDN.IDTypeNotFound('No class found for type {}'
-                                      .format(type))
+            raise IDN.IDNTypeNotFound(('No class'
+                                       ' found for type {}'
+                                      ).format(type))
 
     @classmethod
     def validate_idn(cls, idn):
-        target_length = cls._TARGET_LENGTH if isinstance(cls._TARGET_LENGTH, tuple) else (cls._TARGET_LENGTH,) 
+        target_length = cls._TARGET_LENGTH \
+            if isinstance(cls._TARGET_LENGTH, tuple) \
+            else (cls._TARGET_LENGTH,) 
         if len(idn.number) not in target_length:
-            raise ValueError('{} Number "{}" length must be of {} characters.'
-                             .format(cls._IDN_TYPE.name,
+            raise ValueError(('{} Number "{}" length'
+                              ' must be of {} characters.'
+                             ).format(cls._IDN_TYPE.name,
                                      idn.number,
                                      cls._TARGET_LENGTH))
 
         strippedIdn = idn.number.lstrip('0')
         if len(strippedIdn) not in target_length:
-            raise ValueError("{} Number \"{}\" has leading zeroes. Stripping them makes it's length not match the required length of {} characters"
-                             .format(cls._IDN_TYPE.name,
+            raise ValueError(("{} Number \"{}\" has"
+                              " leading zeroes. Stripping"
+                              " them makes it's length not"
+                              " match the required length of"
+                              " {} characters."
+                             ).format(cls._IDN_TYPE.name,
                                      idn.number,
                                      cls._TARGET_LENGTH))
 
         onlyDigitsIdn = regex_sub(r'\D', '', idn.number)
         if len(onlyDigitsIdn) not in target_length:
-            raise ValueError("{} Number \"{}\" has characters other than digits. Stripping them makes it's length not match the required length of {} characters"
-                             .format(cls._IDN_TYPE.name,
+            raise ValueError(("{} Number \"{}\" has"
+                              " characters other than digits."
+                              " Stripping them makes it's"
+                              " length not match the required"
+                              " length of {} characters."
+                             ).format(cls._IDN_TYPE.name,
                                      idn.number,
                                      cls._TARGET_LENGTH))
 

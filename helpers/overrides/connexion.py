@@ -1,3 +1,7 @@
+"""
+Module that contains overrides to connexion's configurations.
+"""
+
 import logging
 
 from flask import jsonify
@@ -12,7 +16,8 @@ class DetailedRequestBodyValidator(RequestBodyValidator):
         if self.is_null_value_valid and is_null(data):
             return None
 
-        errors = sorted(self.validator.iter_errors(data), key=lambda e: e.path)
+        errors = sorted(self.validator.iter_errors(data),
+                        key=lambda e: e.path)
         if errors:
             logger.error("""{url} had validation errors:
 {errors}""".format(url=url, errors=errors),
