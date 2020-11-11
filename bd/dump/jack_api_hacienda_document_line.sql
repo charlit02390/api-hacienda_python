@@ -29,7 +29,7 @@ CREATE TABLE `document_line` (
   `line_number` varchar(45) DEFAULT NULL,
   `quantity` varchar(45) DEFAULT NULL,
   `unity` varchar(45) DEFAULT NULL,
-  `detail` varchar(100) DEFAULT NULL,
+  `detail` varchar(150) DEFAULT NULL,
   `unit_price` varchar(45) DEFAULT NULL,
   `net_tax` varchar(45) DEFAULT NULL,
   `total_line` varchar(45) DEFAULT NULL,

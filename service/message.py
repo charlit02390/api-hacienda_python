@@ -75,15 +75,22 @@ def create(data: dict):
     dao_message.insert(company_id, message, encoded,
                     'creado', issuer_email=issuer_email)
 
-    result = process_message(message.key)
+    result = process_message('-'.join((message.key,
+                                       message.recipientSequenceNumber)))
 
     return build_response_data(result)
 
 
-def process_message(key_mh: str):
-    message = dao_message.select(key_mh)
+def process_message(key_mh: str, rec_seq_num: str = None):
+    key = key_mh
+    sequence = rec_seq_num
+    if sequence is None: # attempt to coerce sequence from the full key
+        key, *sequence = key.split('-', 1)
+        sequence = sequence[0] if sequence else None
+    message = dao_message.select(key, sequence)
     if not message:
-        raise InputError('message', key_mh,
+        raise InputError('message', key if sequence is None else \
+            '-'.join((key, sequence)),
                          status=InputErrorCodes.NO_RECORD_FOUND)
 
     company_user = message['company_user']
@@ -134,10 +141,11 @@ def send_mail(document: dict):
 def job_process_messages():
     collec_cb = dao_message.select_by_status
     item_cb = process_message
-    item_id_key = 'key_mh'
+    item_id_key = ('key_mh','recipient_seq_number')
     collec_cb_args = ('procesando', None, True)
     item_cb_kwargs_map = {
-        'key_mh': 'key_mh'
+        'key_mh': 'key_mh',
+        'rec_seq_num': 'recipient_seq_number'
         }
     return run_and_summ_collec_job(collec_cb,
                                    item_cb, item_id_key,
@@ -150,6 +158,7 @@ def _handle_created_message(company: dict, message: dict, token: str):
     env = company['env']
     issue_date = message['issue_date']
     key = message['key_mh']
+    sequence = message['recipient_seq_number']
     company_user = company['company_user']
     if isinstance(issue_date, datetime):
         issue_date = issue_date.isoformat()
@@ -174,14 +183,14 @@ def _handle_created_message(company: dict, message: dict, token: str):
     if 'error' in info:
         if info['error']['http_status'] == 400: # gotta update only if the response is 400...
             dao_message.update_from_answer(company_user,
-                                           key, None, 'procesando',
+                                           key, sequence, None, 'procesando',
                                            None)
         return info
     elif 'unexpected' in info:
         return info
 
     dao_message.update_from_answer(company_user,
-                                   key, None, 'procesando',
+                                   key, sequence, None, 'procesando',
                                    None)
 
     result = {
@@ -192,7 +201,9 @@ def _handle_created_message(company: dict, message: dict, token: str):
 
 
 def _handle_sent_message(company: dict, message:dict, token: str):
-    message_query_key = '-'.join((message['key_mh'], message['recipient_seq_number']))
+    key = message['key_mh']
+    sequence = message['recipient_seq_number']
+    message_query_key = '-'.join((key, sequence))
     response = query_document(company['env'], message_query_key,
                               token)
     info = _handle_hacienda_api_response(response)
@@ -203,7 +214,7 @@ def _handle_sent_message(company: dict, message:dict, token: str):
     answer_xml = info.get('respuesta-xml')
     answer_date = info.get('fecha', _curr_datetime_cr(False))
     dao_message.update_from_answer(company['company_user'],
-                                   message['key_mh'], answer_xml,
+                                   key, sequence, answer_xml,
                                    status, answer_date)
 
     result = {
@@ -223,7 +234,7 @@ def _handle_sent_message(company: dict, message:dict, token: str):
             result['data']['warning'] = 'A problem occurred when attempting to send email.'
             email_sent = get_smtp_error_code(ex)
 
-        dao_message.update_email_sent(message['key_mh'], email_sent)
+        dao_message.update_email_sent(key, sequence, email_sent)
 
     if answer_xml:
         decoded = b64decode(answer_xml)
@@ -319,7 +330,7 @@ def _handle_hacienda_api_response(response: requests.Response):
                 {
                     'http_status': 400,
                     'code': 400,
-                    'details': cause
+                    'detail': cause
                     }
                 }
 
@@ -334,7 +345,7 @@ def _handle_hacienda_api_response(response: requests.Response):
                 {
                     'http_status': 404,
                     'code': 404,
-                    'details': cause
+                    'detail': cause
                     }
                 }
 
@@ -348,7 +359,7 @@ def _handle_hacienda_api_response(response: requests.Response):
                 {
                     'http_status': 401,
                     'code': 401,
-                    'details': response.reason
+                    'detail': response.reason
                     }
                 }
 
@@ -372,7 +383,7 @@ def _handle_hacienda_api_response(response: requests.Response):
                     {
                         'http_status': response.status_code,
                         'code': response.status_code,
-                        'details': response.reason + '/' + response.text
+                        'detail': response.reason + '/' + response.text
                         }
                     }
 
@@ -411,16 +422,21 @@ def _send_mail_invoice(document: dict, smtp: dict):
 def _send_mail_message(document: dict, smtp: dict):
     primary_recipient = [document['issuer_email']]
     doc_key = document['key_mh']
+    doc_sequence = document['recipient_seq_number']
     doc_message_code = document['code']
     doc_message_code_desc = fe_enums.MessageCodeDesc[doc_message_code]
 
     mail_data = {
         'subject': 'Confirmación de documento número: {}'.format(
             doc_key),
-        'content': """Saludos cordiales,
+        'content': ("""Saludos cordiales,
         
-        Se le informa que su documento emitido con clave: "{}", para el receptor con identificación: "{}", fue confirmado con un estado de: {}"""
-            .format(doc_key, document['recipient_idn'], doc_message_code_desc),
+Se le informa que su documento emitido con clave: "{}","""
+        """ para el receptor con identificación: "{}","""
+        """numeración consecutiva: "{}","""
+        """fue confirmado con un estado de: {}."""
+            ).format(doc_key, document['recipient_idn'], doc_sequence,
+                    doc_message_code_desc),
         'name_file1': "",
         'name_file2': "",
         'name_file3': "",

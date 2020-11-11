@@ -38,8 +38,8 @@ CREATE TABLE `documents` (
   `dni_receiver` varchar(50) DEFAULT NULL,
   `total_document` float DEFAULT NULL,
   `total_taxes` float DEFAULT NULL,
-  `email` varchar(45) DEFAULT NULL,
-  `email_costs` varchar(45) DEFAULT NULL,
+  `email` varchar(128) DEFAULT NULL,
+  `email_costs` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_company_id_idx` (`company_id`),
   CONSTRAINT `FK_company_id` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`)

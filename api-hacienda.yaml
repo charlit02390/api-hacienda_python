@@ -161,6 +161,7 @@ components:
             - '06'
             - '07'
             - '99'
+            - '' # allowed for compatibility reasons
         numeroIdentidadTercero:
           type: string
         nombreTercero:
@@ -351,7 +352,6 @@ components:
           type: string
       required:
         - numero
-        - codigo
         - cantidad
         - unidad
         - precioUnitario
@@ -496,6 +496,7 @@ components:
                 - type: array
                   items:
                     $ref: '#/components/schemas/doc_reference'
+                - type: object # allowed for compatibility reasons
             otros:
               anyOf:
               - type: object

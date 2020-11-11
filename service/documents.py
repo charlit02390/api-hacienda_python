@@ -212,7 +212,8 @@ def save_additional_emails(key_mh, emails, conn):
 def validate_documents():
     item_cb = validate_document
     collec_cb_args = (0,)
-    return _run_and_summ_docs_job(item_cb, collec_cb_args)
+    return _run_and_summ_docs_job(item_cb=item_cb,
+                                  collec_cb_args=collec_cb_args)
 
 
 def validate_document(company_user, key_mh):
@@ -266,7 +267,8 @@ def validate_document(company_user, key_mh):
 def consult_documents():
     item_cb = consult_document
     collec_cb_args = (1,)
-    return _run_and_summ_docs_job(item_cb, collec_cb_args)
+    return _run_and_summ_docs_job(item_cb=item_cb,
+                                  collec_cb_args=collec_cb_args)
 
 
 def consult_document(company_user, key_mh):
@@ -560,7 +562,7 @@ def parse_datetime(value, field):
 _run_and_summ_docs_job = partial(
     run_and_summ_collec_job,
     collec_cb=documents.get_documents,
-    item_id_key='key_mh',
+    item_id_keys='key_mh',
     item_cb_kwargs_map={
         'company_user': 'company_user',
         'key_mh': 'key_mh'

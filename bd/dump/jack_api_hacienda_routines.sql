@@ -112,7 +112,7 @@ SET character_set_client = @saved_cs_client;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_CheckUser`(
-v_email varchar(50),
+v_email varchar(128),
 v_password varchar(50)
 )
 BEGIN
@@ -143,10 +143,10 @@ IN v_state varchar(45),
 IN v_county varchar(45),
 IN v_district varchar(45),
 IN v_neighborhood varchar(45),
-IN v_address varchar(100),
+IN v_address varchar(255),
 IN v_code_phone int,
 IN v_phone int,
-IN v_email varchar(100),
+IN v_email varchar(128),
 IN v_activity_code varchar(45),
 IN v_is_active tinyint(4)
 )
@@ -208,7 +208,7 @@ v_id_company varchar(45),
 v_line_number varchar(45),
 v_quantity varchar(45),
 v_unity varchar(45),
-v_detail varchar(45),
+v_detail varchar(150),
 v_unit_price varchar(45),
 v_net_tax varchar(45),
 v_total_line varchar(45),
@@ -352,7 +352,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createUser`(
-v_email varchar(45),
+v_email varchar(128),
 v_password varchar(45),
 v_name varchar(100),
 v_idrol int
@@ -388,7 +388,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createUser_Company`(
-v_email varchar(45),
+v_email varchar(128),
 v_idcompany int
 )
 BEGIN
@@ -468,7 +468,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteUser`(
-v_email varchar(45))
+v_email varchar(128))
 BEGIN
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -497,7 +497,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteUserCompany`(
-v_email varchar(45),
+v_email varchar(128),
 v_idcompany int
 )
 BEGIN
@@ -762,7 +762,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserCompany_info`(
-IN v_email varchar(45),
+IN v_email varchar(128),
 IN v_idcompany int
 )
 BEGIN
@@ -786,7 +786,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfo`(
-v_email varchar(45))
+v_email varchar(128))
 BEGIN
 
 select u.*,r.value rol
@@ -811,7 +811,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getUserInfoCompanies`(
-v_email varchar(45))
+v_email varchar(128))
 BEGIN
 select c.id internalid, c.company_user idcompany, c.tradename tradename
 from users u 
@@ -864,10 +864,10 @@ IN v_state varchar(45),
 IN v_county varchar(45),
 IN v_district varchar(45),
 IN v_neighborhood varchar(45),
-IN v_address varchar(100),
+IN v_address varchar(255),
 IN v_code_phone int,
 IN v_phone int,
-IN v_email varchar(100),
+IN v_email varchar(128),
 IN v_activity_code varchar(45),
 IN v_is_active tinyint(4)
 )
@@ -975,7 +975,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ModifyUser`(
-IN v_email varchar(45),
+IN v_email varchar(128),
 IN v_password varchar(45),
 IN v_name varchar(100),
 IN v_idrol int
@@ -1016,8 +1016,8 @@ v_dni varchar(50),
 v_total_document float,
 v_total_taxes float,
 v_pdf longblob,
-v_email varchar(45),
-v_email_costs varchar(45)
+v_email varchar(128),
+v_email_costs varchar(128)
 )
 BEGIN
 IF not exists (select id from documents where key_mh = v_key_mh) then
@@ -1132,6 +1132,19 @@ SET
 WHERE `key_mh` = v_key_mh and `company_id` = (Select id from companies where company_user = v_company_id) ;
 END ;;
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS `usp_updateIsSent_documents`;
+DELIMITER $$
+CREATE PROCEDURE `usp_updateIsSent_documents` (
+	v_key_mh VARCHAR(50),
+	v_isSent TINYINT
+)
+BEGIN
+	UPDATE documents
+	SET	`isSent` = v_isSent
+	WHERE `key_mh` = v_key_mh;
+END $$
+DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
@@ -1154,7 +1167,7 @@ BEGIN
     	,description AS descripcion
         ,tax AS impuesto
 	FROM cabys
-	WHERE CONCAT_WS(' ', cat8desc, description) REGEXP p_patron;
+	WHERE CONCAT_WS(' ', `code`, cat8desc, description) REGEXP p_patron;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1199,7 +1212,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_deleteUser_CompanyByUser`(
-	IN `p_user_email` VARCHAR(255)
+	IN `p_user_email` VARCHAR(128)
 )
 BEGIN
 	DELETE FROM users_companies WHERE iduser = (SELECT idusers FROM users WHERE email = p_user_email);
@@ -1220,7 +1233,8 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_documentxemail`(
-	IN `p_key` VARCHAR(50), IN `p_email` VARCHAR(64)
+	IN `p_key` VARCHAR(50),
+	IN `p_email` VARCHAR(128)
 )
 BEGIN
 	DECLARE v_iddoc int;
@@ -1235,65 +1249,6 @@ BEGIN
         	p_email
     	);
     END IF;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_insert_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_message`(
-	IN `p_company_id` VARCHAR(45),
-	IN `p_key_mh` VARCHAR(50),
-	IN `p_issuer_idn_num` VARCHAR(15),
-	IN `p_issuer_idn_type` VARCHAR(10),
-	IN `p_issue_date` DATETIME,
-	IN `p_code` VARCHAR(1),
-	IN `p_recipient_idn` VARCHAR(15),
-	IN `p_recipient_seq_number` VARCHAR(20),
-	IN `p_encd_xml` BLOB,
-	IN `p_status` VARCHAR(30),
-	IN `p_issuer_email` VARCHAR(128)
-)
-BEGIN
-	DECLARE v_idcomp INT;
-	SET v_idcomp = (SELECT id from companies WHERE company_user = p_company_id);
-	IF v_idcomp IS NOT NULL THEN
-		INSERT INTO `message` (
-			company_id,
-			key_mh,
-			status,
-			code,
-			issue_date,
-			issuer_idn_num,
-			issuer_idn_type,
-			issuer_email,
-			recipient_idn,
-			recipient_seq_number,
-			signed_xml)
-		VALUES (
-			v_idcomp,
-			`p_key_mh`,
-			`p_status`,
-			`p_code`,
-			`p_issue_date`,
-			`p_issuer_idn_num`,
-			`p_issuer_idn_type`,
-			`p_issuer_email`,
-			`p_recipient_idn`,
-			`p_recipient_seq_number`,
-			`p_encd_xml`
-		);
-	END IF;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1353,68 +1308,6 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_selectByCode_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCode_message`(
-	IN `p_code` VARCHAR(1),
-	IN `p_company_user` VARCHAR(50),
-	IN `p_limit` INT UNSIGNED
-)
-BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.code = ?';
-	IF `p_company_user` IS NOT NULL THEN
-		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
-	END IF;
-	IF `p_limit` IS NOT NULL THEN
-		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
-	END IF;
-	PREPARE stmt FROM @q;
-	SET @code = `p_code`;
-	EXECUTE stmt USING @code;
-	DEALLOCATE PREPARE stmt;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_selectByCompany_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCompany_message`(
-	IN `p_company_user` VARCHAR(50),
-	IN `p_limit` INT UNSIGNED
-)
-BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.company_user = ?';
-	IF `p_limit` IS NOT NULL THEN
-		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
-	END IF;
-	PREPARE stmt FROM @q;
-	SET @cmp_user = `p_company_user`;
-	EXECUTE stmt USING @cmp_user;
-	DEALLOCATE PREPARE stmt;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `usp_selectByDocKey_documentxemail` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -1440,50 +1333,173 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_selectByIssuerIDN_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByIssuerIDN_message`(
-	IN `p_issuer_idn_num` VARCHAR(1),
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2020-11-06 11:57:11
+
+-- ---------------------------------------
+-- Messages USPs --------------------
+-- ---------------------------------------
+DROP PROCEDURE IF EXISTS usp_insert_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_insert_message` (
+	IN `p_company_id` VARCHAR(45),
+	IN `p_key_mh` VARCHAR(50),
+	IN `p_issuer_idn_num` VARCHAR(15),
+	IN `p_issuer_idn_type` VARCHAR(10),
+	IN `p_issue_date` DATETIME,
+	IN `p_code` VARCHAR(1),
+	IN `p_recipient_idn` VARCHAR(15),
+	IN `p_recipient_seq_number` VARCHAR(20),
+	IN `p_encd_xml` BLOB,
+	IN `p_status` VARCHAR(30),
+	IN `p_issuer_email` VARCHAR(128)
+)
+BEGIN
+	DECLARE v_idcomp INT;
+	SET v_idcomp = (SELECT id from companies WHERE company_user = p_company_id);
+	IF v_idcomp IS NOT NULL THEN
+		INSERT INTO `message` (
+			company_id,
+			key_mh,
+			status,
+			code,
+			issue_date,
+			issuer_idn_num,
+			issuer_idn_type,
+			issuer_email,
+			recipient_idn,
+			recipient_seq_number,
+			signed_xml)
+		VALUES (
+			v_idcomp,
+			`p_key_mh`,
+			`p_status`,
+			`p_code`,
+			`p_issue_date`,
+			`p_issuer_idn_num`,
+			`p_issuer_idn_type`,
+			`p_issuer_email`,
+			`p_recipient_idn`,
+			`p_recipient_seq_number`,
+			`p_encd_xml`
+		);
+	END IF;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_updateFromAnswer_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_updateFromAnswer_message` (
+	IN `p_company_user` VARCHAR(45),
+	IN `p_key_mh` VARCHAR(50),
+	IN `p_recipient_seq_number` VARCHAR(20),
+	IN `p_encd_answer_xml` BLOB,
+	IN `p_status` VARCHAR(30),
+	IN `p_answer_date` DATETIME
+)
+BEGIN
+	DECLARE v_idcomp INT;
+	SET v_idcomp = (SELECT id from companies WHERE company_user = `p_company_user`);
+	IF v_idcomp IS NOT NULL THEN
+		UPDATE `message`
+		SET	answer_xml	=	`p_encd_answer_xml`,
+			status	=	`p_status`,
+			answer_date =	`p_answer_date`
+		WHERE	company_id = v_idcomp
+			AND	key_mh	=	`p_key_mh`
+			AND	recipient_seq_number = `p_recipient_seq_number`;
+	END IF;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS `usp_updateEmailSent_message`;
+DELIMITER $$
+CREATE PROCEDURE `usp_updateEmailSent_message` (
+	p_key_mh VARCHAR(50),
+	p_recipient_seq_number VARCHAR(20),
+	p_email_sent TINYINT
+)
+BEGIN
+	UPDATE message
+	SET	`email_sent` = p_email_sent
+	WHERE `key_mh` = p_key_mh
+		AND `recipient_seq_number` = p_recipient_seq_number;
+END$$
+DELIMITER ;
+
+
+DROP VIEW IF EXISTS vw_message;
+CREATE VIEW `vw_message`
+AS
+SELECT	msg.id,
+	msg.company_id,
+	cmp.company_user,
+	msg.key_mh,
+	msg.status,
+	msg.code,
+	msg.issue_date,
+	msg.issuer_idn_num,
+	msg.issuer_idn_type,
+	msg.issuer_email,
+	msg.recipient_idn,
+	msg.recipient_seq_number,
+	msg.signed_xml,
+	msg.answer_date,
+	msg.answer_xml,
+	cmp.is_active as company_is_active,
+	msg.email_sent
+FROM	`message` AS msg INNER JOIN
+	companies as cmp ON msg.company_id = cmp.id;
+
+
+DROP PROCEDURE IF EXISTS usp_select_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_select_message` (
+	IN `p_key_mh` VARCHAR(50),
+	IN `p_recipient_seq_number` VARCHAR(20)
+)
+BEGIN
+	SELECT vw_msg.*
+	FROM	`vw_message` AS vw_msg
+	WHERE	vw_msg.key_mh = p_key_mh
+		AND	vw_msg.recipient_seq_number = `p_recipient_seq_number`;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_selectByCompany_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCompany_message` (
 	IN `p_company_user` VARCHAR(50),
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.issuer_idn_num = ?';
-	IF `p_company_user` IS NOT NULL THEN
-		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
-	END IF;
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.company_user = ?';
 	IF `p_limit` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
 	END IF;
 	PREPARE stmt FROM @q;
-	SET @idn = `p_issuer_idn_num`;
-	EXECUTE stmt USING @idn;
+	SET @cmp_user = `p_company_user`;
+	EXECUTE stmt USING @cmp_user;
 	DEALLOCATE PREPARE stmt;
-END ;;
+END$$
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_selectByStatus_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByStatus_message`(
+
+
+DROP PROCEDURE IF EXISTS usp_selectByStatus_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByStatus_message` (
 	IN `p_status` VARCHAR(30),
 	IN `p_company_user` VARCHAR(50),
 	IN `p_company_is_active` TINYINT UNSIGNED,
@@ -1504,125 +1520,52 @@ BEGIN
 	SET @status = `p_status`;
 	EXECUTE stmt USING @status;
 	DEALLOCATE PREPARE stmt;
-END ;;
+END$$
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_select_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_select_message`(
-	IN `p_key_mh` VARCHAR(50)
+
+
+DROP PROCEDURE IF EXISTS usp_selectByCode_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCode_message` (
+	IN `p_code` VARCHAR(1),
+	IN `p_company_user` VARCHAR(50),
+	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SELECT v_msg.*
-	FROM	`vw_message` AS v_msg
-	WHERE	v_msg.key_mh = p_key_mh;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_updateEmailSent_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_updateEmailSent_message`(
-	v_key_mh VARCHAR(50),
-	v_email_sent TINYINT
-)
-BEGIN
-	UPDATE message
-	SET	`email_sent` = v_email_sent
-	WHERE `key_mh` = v_key_mh;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_updateFromAnswer_message` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_updateFromAnswer_message`(
-	IN `p_company_id` VARCHAR(45),
-	IN `p_key_mh` VARCHAR(50),
-	IN `p_encd_answer_xml` BLOB,
-	IN `p_status` VARCHAR(30),
-	IN `p_answer_date` DATETIME
-)
-BEGIN
-	DECLARE v_idcomp INT;
-	SET v_idcomp = (SELECT id from companies WHERE company_user = p_company_id);
-	IF v_idcomp IS NOT NULL THEN
-		UPDATE `message`
-		SET	answer_xml	=	`p_encd_answer_xml`,
-			status	=	`p_status`,
-			answer_date =	`p_answer_date`
-		WHERE	v_idcomp = company_id
-			AND	key_mh	=	`p_key_mh`;
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.code = ?';
+	IF `p_company_user` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
 	END IF;
-END ;;
+	IF `p_limit` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
+	END IF;
+	PREPARE stmt FROM @q;
+	SET @code = `p_code`;
+	EXECUTE stmt USING @code;
+	DEALLOCATE PREPARE stmt;
+END$$
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `usp_updateIsSent_documents` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_updateIsSent_documents`(
-	v_key_mh VARCHAR(50),
-	v_isSent TINYINT
+
+
+DROP PROCEDURE IF EXISTS usp_selectByIssuerIDN_message;
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByIssuerIDN_message` (
+	IN `p_issuer_idn_num` VARCHAR(1),
+	IN `p_company_user` VARCHAR(50),
+	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	UPDATE documents
-	SET	`isSent` = v_isSent
-	WHERE `key_mh` = v_key_mh;
-END ;;
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.issuer_idn_num = ?';
+	IF `p_company_user` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
+	END IF;
+	IF `p_limit` IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
+	END IF;
+	PREPARE stmt FROM @q;
+	SET @idn = `p_issuer_idn_num`;
+	EXECUTE stmt USING @idn;
+	DEALLOCATE PREPARE stmt;
+END$$
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2020-11-06 11:57:11
+-- ---------------------------------------

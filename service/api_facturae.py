@@ -213,7 +213,7 @@ def get_token_hacienda(_company_id, _user_mh, _pass_mh, env):
 
             if 200 <= response.status_code <= 299:
                 token_hacienda = response_json.get('access_token')
-                last_tokens[_company_id] = token
+                last_tokens[_company_id] = token_hacienda
                 last_tokens_time[_company_id] = time.time()
                 last_tokens_expire[_company_id] = response_json.get('expires_in')
                 last_tokens_refresh[_company_id] = response_json.get('refresh_expires_in')

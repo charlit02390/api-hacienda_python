@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS `documentxemail`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `documentxemail` (
   `iddocument` int(11) NOT NULL,
-  `email` varchar(64) NOT NULL,
+  `email` varchar(128) NOT NULL,
   PRIMARY KEY (`iddocument`,`email`),
   CONSTRAINT `FK_documentxemail_documents` FOREIGN KEY (`iddocument`) REFERENCES `documents` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
