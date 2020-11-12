@@ -74,8 +74,8 @@ def find(data, where):
 
 
 def get(code: str):
-    cabys = cabys.select(code)
-    if not cabys:
+    found = cabys.select(code)
+    if not found:
         return utils.build_response_data(
             {
                 'http_status': 404,
@@ -89,7 +89,7 @@ def get(code: str):
         )
     
     return utils.build_response_data({
-        'data': cabys
+        'data': found
     })
 
 
