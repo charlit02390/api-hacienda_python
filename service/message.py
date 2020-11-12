@@ -61,7 +61,9 @@ def create(data: dict):
     message.detail = data['detalle']
     message.taxTotalAmount = DecimalMoney(data['montoImpuesto'])
     message.invoiceTotalAmount = DecimalMoney(data['total'])
-    message.issueDate = _curr_datetime_cr()
+
+    issueDate = _curr_datetime_cr(False)
+    message.issueDate = issueDate.isoformat()
 
 
     signed = api_facturae.sign_xml(cert,
@@ -72,8 +74,8 @@ def create(data: dict):
 
     issuer_email = data.get('correoEmisor')
 
-    dao_message.insert(company_id, message, encoded,
-                    'creado', issuer_email=issuer_email)
+    dao_message.insert(company_id, message, issueDate,
+                       encoded, 'creado', issuer_email=issuer_email)
 
     result = process_message('-'.join((message.key,
                                        message.recipientSequenceNumber)))
@@ -212,7 +214,20 @@ def _handle_sent_message(company: dict, message:dict, token: str):
 
     status = info.get('ind-estado', '')
     answer_xml = info.get('respuesta-xml')
-    answer_date = info.get('fecha', _curr_datetime_cr(False))
+    try:
+        temp_date = info.get('fecha')
+        answer_date = datetime.fromisoformat(temp_date)
+    except ValueError as ver:
+        _logger.warning("""**Hacienda's answer date format was not isoformat:**
+{}
+Message key: {}
+Setting it to None/Null""".format(ver, message_query_key))
+        answer_date = None
+    except TypeError:
+        _logger.warning(("**Hacienda's answer did not"
+                         " provide a date. Setting it to None/Null**"))
+        answer_date = None
+
     dao_message.update_from_answer(company['company_user'],
                                    key, sequence, answer_xml,
                                    status, answer_date)

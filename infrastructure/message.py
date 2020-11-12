@@ -1,3 +1,4 @@
+from datetime import datetime
 
 from pymysql.connections import Connection
 
@@ -7,11 +8,11 @@ from helpers.errors.enums import DBErrorCodes
 from helpers.errors.exceptions import DatabaseError
 
 def insert(company_id: str, message: RecipientMessage,
-           encoded_xml: bytes, status: str, issuer_email: str = None,
-           connection: Connection = None):
+           issue_date: datetime, encoded_xml: bytes, status: str,
+           issuer_email: str = None, connection: Connection = None):
     procedure = 'usp_insert_message'
     args = (company_id, message.key, message.issuerIDN.number,
-            message.issuerIDN.type, message.issueDate,
+            message.issuerIDN.type, issue_date,
             message.code, message.recipientIDN.number,
             message.recipientSequenceNumber, encoded_xml, status,
             issuer_email)
