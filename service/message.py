@@ -77,10 +77,8 @@ def create(data: dict):
     dao_message.insert(company_id, message, issueDate,
                        encoded, 'creado', issuer_email=issuer_email)
 
-    result = process_message('-'.join((message.key,
+    return process_message('-'.join((message.key,
                                        message.recipientSequenceNumber)))
-
-    return build_response_data(result)
 
 
 def process_message(key_mh: str, rec_seq_num: str = None):
