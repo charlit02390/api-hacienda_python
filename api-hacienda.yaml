@@ -883,12 +883,17 @@ components:
           - montoImpuesto
   parameters:
     debug:
-        name: {{debug_switch}}
-        in: query
-        required: false
-        description: A parameter that specifies if responses will return debug information on errors.
-        schema:
-            type: string
+      name: {{debug_switch}}
+      in: query
+      required: false
+      description: A parameter that specifies if responses will return debug information on errors.
+      schema:
+        type: string
+    param_search:
+      name: search
+      in: query
+      schema:
+        type: string
 paths:
   /api/companies:
     get:
@@ -1455,11 +1460,11 @@ paths:
       summary: Finds the specified SAC code(s) using the given Cabys code from the CabysXSac collection.
       operationId: routes.cabys.find_sacs_by_cabys
       # again... this body could be a query parameter, maybe...
-      # parameters:
-      # - name: cabys
-      #   in: query
-      #   schema:
-      #     type: string
+      parameters:
+        - name: cabys
+          in: query
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -1488,18 +1493,8 @@ paths:
         - cabys
       summary: Performs a search on the cabys collection returning matches for the requested query.
       operationId: routes.cabys.search_cabys
-      # once more, this body could be a query parameter... prolly... heck, it's even used more than just once, so it could be placed in components:
-      # components:
-      #   parameters:
-      #     param_search:
-      #       name: search
-      #       in: query
-      #       schema:
-      #         type: string
-      # just call it here:
-      # parameters:
-      # - $ref: '#/components/parameters/param_search'
-      # but, whatever, already made a requestBody component, so might as well use it
+      parameters:
+        - $ref: '#/components/parameters/param_search'
       requestBody:
         $ref: '#/components/requestBodies/search'
       responses:
@@ -1513,6 +1508,38 @@ paths:
           $ref: '#/components/responses/404NoMatches'
       security:
         - api_key: []
+  /cabys/goods/{code}:
+    get:
+      tags:
+        - cabys
+      summary: obtains a cabys information by it's full cabys code
+      operationId: routes.cabys.get
+      parameters:
+        - name: code
+          in: path
+          description: The 13 digit code for the requested CABYS
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: ok #TODO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/stdResponse'
+        400:
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/stdResponse'
+        404:
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/stdResponse'
   /registry/persons/{id}:
     get:
       tags:
