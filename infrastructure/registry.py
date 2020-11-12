@@ -4,7 +4,7 @@ from infrastructure import dbadapter as dbadp
 from helpers.errors.enums import DBErrorCodes
 from helpers.errors.exceptions import DatabaseError
 
-def get_person(id: str) -> dict|None:
+def get_person(id: str):
 	"""
 	Gets the information of a person from the database using the
 	given id.
