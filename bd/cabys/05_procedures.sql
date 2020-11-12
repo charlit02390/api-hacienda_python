@@ -61,7 +61,7 @@ BEGIN
     	,description AS descripcion
         ,tax AS impuesto
 	FROM cabys
-	WHERE `code` = p_code 
+	WHERE `code` = p_code; 
 END //
 -- ---------------------------
 DELIMITER ;
