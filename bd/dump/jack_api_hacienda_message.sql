@@ -39,7 +39,7 @@ CREATE TABLE `message` (
   `answer_xml` blob,
   `email_sent` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `UQ_message` (`key_mh`),
+  UNIQUE KEY `UQ_message` (`key_mh`, `recipient_seq_number`),
   KEY `FK_message_companies` (`company_id`),
   CONSTRAINT `FK_message_companies` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

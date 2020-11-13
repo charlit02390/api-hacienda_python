@@ -22,3 +22,7 @@ def find_sacs_by_cabys():
     body = connexion.request.json
     response = service.find(body, service.Find.SACS)
     return utils.build_response(response)
+
+def get(code: str):
+    response = service.get(code)
+    return utils.build_response(response)

@@ -73,6 +73,26 @@ def find(data, where):
     return response
 
 
+def get(code: str):
+    found = cabys.select(code)
+    if not found:
+        return utils.build_response_data(
+            {
+                'http_status': 404,
+                'error': {
+                    'message': (
+                        'No cabys was found for code {}.'
+                        ).format(code),
+                    'code': 21
+                }
+            }
+        )
+    
+    return utils.build_response_data({
+        'data': found
+    })
+
+
 # Formats a query into a Regular Expression matching pattern... maybe...
 def format(query):
     # dunno what to do here, so just trying stuff. Better find a more efficient way

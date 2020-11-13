@@ -7,7 +7,7 @@ from werkzeug.exceptions import Unauthorized
 from infrastructure import users
 from infrastructure.dbadapter import DbAdapterError
 
-from jose import jwt, JWTError, ExpiredSignatureError
+from jose import jwt, JWTError
 
 from service import utils
 from helpers.errors.enums import InputErrorCodes, AuthErrorCodes, InternalErrorCodes
@@ -100,8 +100,6 @@ def generate_token(email):
 def decode_token(token):
     try:
         return jwt.decode(token, cfg['jwt_secret'], algorithms=cfg['jwt_algorithm'])
-    #except ExpiredSignatureError as eser:
-    #    raise AuthError(status=AuthErrorCodes.EXPIRED_JWT);
     except JWTError as e:
         six.raise_from(Unauthorized, e)
 

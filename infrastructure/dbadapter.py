@@ -90,7 +90,7 @@ def fetchall_from_proc(procname: str, args: tuple=(),
 
 
 def fetchone_from_proc(procname: str, args: tuple=(),
-                       headers: list=None) -> dict|None:
+                       headers: list=None):
     """
     Fetches the first row from the given database procedure name
     and returns it in a dictionary.
@@ -115,7 +115,7 @@ def fetchone_from_proc(procname: str, args: tuple=(),
 
 def _fetch_from_proc(fetchtype: FetchType, buffered: bool,
                      procname: str, args: tuple=(),
-                     headers: list=None) -> dict|list|generator|None:
+                     headers: list=None):
     """
     Fetches data from the database from the given database
     procedure name.

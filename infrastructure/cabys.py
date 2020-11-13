@@ -65,3 +65,14 @@ def find_sacs(cabyscode: str) -> list:
     except dbadp.DbAdapterError as dbae:
         raise DatabaseError(
             status=DBErrorCodes.DB_CABYS_SEARCH_SACS) from dbae
+
+
+def select(code: str):
+    procname = 'usp_selectByCode_cabys'
+    headers = ['codigo','descripcion','impuesto']
+    try:
+        return dbadp.fetchone_from_proc(procname, (code,), headers)
+    except dbadp.DbAdapterError as dbae:
+        raise DatabaseError(
+            status=DBErrorCodes.DB_CABYS_SELECT_CABYS_BY_CODE
+        ) from dbae

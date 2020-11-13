@@ -49,4 +49,19 @@ BEGIN
     WHERE `code` = p_cod_cabys;
 END //
 -- ---------------------------
+
+-- ---------------------------
+-- User Stored Procedure usp_obtenersacs_cabysxsac --
+-- ---------------------------
+CREATE PROCEDURE usp_selectByCode_cabys (
+    p_code VARCHAR(13)
+)
+BEGIN
+    SELECT `code` AS codigo
+    	,description AS descripcion
+        ,tax AS impuesto
+	FROM cabys
+	WHERE `code` = p_code; 
+END //
+-- ---------------------------
 DELIMITER ;
