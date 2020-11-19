@@ -4,9 +4,11 @@ from helpers.errors.enums import DBErrorCodes
 from helpers.errors.exceptions import DatabaseError
 
 
-def save_company_smtp(host, user, password, port, encrypt_type, id_company):
+def save_company_smtp(host, user, password, port,
+                      encrypt_type, id_company, sender):
     procedure = 'sp_createSmtpData'
-    args = (host,user,password,port,encrypt_type,id_company)
+    args = (host, user, password, port,
+            encrypt_type, id_company, sender)
     try:
         dba.execute_proc(proc_name=procedure,
                          args=args,assert_unique=True)
@@ -18,9 +20,11 @@ def save_company_smtp(host, user, password, port, encrypt_type, id_company):
 
 
 
-def modify_company_smtp(host, password, user, port, encrypt_type, id_company):
+def modify_company_smtp(host, password, user, port,
+                        encrypt_type, id_company, sender):
     procedure = 'sp_ModifyCompanySmtp'
-    args = (host, password, user, port, encrypt_type, id_company)
+    args = (host, password, user, port,
+            encrypt_type, id_company, sender)
     try:
         dba.execute_proc(proc_name=procedure, args=args,
                          assert_unique=True)

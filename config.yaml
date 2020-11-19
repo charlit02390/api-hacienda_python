@@ -1,14 +1,15 @@
 mysql:
     host: localhost
-    user: root
-    passwd: root
+    user: username
+    passwd: password
     db: jack_api_hacienda
 email:
-    host: smtp.gmail.com
+    host: host.com
+    sender: sender@domain.com
     port: 587
-    type: TLS
-    user: cmonge@jackdevelopers.com
-    password: 
+    encrypt_type: TLS
+    user: username
+    password: password
 jwt_issuer: 'com.jackdevelopers.connexion'
 jwt_secret: 'Hernan-API'
 jwt_lifetime_seconds: 600

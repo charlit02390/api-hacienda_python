@@ -126,8 +126,6 @@ def send_mail(document: dict):
     else:
         smtp_data.pop('company_user')
 
-    smtp_data['sender'] = smtp_data.pop('user')
-
     primary_recipient = document.get('email') # using this as a way to tell between invoices and messages... # BIG TODO
     if primary_recipient:
         _send_mail_invoice(document, smtp_data)
@@ -422,13 +420,15 @@ def _send_mail_invoice(document: dict, smtp: dict):
         'subject': "Envio de {} número: {}".format(doc_type_desc,
                                                    doc_key),
         'content': "Adjuntamos los datos de la {}".format(doc_type_desc),
-        'name_file1': "{}_{}.pdf".format(doc_type_desc, doc_key),
-        'name_file2': "{}_{}.xml".format(doc_type, doc_key),
-        'name_file3': "AHC_{}.xml".format(doc_key),
-        'file1': b64decode(document['pdfdocument']),
-        'file2': b64decode(document['signxml']),
-        'file3': b64decode(document['answerxml'])
-        }
+        'attachments' : [
+            {'name': "{}_{}.pdf".format(doc_type_desc, doc_key),
+             'file': b64decode(document['pdfdocument'])},
+            {'name': "{}_{}.xml".format(doc_type, doc_key),
+             'file': b64decode(document['signxml'])},
+            {'name': "AHC_{}.xml".format(doc_key),
+             'file': b64decode(document['answerxml'])}
+        ]
+    }
     return email.send_email(receivers=recipients, **smtp, **mail_data)
 
 
@@ -445,17 +445,12 @@ def _send_mail_message(document: dict, smtp: dict):
         'content': ("""Saludos cordiales,
         
 Se le informa que su documento emitido con clave: "{}","""
-        """ para el receptor con identificación: "{}","""
-        """numeración consecutiva: "{}","""
+        """ para el receptor con identificación: "{}", """
+        """numeración consecutiva: "{}", """
         """fue confirmado con un estado de: {}."""
             ).format(doc_key, document['recipient_idn'], doc_sequence,
                     doc_message_code_desc),
-        'name_file1': "",
-        'name_file2': "",
-        'name_file3': "",
-        'file1': None,
-        'file2': None,
-        'file3': None
+        'attachments': []
         }
     return email.send_email(receiver=primary_recipient, **smtp,
                             **mail_data)

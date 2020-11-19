@@ -24,12 +24,13 @@ DROP TABLE IF EXISTS `companies_smtp`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `companies_smtp` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `host` varchar(45) NOT NULL,
-  `user` varchar(45) NOT NULL,
-  `password` varchar(45) NOT NULL,
+  `host` varchar(128) NOT NULL,
+  `user` varchar(128) NOT NULL,
+  `password` varchar(128) NOT NULL,
   `port` varchar(45) NOT NULL,
   `encrypt_type` varchar(45) NOT NULL,
   `id_company` int(11) NOT NULL,
+  `sender` VARCHAR(128) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `id_company_fk_idx` (`id_company`),
   CONSTRAINT `id_company_fk` FOREIGN KEY (`id_company`) REFERENCES `companies` (`id`)
