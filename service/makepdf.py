@@ -6,6 +6,9 @@ from . import utils
 
 from flask import render_template
 
+CREDIT_CURRENCY_EXCHANGE_POLICY = """\
+Si la factura no se cancela dentro del mes de su facturación, \
+se debe pagar al tipo de cambio oficial al dia de su cancelación."""
 
 def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_conditions, activity_code, receptor,
                 total_servicio_gravado, total_servicio_exento, totalServExonerado, total_mercaderia_gravado,
@@ -26,6 +29,7 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
         line['subtotal'] = utils.stringRound(line['subtotal'])
         line['cantidad'] = utils.stringRound(line['cantidad'])
         line['totalLinea'] = utils.stringRound(line['totalLinea'])
+        line['_cabys'] = line.get('codigo', line.get('cabys', ''))
 
     simboloMoneda = fe_enums.currencies[moneda['tipoMoneda']]
 
@@ -57,8 +61,19 @@ def render_pdf(company_data, document_type, key_mh, consecutive, date, sale_cond
                    'type_iden_company' : fe_enums.tipoCedulaPDF.get(company_data.get('type_identification'), 'Tipo de identificación no especificada'),
                    'ref_num' : additionalFields['ref_num']
                   }
+    footer_data = {'notes': invoice_comments if \
+        isinstance(invoice_comments, list) else [],
+                   'email': company_data['email']
+        }
+    # if there there is a due date, this document's condition is
+    # credit, and if there is a currency exchange, it must have
+    # been made using a foreign currency. So, we must display
+    # our credit currency exchange policy.
+    if additionalFields.get('due_date') \
+            and additionalFields.get('currency_exchange'):
+        footer_data['notes'].insert(0, CREDIT_CURRENCY_EXCHANGE_POLICY)
     add_pdf_header(options, header_data)
-    add_pdf_footer(options, {"notes" : invoice_comments or [], "email" : company_data['email']})
+    add_pdf_footer(options, footer_data)
     try:
         pdf = pdfkit.from_string(main_content, False, css=css, options=options)
     finally:
