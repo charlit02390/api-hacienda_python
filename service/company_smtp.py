@@ -14,6 +14,7 @@ def save_company_smtp(data, id_company):
     _password = data['password']
     _port = data['port']
     _encrypt_type = data['encrypt_type']
+    _sender = data['sender']
 
     company_exists = companies.verify_company(id_company)
 
@@ -26,7 +27,8 @@ def save_company_smtp(data, id_company):
         raise InputError(status=InputErrorCodes.DUPLICATE_RECORD,
                          message="The company already has SMTP data.")
 
-    company_smtp.save_company_smtp(_host, _user, _password, _port, _encrypt_type, id_company)
+    company_smtp.save_company_smtp(_host, _user, _password, _port,
+                                   _encrypt_type, id_company, _sender)
 
     return build_response_data({'message' : 'SMTP data created successfully'})
 
@@ -47,12 +49,14 @@ def modify_company_smtp(data, id_company):
     _password = data['password']
     _port = data['port']
     _encrypt_type = data['encrypt_type']
+    _sender = data['sender']
 
     company_smtp_exists = company_smtp.verify_company_smtp(id_company)
 
     if not company_smtp_exists:
         raise InputError(status=InputErrorCodes.NO_RECORD_FOUND, message="The company doesn't have SMTP data to be updated.")
 
-    company_smtp.modify_company_smtp(_host, _password, _user, _port, _encrypt_type, id_company)
+    company_smtp.modify_company_smtp(_host, _password, _user, _port,
+                                     _encrypt_type, id_company, _sender)
 
     return build_response_data({'message' : "The company's SMTP was successfully updated."})
