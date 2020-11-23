@@ -1,0 +1,17 @@
+mysql:
+    host: localhost
+    user: username
+    passwd: password
+    db: jack_api_hacienda
+email:
+    host: host.com
+    sender: sender@domain.com
+    port: 587
+    encrypt_type: TLS
+    user: username
+    password: password
+jwt_issuer: 'com.jackdevelopers.connexion'
+jwt_secret: 'Hernan-API'
+jwt_lifetime_seconds: 600
+jwt_algorithm: 'HS256'
+api_key: '61fe6e29-06ea-434b-bc2a-eae5b557eb45'

@@ -639,12 +639,15 @@ components:
               type: string
             encrypt_type:
               type: string
+            sender:
+              type: string
           required:
             - host
             - user
             - password
             - port
             - encrypt_type
+            - sender
       required:
         - data
     email:

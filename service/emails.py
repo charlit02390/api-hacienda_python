@@ -24,16 +24,18 @@ def sent_email_fe(data):
 
     if smtp_data:
         host = smtp_data['host']
-        sender = smtp_data['user']
+        sender = smtp_data['sender']
+        username = smtp_data['user']
         password = smtp_data['password']
         port = smtp_data['port']
         encrypt_type = smtp_data['encrypt_type']
     else:
         host = cfg['email']['host']
-        sender = cfg['email']['user']
+        sender = cfg['email']['sender']
+        username = cfg['email']['user']
         password = cfg['email']['password']
         port = cfg['email']['port']
-        encrypt_type = cfg['email']['type']
+        encrypt_type = cfg['email']['encrypt_type']
 
     document = documents.get_document(data['key_mh'])
     if not document:
@@ -55,8 +57,14 @@ def sent_email_fe(data):
     file2 = base64.b64decode(document['signxml'])
     file3 = base64.b64decode(document['answerxml'])
 
-    send_email(receivers, subject, body, file1, file2, file3, host, sender, password, port,
-                        encrypt_type, name_file1, name_file2, name_file3)
+    attachments = [
+        {'name': name_file1, 'file': file1},
+        {'name': name_file2, 'file': file2},
+        {'name': name_file3, 'file': file3}
+    ]
+
+    send_email(receivers, host, sender, port, encrypt_type,
+               username, password, subject, body, attachments)
     return build_response_data({'message' : 'Email successfully sent.'})
 
 
@@ -72,30 +80,32 @@ def send_custom_email(data, file1, file2, file3):
     subject = data['subject']
     content = data['content']
     # wish these were just a list...
-    # files are optional, so, if no file was received, just set the filename to empty string so send_mail doesn't attach it
-    name_file1 = ""
-    name_file2 = ""
-    name_file3 = ""
+    # files are optional, so, let's create a list containing any files given
+    attachments = []
     if file1:
         name_file1 = file1.filename
         file1 = file1.stream.read() # if this is a FileStorage werkzeug thingie, could prolly just file1.read()... to lazy to test...
+        attachments.append({'file': file1, 'name': name_file1})
         
     if file2:
         name_file2 = file2.filename
         file2 = file2.stream.read()
+        attachments.append({'file': file2, 'name': name_file2})
 
     if file3:
         name_file3 = file3.filename
         file3 = file3.stream.read()
+        attachments.append({'file': file3, 'name': name_file3})
         
     
     host = smtp_data['host']
-    sender = smtp_data['user']
+    sender = smtp_data['sender']
+    username = smtp_data['user']
     password = smtp_data['password']
     port = smtp_data['port']
     encrypt_type = smtp_data['encrypt_type']
-    send_email(receivers, subject, content, file1, file2, file3, host, sender, password, port,
-                        encrypt_type, name_file1, name_file2, name_file3)
+    send_email(receivers, host, sender, port, encrypt_type,
+               username, password, subject, content, attachments)
     return build_response_data({'message': 'email sent successfully'})
 
 

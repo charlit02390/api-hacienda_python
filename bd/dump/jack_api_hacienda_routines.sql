@@ -310,12 +310,13 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createSmtpData`(
-v_host varchar(45),
-v_user varchar(45),
-v_password varchar(45),
+v_host varchar(128),
+v_user varchar(128),
+v_password varchar(128),
 v_port varchar(45),
 v_encrypt_type varchar(45),
-v_id_company varchar(45))
+v_id_company varchar(45),
+p_sender varchar(128))
 BEGIN
 INSERT INTO `jack_api_hacienda`.`companies_smtp`
 (
@@ -324,7 +325,8 @@ INSERT INTO `jack_api_hacienda`.`companies_smtp`
 `password`,
 `port`,
 `encrypt_type`,
-`id_company`
+`id_company`,
+`sender`
 )
 VALUES
 (
@@ -333,7 +335,8 @@ v_user,
 v_password,
 v_port,
 v_encrypt_type,
-(Select id from companies where company_user = v_id_company)
+(Select id from companies where company_user = v_id_company),
+p_sender
 );
 END ;;
 DELIMITER ;
@@ -571,7 +574,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getCompanySmtpInfo`(
 v_company_id varchar(45))
 BEGIN
 
-Select c.company_user, csmtp.host, csmtp.user, csmtp.password, csmtp.port, csmtp.encrypt_type
+Select c.company_user, csmtp.host, csmtp.user, csmtp.password, csmtp.port, csmtp.encrypt_type, csmtp.sender
 	from companies_smtp csmtp 
     inner join companies c
 		on c.id = csmtp.id_company
@@ -907,12 +910,13 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ModifyCompanySmtp`(
-v_host varchar(45),
-v_user varchar(45),
-v_password varchar(45),
+v_host varchar(128),
+v_user varchar(128),
+v_password varchar(128),
 v_port varchar(45),
 v_encrypt_type varchar(45),
-v_id_company varchar(45) )
+v_id_company varchar(45),
+p_sender VARCHAR(128) )
 BEGIN
 UPDATE `jack_api_hacienda`.`companies_smtp`
 SET
@@ -920,7 +924,8 @@ SET
 `user` = v_user,
 `password` = v_password,
 `port` = v_port,
-`encrypt_type` = v_encrypt_type
+`encrypt_type` = v_encrypt_type,
+`sender` = p_sender
 where `id_company` = (Select id from companies c where c.company_user = v_id_company);
 END ;;
 DELIMITER ;
