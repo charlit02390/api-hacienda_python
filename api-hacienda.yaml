@@ -9,7 +9,6 @@ components:
   responses:
     404NoMatches:
       description: No matches found for the requested query
-
   requestBodies:
     search:
       required: true
