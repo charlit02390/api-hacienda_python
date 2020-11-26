@@ -22,11 +22,30 @@ def get_person(id: str) -> dict:
           to be sent.
 
     """
-    # should prolly check the id length and restrict it to the
-    # proper length...
-    # make a "constant" for length, which value should be 9...
-    # TODO i guess... too lazy rn
-    result = { 'data' : registry.get_person(id) }
+    max_length = 12
+    if len(id) > max_length:
+      return utils.build_response_data({
+        'error': {
+          'http_status': 400,
+          'code': 400,
+          'detail': (
+            'ID length is too long.'
+            ' Must be {} characters or less.'
+            ).format(max_length)
+        }
+      })
+
+    person =  registry.get_person(id)
+    if person is None:
+      return utils.build_response_data({
+        'error': {
+          'http_status': 404,
+          'code': 404,
+          'detail': 'Person not found.'
+          }
+      })
+
+    result = {'data': person}
 
     response = utils.build_response_data(
         result,
