@@ -71,7 +71,7 @@
 				</td>
 				<td> <b>Moneda:</b> </td>
 				<td>
-					{{currency.tipoMoneda}}{% if currency_exchange %} T.c. {{currency_exchange}}{% endif %}
+					{{currency.tipoMoneda}}{% if currency.tipoMoneda != "CRC" %} T.c. {{currency.tipoCambio}}{% endif %}
 				</td>
 			</tr>
 			<tr>
@@ -113,7 +113,7 @@
 					<td class="text-right">{{line.cantidad}}</td>
 					<td class="text-right">{{line.precioUnitario}}</td>
 					<td class="text-right">{{line.impuestoNeto}}</td>
-					<td class="text-right">{% if line.impuesto %}{{line.impuesto[0].tarifa|int}}{% else %}0{% endif %}</td>
+					<td class="text-right">{% if line.impuesto %}{{line.impuesto[0].tarifa|int}}{% elif line._cabys %}0{% endif %}</td>
 					<td class="text-right">{{line.totalLinea}}</td>
 				</tr>
 				{%endfor%}

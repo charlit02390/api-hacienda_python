@@ -283,9 +283,11 @@ components:
         montoExportacion:
           type: string
         exoneracion:
-          type: array
-          items:
-            $ref: '#/components/schemas/doc_detail_tax_exemption'
+          anyOf:
+            - $ref: '#/components/schemas/doc_detail_tax_exemption'
+            - type: array
+              items:
+                $ref: '#/components/schemas/doc_detail_tax_exemption'
       required:
         - monto
     doc_detail:
@@ -295,6 +297,7 @@ components:
           type: string
         codigo:
           type: string
+          maxLength: 13
         cantidad:
           type: string
         codigoComercial:
@@ -352,6 +355,7 @@ components:
           type: string
       required:
         - numero
+        - codigo
         - cantidad
         - unidad
         - precioUnitario
@@ -437,6 +441,8 @@ components:
                       - '99'
                 required:
                   - codigo
+              minItems: 1
+              maxItems: 4
             detalles:
               type: array
               items:
@@ -496,6 +502,7 @@ components:
                 - type: array
                   items:
                     $ref: '#/components/schemas/doc_reference'
+                    maxItems: 10
                 - type: object # allowed for compatibility reasons
             otros:
               anyOf:

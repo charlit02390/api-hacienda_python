@@ -24,6 +24,8 @@ class ValidationErrorCodes(IntEnum):
     INVALID_KEY_COMPOSITION = _BASE + 1
     INVALID_DATETIME_FORMAT = _BASE + 2
     INVALID_EMAIL = _BASE + 5
+    INVALID_DETAIL_LINE = _BASE + 6
+    CABYS_NOT_FOUND = _BASE + 7
 
 
 class EmailErrorCodes(IntEnum):

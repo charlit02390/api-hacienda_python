@@ -21,6 +21,8 @@ from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, Internal
 from helpers.errors.exceptions import InputError, ValidationError, ServerError
 from helpers.utils import build_response_data, run_and_summ_collec_job, get_smtp_error_code
 from helpers.debugging import log_section
+from helpers.validations import document as document_validator
+from helpers.arrangers import document as document_arranger
 
 docLogger = logging.getLogger(__name__)
 
@@ -38,6 +40,9 @@ def create_document(data):
     if not signature:
         raise InputError(status=InputErrorCodes.NO_RECORD_FOUND,
                          message="No signature information was found for the company; can't sign the document, so the document can't be created.")
+
+    xml_data, pdf_data = document_arranger.arrange_data(data)
+    document_validator.validate_data(xml_data)
 
     _email_costs = None # MARKED FOR DEATH . Using _additional_emails now
     _additional_emails = []
@@ -89,15 +94,10 @@ def create_document(data):
     _total_other_charges = data.get('totalOtrosCargos','0.0000')
     _total_document = data['totalComprobantes']
     _other_charges = data.get('otrosCargos')
-    _reference = data.get('referencia')
+    _reference = xml_data.get('referencia')
     _others = data.get('otros')
 
     _issued_date = parse_datetime(data['fechafactura'], 'fechafactura')
-
-    if not isinstance(_reference, dict):
-        _reference = None
-    elif _reference:
-        _reference['fecha'] = parse_datetime(_reference['fecha'], 'referencia => fecha').isoformat()
 
     _datestr = api_facturae.get_time_hacienda()
     datecr = api_facturae.get_time_hacienda(True)
@@ -134,14 +134,9 @@ def create_document(data):
         pdf_notes = data.get('notas', data.get('observaciones', data.get('piedepagina',[])))
         _logo = _logo['logo'].decode('utf-8')
         try:
-            pdf = makepdf.render_pdf(company_data, fe_enums.tagNamePDF[_type_document], _key_mh, _consecutive,
-	                                _issued_date.strftime("%d-%m-%Y"), _sale_condition,
-	                                _activity_code, _receptor, _total_serv_taxed, _total_serv_untaxed, _total_serv_exone,
-	                                _total_merch_taxed, _total_merch_untaxed, _total_merch_exone, _total_other_charges,
-	                                _total_net_sales, _total_taxes, _total_discount, _lines, _other_charges, pdf_notes,
-	                                _reference, _payment_methods, _credit_term, _currency, _total_taxed, _total_exone,
-	                                _total_untaxed, _total_sales, _total_return_iva, _total_document, _logo,
-	                                additional_pdf_fields);
+            pdf = makepdf.render_pdf(company_data,
+                                     _logo,
+                                     pdf_data);
         except Exception as ex: #TODO : be more specific about exceptions
             raise # TODO : return {'error' : 'A problem occured when creating the PDF File for the document.'} # INTERNAL ERROR
         #Prueba de creacion de correo
