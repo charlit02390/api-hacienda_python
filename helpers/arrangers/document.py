@@ -22,7 +22,8 @@ def arrange_data(data: dict) -> tuple:
     xml_data = arrange_xml_data(data)
     pdf_data = arrange_pdf_data(data)
 
-    xml_data['detalles'], pdf_data['lines'] = arrange_details(data['detalles'])
+    xml_data['detalles'], pdf_data['lines'] =\
+        arrange_details(data['detalles'])
 
     return (xml_data, pdf_data)
 
@@ -31,8 +32,11 @@ def arrange_data(data: dict) -> tuple:
 def arrange_xml_data(data: dict) -> dict:
     xml_data = deepcopy(data)
 
+    xml_data['tipoC'] = data['tipo']
     xml_data['tipo'] = fe_enums.TipoDocumentoApi[data['tipo']]
-    xml_data['fechafactura'] = parse_datetime(data['fechafactura'], 'fechafactura').isoformat()
+    xml_data['fechafactura'] = parse_datetime(
+        data['fechafactura'], 'fechafactura'
+    ).isoformat()
     if 'referencia' in xml_data:
         references = xml_data.pop('referencia')
         if not isinstance(references, str): # if str, it's not useful, so let it out of our data
@@ -59,6 +63,15 @@ def arrange_xml_data(data: dict) -> dict:
                 additional_emails.append(fallback_email)
 
         recipient['correosAdicionales'] = additional_emails
+
+    otherCharges = xml_data.pop('otrosCargos', [])
+    if isinstance(otherCharges, dict):
+        if otherCharges.get('tipoDocumento'):
+            otherCharges = [otherCharges]
+        else:
+            otherCharges = None
+    if otherCharges:
+        xml_data['otrosCargos'] = otherCharges
 
     xml_data['totalServGravados'] = data.get('totalServGravados', DEFAULT_MONEY_VALUE)
     xml_data['totalServExentos'] = data.get('totalServExentos', DEFAULT_MONEY_VALUE)
@@ -130,6 +143,10 @@ def arrange_details(details: list) -> tuple:
         if cabys and amountTotal:
             xml_line = deepcopy(line)
             xml_line['numero'] = pdf_line['numero'] = line_count
+            baseImponible = xml_line.pop('baseImponible', '')
+            if baseImponible.strip('0.'):
+                xml_line['baseImponible'] = baseImponible
+
             xml_details.append(xml_line)
             line_count += 1
         else:

@@ -81,28 +81,31 @@ components:
           format: binary
         estado:
           type: string
-      required:
-          - logo
-          - id_compania
-          - codigo_actividad
-          - otras_senas
-          - cod_telefono
-          - canton
-          - distrito
-          - email
-          - ambiente
-          - cedula
-          - nombre_compania
-          - barrio
-          - password_hacienda
-          - telefono
-          - pin
-          - provincia
-          - nombre_comercial
-          - tipo_identificacion
-          - usuario_hacienda
-          - firma
-          - estado
+    company_post_put:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/company'
+      - required:
+        - id_compania
+        - codigo_actividad
+        - otras_senas
+        - cod_telefono
+        - canton
+        - distrito
+        - email
+        - ambiente
+        - cedula
+        - nombre_compania
+        - barrio
+        - password_hacienda
+        - telefono
+        - pin
+        - provincia
+        - nombre_comercial
+        - tipo_identificacion
+        - usuario_hacienda
+        - firma
+        - estado
     doc_recipient:
       type: object
       properties:
@@ -215,7 +218,10 @@ components:
           type: string
       required:
         - tipoDocumento
+        - numeroReferencia
         - fecha
+        - codigo
+        - razon
     doc_detail_tax_exemption:
       type: object
       properties:
@@ -926,7 +932,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/company'
+              $ref: '#/components/schemas/company_post_put'
       operationId: routes.companies.route_save_company
       responses:
         200:
@@ -944,7 +950,7 @@ paths:
         content:
           multipart/from-data:
             schema:
-              $ref: '#/components/schemas/company'
+              $ref: '#/components/schemas/company_post_put'
       operationId: routes.companies.route_modify_company
       responses:
         200:
@@ -989,6 +995,35 @@ paths:
           description: The company has been deleted
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
+    patch:
+      tags:
+       - companies
+      description: updates an attribute of the given company
+      operationId: routes.companies.patch_company
+      parameters:
+        - name: id
+          in: path
+          description: the company's id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/company'
+      responses:
+        200:
+          description: company successfully patched
+        400:
+          description: invalid data
+        404:
+          description: company not found
+        500:
+          description: internal error
       security:
         - jwt: []
   /api/consult:

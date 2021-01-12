@@ -26,6 +26,7 @@ class ValidationErrorCodes(IntEnum):
     INVALID_EMAIL = _BASE + 5
     INVALID_DETAIL_LINE = _BASE + 6
     CABYS_NOT_FOUND = _BASE + 7
+    INVALID_SEQUENCE = _BASE + 8
 
 
 class EmailErrorCodes(IntEnum):

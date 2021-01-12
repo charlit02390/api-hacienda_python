@@ -162,3 +162,14 @@ def verify_company(company_user):
         result = True
 
     return result
+
+
+def update_state(company_id, new_state):
+    procedure = 'USP_UpdateCompanyState'
+    args = (company_id, new_state)
+    try:
+        company = dba.execute_proc(procedure, args,assert_unique=True)
+    except dba.DbAdapterError as dbae:
+        raise DatabaseError(status=DBErrorCodes.DB_COMPANY_UPDATE) from dbae
+    
+    return True

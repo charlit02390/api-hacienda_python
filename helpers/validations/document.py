@@ -1,3 +1,6 @@
+from re import ASCII, findall
+from datetime import datetime
+
 import requests
 from email.headerregistry import Address
 from email.errors import HeaderParseError
@@ -6,24 +9,172 @@ from helpers.errors.exceptions import InputError, ValidationError, HaciendaError
 from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, InternalErrorCodes
 from helpers.debugging import time_my_func
 from helpers.entities.numerics import DecimalMoney
+from service.fe_enums import SituacionComprobante
 
 CABYS_VALID_LENGTH = 13
 BASEIMPONIBLE_REQ_TAX_CODE = '07'
 IVAFACTOR_REQ_TAX_CODE = '08'
 HACIENDA_ENDPOINT = 'https://api.hacienda.go.cr/fe/cabys'
 SERVICE_UNITS = ('Sp','Spe','St')
+SEQUENCE_PARTS_SLICES = {
+    'branch': slice(0, 3),
+    'terminal': slice(3, 8),
+    'doctype': slice(8, 10),
+}
+KEY_PARTS_SLICES = {
+    'countrycode': slice(0, 3),
+    'day': slice(3, 5),
+    'month': slice(5, 7),
+    'year': slice(7, 9),
+    'identification': slice(9, 21),
+    'sequence': slice(21, 41),
+    'circumstance': slice(41, 42)
+}
+KEY_VALID_COUNTRY_CODE = '506'
 
 @time_my_func
-def validate_data(data: dict):    
-    doc_type = data['tipo']
+def validate_data(data: dict):
+    validate_header(data)
 
     recipient = data.get('receptor')
     validate_recipient(recipient)
 
+    doc_type = data['tipo']
     details = data['detalles']
     validate_details(doc_type, details)
 
     validate_totals(data)
+
+
+@time_my_func
+def validate_header(data: dict):
+    sequence = data['consecutivo']
+    branch = data['sucursal']
+    terminal = data['terminal']
+    doctype = data['tipoC'].zfill(2)
+    validate_sequence(sequence, branch, terminal, doctype)
+
+    key = data['clavelarga']
+    identification = ''.join(findall('\d', data['nombre_usuario'], ASCII)).zfill(12)
+    date = datetime.fromisoformat(data['fechafactura'])
+    circumstance = data['situacion']
+    validate_key(key, date, identification, sequence, circumstance)
+
+
+def validate_key(key: str, date: datetime, identification: str,
+                 sequence: str, circumstance: str):
+    countrycode_slice = KEY_PARTS_SLICES['countrycode']
+    key_countrycode = key[countrycode_slice]
+    if key_countrycode != KEY_VALID_COUNTRY_CODE:
+        raise ValidationError(
+            message=('La clave posee un código de país inválido {}. '
+                     'El código de país debe ser {}.'
+                     ).format(key_countrycode, KEY_VALID_COUNTRY_CODE),
+            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION
+        )
+
+    day = str(date.day).zfill(2)
+    month = str(date.month).zfill(2)
+    year = str(date.year)[2 : 4]
+    dateisof = date.isoformat()
+
+    day_slice = KEY_PARTS_SLICES['day']
+    key_day = key[day_slice]
+    if key_day != day:
+        raise ValidationError(
+            message=('La clave posee un número de día ({}) que '
+                     'no coincide con el de la fecha de comprobante '
+                     'especificada (fecha: {}; dia: {}).'
+                     ).format(key_day, dateisof, day),
+            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION
+        )
+
+    month_slice = KEY_PARTS_SLICES['month']
+    key_month = key[month_slice]
+    if key_month != month:
+        raise ValidationError(
+            message=('La clave posee un número de mes ({}) que '
+                     'no coincide con el de la fecha de comprobante '
+                     'especificada (fecha: {}; mes: {}).'
+                     ).format(key_month, dateisof, month)
+        )
+
+    year_slice = KEY_PARTS_SLICES['year']
+    key_year = key[year_slice]
+    if key_year != year:
+        raise ValidationError(
+            message=('La clave posee un número de año ({}) que '
+                     'no coincide con el de la fecha de comprobante '
+                     'especificada (fecha: {}; año: {}).'
+                     ).format(key_year, dateisof, year)
+        )
+
+    identification_slice = KEY_PARTS_SLICES['identification']
+    key_identification = key[identification_slice]
+    if key_identification != identification:
+        raise ValidationError(
+            message=('La clave posee un número de identificación ({}) que '
+                     'no coincide con el del usuario especificado ({}).'
+                     ).format(key_identification, identification),
+            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION
+        )
+
+    sequence_slice = KEY_PARTS_SLICES['sequence']
+    key_sequence = key[sequence_slice]
+    if key_sequence != sequence:
+        raise ValidationError(
+            message=('La clave posee un consecutivo ({}) que '
+                     'no coincide con el del consecutivo especificado ({}).'
+                     ).format(key_sequence, sequence),
+            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION
+        )
+
+    circumstance_slice = KEY_PARTS_SLICES['circumstance']
+    key_circumstance = key[circumstance_slice]
+    circumstance_code = SituacionComprobante[circumstance]
+    if key_circumstance != circumstance_code:
+        raise ValidationError(
+            message=('La clave posee un código de circumstancia ({}) que '
+                     'no coincide con el especificado ({} => {}).'
+                     ).format(key_circumstance, circumstance, circumstance_code)
+        )
+
+    return True
+
+
+def validate_sequence(sequence: str, branch: str,
+                      terminal: str, doctype: str):
+    branch_slice = SEQUENCE_PARTS_SLICES['branch']
+    seq_branch = sequence[branch_slice]
+    if branch != seq_branch:
+        raise ValidationError(
+            message=('La sucursal en el consecutivo ({}) no '
+                     'coincide con la sucursal provista ({}).'
+                     ).format(seq_branch, branch),
+            status=ValidationErrorCodes.INVALID_SEQUENCE
+        )
+
+    terminal_slice = SEQUENCE_PARTS_SLICES['terminal']
+    seq_terminal = sequence[terminal_slice]
+    if terminal != seq_terminal:
+        raise ValidationError(
+            message=('La terminal en el consecutivo ({}) no '
+                     'coincide con la terminal provista ({}).'
+                     ).format(seq_terminal, terminal),
+            status=ValidationErrorCodes.INVALID_SEQUENCE
+        )
+
+    doctype_slice = SEQUENCE_PARTS_SLICES['doctype']
+    seq_doctype = sequence[doctype_slice]
+    if doctype != seq_doctype:
+        raise ValidationError(
+            message=('El tipo de documento en el consecutivo ({}) no '
+                     'coincide con el tipo de documento provisto ({}).'
+                     ).format(seq_doctype, doctype),
+            status=ValidationErrorCodes.INVALID_SEQUENCE
+        )
+
+    return True
 
 
 @time_my_func

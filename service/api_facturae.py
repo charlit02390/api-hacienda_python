@@ -33,6 +33,12 @@ except(ImportError, IOError) as err:
 
 _logger = logging.getLogger(__name__)
 
+NO_TAXCUT_DOC_TYPE = 'FEE'
+NO_RETURNTAX_DOC_TYPES = (
+    'FEC',
+    'FEE'
+)
+INCLUDES_IVAFACTOR_TAX_CODE = '08'
 
 def sign_xml(cert, password, xml,
              policy_id='https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.3/Resoluci%C3%B3n_General_sobre_disposiciones_t%C3%A9cnicas_comprobantes_electr%C3%B3nicos_para_efectos_tributarios.pdf'):
@@ -529,76 +535,50 @@ def receptor_xml(sb, receiver_company, document_type):
 
 
 def lines_xml(sb, lines, document_type, receiver_company):
-    line_number = 0
     sb.Append('<DetalleServicio>')
 
     for v in lines:
-        line_number = line_number + 1
-
         sb.Append('<LineaDetalle>')
         sb.Append('<NumeroLinea>' + str(v['numero']) + '</NumeroLinea>')
 
         if document_type == 'FEE' and v.get('partidaArancelaria'):
             sb.Append('<PartidaArancelaria>' + str(v['partidaArancelaria']) + '</PartidaArancelaria>')
 
-        code = v.get('codigo', v.get('cabys', v.get('codigoServicio', v.get('codigoProducto')))) # just in case...
-        if isinstance(code, str) and code:
-            sb.Append('<Codigo>' + code + '</Codigo>')
+        code = v['codigo']
+        sb.Append('<Codigo>' + code + '</Codigo>')
 
         com_codes = v.get('codigoComercial')
-        #if isinstance(com_codes, dict): # this could be used in case, when only one is sent, it's sent as an object instead of array... dunno...
-        #    com_codes = [com_codes]
-
-        if isinstance(com_codes, list) and len(com_codes) > 0:
-            try:
-                for cc in com_codes:
-                    sb.Append('<CodigoComercial>')
-                    sb.Append('<Tipo>' + str(cc['tipo']) + '</Tipo>')
-                    sb.Append('<Codigo>' + str(cc['codigo']) + '</Codigo>')
-                    sb.Append('</CodigoComercial>')
-            except KeyError as ker:
-                raise KeyError('Missing property in codigoComercial: ' + str(ker))
+        for cc in com_codes:
+            sb.Append('<CodigoComercial>')
+            sb.Append('<Tipo>' + str(cc['tipo']) + '</Tipo>')
+            if 'codigo' in cc:
+                sb.Append('<Codigo>' + str(cc['codigo']) + '</Codigo>')
+            sb.Append('</CodigoComercial>')
 
         sb.Append('<Cantidad>' + str(v['cantidad']) + '</Cantidad>')
-        sb.Append('<UnidadMedida>' +
-                  str(v['unidad']) + '</UnidadMedida>')
-        if v.get('unidadMedidaComercial'):
+        sb.Append('<UnidadMedida>' + str(v['unidad']) + '</UnidadMedida>')
+        if 'unidadMedidaComercial' in v:
             sb.Append('<UnidadMedidaComercial>{}</UnidadMedidaComercial>'
                       .format(v['unidadMedidaComercial']))
-        sb.Append('<Detalle>' + v['detalle'] + '</Detalle>')
-        sb.Append('<PrecioUnitario>' +
-                  str(v['precioUnitario']) + '</PrecioUnitario>')
+        if 'detalle' in v:
+            sb.Append('<Detalle>' + v['detalle'] + '</Detalle>')
+        sb.Append('<PrecioUnitario>' + str(v['precioUnitario']) + '</PrecioUnitario>')
         sb.Append('<MontoTotal>' + str(v['montoTotal']) + '</MontoTotal>')
-        if v.get('descuento'):
+
+        if 'descuento' in v:
             for b in v['descuento']:
                 sb.Append('<Descuento>')
                 sb.Append('<MontoDescuento>' +
                           str(b['monto']) + '</MontoDescuento>')
-                # NaturalezaDescuento's text could come from a property called "descripcion" or "descripcionDescuento"
-                desc = b.get('descripcion', b.get('descripcionDescuento'))
-                if desc:
-                    sb.Append('<NaturalezaDescuento>' +
-                              desc + '</NaturalezaDescuento>')
+                sb.Append('<NaturalezaDescuento>' +
+                          str(b['descripcionDescuento']) + '</NaturalezaDescuento>')
                 sb.Append('</Descuento>')
 
         sb.Append('<SubTotal>' + str(v['subtotal']) + '</SubTotal>')
 
-
-        if document_type != 'FEE':
-            # BaseImponible only applies to Impuesto where Codigo = '07'... look ahead for this
-            uses_BaseImponible = False
-            _impuesto = v.get('impuesto')
-            if _impuesto:
-                for impuesto in _impuesto:
-                    if impuesto['codigo'] == '07':
-                        uses_BaseImponible = True
-                        break
-
-            if uses_BaseImponible:
-                try:
-                    sb.Append('<BaseImponible>' + str(v['baseImponible']) + '</BaseImponible>')
-                except KeyError as ker:
-                    raise KeyError('Missing property in detalles: ' + str(ker) + '. This is REQUIRED because the specified Tax Code is "07".')
+        if document_type != 'FEE' \
+                and 'baseImponible' in v:
+            sb.Append('<BaseImponible>' + str(v['baseImponible']) + '</BaseImponible>')                
 
         if v.get('impuesto'):
             for b in v['impuesto']:
@@ -607,29 +587,29 @@ def lines_xml(sb, lines, document_type, receiver_company):
                 sb.Append('<CodigoTarifa>' + str(b['codigoTarifa']) + '</CodigoTarifa>')
                 sb.Append('<Tarifa>' + str(b['tarifa']) + '</Tarifa>')
                 sb.Append('<Monto>' + str(b['monto']) + '</Monto>')
-                # if tax code is '08', IVAFactor must be here, else everything is bad... # TODO
-                if b['codigo'] == '08':
+
+                if b['codigo'] == INCLUDES_IVAFACTOR_TAX_CODE:
                     sb.Append('<FactorIVA>{}</FactorIVA>'.format(
                         b['factorIVA']))
 
                 if document_type != 'FEE':
-                    if b.get('exoneracion'):
+                    taxcut = b.get('exoneracion')
+                    if taxcut:
                         sb.Append('<Exoneracion>')
-                        sb.Append('<TipoDocumento>' + b['exoneracion']['Tipodocumento'] + '</TipoDocumento>')
-                        sb.Append('<NumeroDocumento>' + b['exoneracion']['NumeroDocumento'] + '</NumeroDocumento>')
+                        sb.Append('<TipoDocumento>' + str(taxcut['Tipodocumento']) + '</TipoDocumento>')
+                        sb.Append('<NumeroDocumento>' + str(taxcut['NumeroDocumento']) + '</NumeroDocumento>')
                         sb.Append(
-                            '<NombreInstitucion>' + b['exoneracion']['NombreInstitucion'] + '</NombreInstitucion>')
-                        sb.Append('<FechaEmision>' + b['exoneracion']['FechaEmision'] + '</FechaEmision>')
+                            '<NombreInstitucion>' + str(taxcut['NombreInstitucion']) + '</NombreInstitucion>')
+                        sb.Append('<FechaEmision>' + str(taxcut['FechaEmision']) + '</FechaEmision>')
                         sb.Append('<PorcentajeExoneracion>' + str(
-                            b['exoneracion']['porcentajeExoneracion']) + '</PorcentajeExoneracion>')
+                            taxcut['porcentajeExoneracion']) + '</PorcentajeExoneracion>')
                         sb.Append(
-                            '<MontoExoneracion>' + str(b['exoneracion']['montoExoneracion']) + '</MontoExoneracion>')
+                            '<MontoExoneracion>' + str(taxcut['montoExoneracion']) + '</MontoExoneracion>')
                         sb.Append('</Exoneracion>')
 
                 sb.Append('</Impuesto>')
 
-            sb.Append('<ImpuestoNeto>' + str(v['impuestoNeto']) + '</ImpuestoNeto>')
-
+        sb.Append('<ImpuestoNeto>' + str(v['impuestoNeto']) + '</ImpuestoNeto>')
         sb.Append('<MontoTotalLinea>' + str(v['totalLinea']) + '</MontoTotalLinea>')
         sb.Append('</LineaDetalle>')
     sb.Append('</DetalleServicio>')
@@ -642,12 +622,12 @@ def other_charges(sb, otrosCargos):
                   otro_cargo['tipoDocumento'] +
                   '</TipoDocumento>')
 
-        if otro_cargo.get('numeroIdentidadTercero'):
+        if 'numeroIdentidadTercero' in otro_cargo:
             sb.Append('<NumeroIdentidadTercero>' +
                       str(otro_cargo['numeroIdentidadTercero']) +
                       '</NumeroIdentidadTercero>')
 
-        if otro_cargo.get('nombreTercero'):
+        if 'nombreTercero' in otro_cargo:
             sb.Append('<NombreTercero>' +
                       otro_cargo['nombreTercero'] +
                       '</NombreTercero>')
@@ -656,7 +636,7 @@ def other_charges(sb, otrosCargos):
                   otro_cargo['detalle'] +
                   '</Detalle>')
 
-        if otro_cargo.get('porcentaje'):
+        if 'porcentaje' in otro_cargo:
             sb.Append('<Porcentaje>' +
                       str(otro_cargo['porcentaje']) +
                       '</Porcentaje>')
@@ -667,12 +647,17 @@ def other_charges(sb, otrosCargos):
     sb.Append('</OtrosCargos>')
 
 
-def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_conditions, activity_code, receptor,
-                total_servicio_gravado, total_servicio_exento, totalServExonerado, total_mercaderia_gravado,
-                total_mercaderia_exento, totalMercExonerada, totalOtrosCargos, base_total, total_impuestos,
-                total_descuento, lines, otrosCargos, invoice_comments, referencia, payment_methods, plazo_credito,
-                moneda,
-                total_taxed, total_exone, total_untaxed, total_sales, total_return_iva, total_document):
+# TODO: change this signature...
+def gen_xml_v43(company_data, document_type, key_mh,
+                consecutive, date, sale_conditions, activity_code,
+                receptor, total_servicio_gravado, total_servicio_exento,
+                totalServExonerado, total_mercaderia_gravado,
+                total_mercaderia_exento, totalMercExonerada,
+                totalOtrosCargos, base_total, total_impuestos,
+                total_descuento, lines, otrosCargos, invoice_comments,
+                referencia, payment_methods, plazo_credito, moneda,
+                total_taxed, total_exone, total_untaxed, total_sales,
+                total_return_iva, total_document):
     if document_type == 'FEC':
         issuing_company = receptor
         activity_code = receptor.get('codigoActividad', activity_code)
@@ -700,43 +685,12 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     sb.Append('<CondicionVenta>' + sale_conditions + '</CondicionVenta>')
     sb.Append('<PlazoCredito>' + plazo_credito + '</PlazoCredito>')
 
-    # payment_methods could/should be a list, because multiple payment methods can be specified. Consider moving this to a function...
-    # @todo: check if there is at least one payment method, because it's REQUIRED.
-    if isinstance(payment_methods, list):
-        # @todo: move this to... someplace with constants...
-        MAX_PMS = 4
-        count = 0
-        for pm in payment_methods:
-            # @todo: use try excepting for KeyError in case the key 'codigo' doesn't exist, or check with if...in. Raising an exception would prolly be better...
-            sb.Append('<MedioPago>' + pm['codigo'] + '</MedioPago>')
-            # we cannot exceed the max amount of payment methods established by Hacienda (four)
-            # for now, ignore any other payment method past the fourth one. Should we Except here instead?
-            count += 1
-            if count >= MAX_PMS:
-                break
-    else:
-        # awful fallback in case payment_methods isn't a list.
-        # @todo: review what to actually do here... prone to explosions over here
-        sb.Append('<MedioPago>' + payment_methods['codigo'] + '</MedioPago>')
+    for pm in payment_methods:
+        sb.Append('<MedioPago>' + pm['codigo'] + '</MedioPago>')
 
     lines_xml(sb, lines, document_type, receiver_company)
 
-    # temp implementation, will change once this is clarified
-    # if otrosCargos is not a list, it's badly formatted, so we'll ignore it
-    if not isinstance(otrosCargos, list):
-        otrosCargos = None
-
-    # alternative implementation:
-    # if otrosCargos is a dictionary, only one was sent, so, change otrosCargos to a list and append the dict
-    #if isinstance(otrosCargos, dict):
-    #    otrosCargos = [otrosCargos]
-    #elif not isinstance(otrosCargos, list):
-    #    otrosCargos = None
-
-    # end me, doing this for now.... TODO: validate the whole json before getting here...
-    if otrosCargos and len(otrosCargos) \
-        and isinstance(otrosCargos[0], dict) \
-        and otrosCargos[0].get('tipoDocumento'):
+    if otrosCargos:
         other_charges(sb, otrosCargos)
 
     sb.Append('<ResumenFactura>')
@@ -749,46 +703,43 @@ def gen_xml_v43(company_data, document_type, key_mh, consecutive, date, sale_con
     sb.Append('<TotalServGravados>' + str(total_servicio_gravado) + '</TotalServGravados>')
     sb.Append('<TotalServExentos>' + str(total_servicio_exento) + '</TotalServExentos>')
 
-    if document_type != 'FEE':
+    if document_type != NO_TAXCUT_DOC_TYPE:
         sb.Append('<TotalServExonerado>' + str(totalServExonerado) + '</TotalServExonerado>')
 
     sb.Append('<TotalMercanciasGravadas>' + str(total_mercaderia_gravado) + '</TotalMercanciasGravadas>')
     sb.Append('<TotalMercanciasExentas>' + str(total_mercaderia_exento) + '</TotalMercanciasExentas>')
 
-    if document_type != 'FEE':
+    if document_type != NO_TAXCUT_DOC_TYPE:
         sb.Append('<TotalMercExonerada>' + str(totalMercExonerada) + '</TotalMercExonerada>')
 
     sb.Append('<TotalGravado>' + str(total_taxed) + '</TotalGravado>')
     sb.Append('<TotalExento>' + str(total_untaxed) + '</TotalExento>')
 
-    if document_type != 'FEE':
+    if document_type != NO_TAXCUT_DOC_TYPE:
         sb.Append('<TotalExonerado>' + str(total_exone) + '</TotalExonerado>')
 
-    sb.Append('<TotalVenta>' +
-              str(total_sales) +
-              '</TotalVenta>')
+    sb.Append('<TotalVenta>' + str(total_sales) + '</TotalVenta>')
     sb.Append('<TotalDescuentos>' + str(total_descuento) + '</TotalDescuentos>')
     sb.Append('<TotalVentaNeta>' + str(base_total) + '</TotalVentaNeta>')
     sb.Append('<TotalImpuesto>' + str(total_impuestos) + '</TotalImpuesto>')
-    if document_type not in ('FEC', 'FEE'): # change this to a constant or something
+    if document_type not in NO_RETURNTAX_DOC_TYPES:
         sb.Append('<TotalIVADevuelto>' + str(total_return_iva) + '</TotalIVADevuelto>')
     sb.Append('<TotalOtrosCargos>' + str(totalOtrosCargos) + '</TotalOtrosCargos>')
     sb.Append('<TotalComprobante>' + str(total_document) + '</TotalComprobante>')
     sb.Append('</ResumenFactura>')
 
-    # referencia is coming as a blank string when no reference is set... we want a dict (or, as hacienda specifies, a list of dicts)
-    #if not isinstance(referencia, dict):
-    #    referencia = None
-
-
     if referencia:
-        sb.Append('<InformacionReferencia>')
-        sb.Append('<TipoDoc>' + str(referencia['tipoDocumento']) + '</TipoDoc>')
-        sb.Append('<Numero>' + str(referencia['numeroReferencia']) + '</Numero>')
-        sb.Append('<FechaEmision>' + referencia['fecha'] + '</FechaEmision>')
-        sb.Append('<Codigo>' + str(referencia['codigo']) + '</Codigo>')
-        sb.Append('<Razon>' + str(referencia['razon']) + '</Razon>')
-        sb.Append('</InformacionReferencia>')
+        for ref in referencia:
+            sb.Append('<InformacionReferencia>')
+            sb.Append('<TipoDoc>' + str(ref['tipoDocumento']) + '</TipoDoc>')
+            if 'numeroReferencia' in ref:
+                sb.Append('<Numero>' + str(ref['numeroReferencia']) + '</Numero>')
+            sb.Append('<FechaEmision>' + ref['fecha'] + '</FechaEmision>')
+            if 'codigo' in ref:
+                sb.Append('<Codigo>' + str(ref['codigo']) + '</Codigo>')
+            if 'razon' in ref:
+                sb.Append('<Razon>' + str(ref['razon']) + '</Razon>')
+            sb.Append('</InformacionReferencia>')
 
     if invoice_comments:
         sb.Append('<Otros>')
