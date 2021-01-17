@@ -1574,3 +1574,17 @@ BEGIN
 END$$
 DELIMITER ;
 -- ---------------------------------------
+
+-- ---------------------------------------
+DROP PROCEDURE IF EXISTS usp_verifyExists_documents;
+DELIMITER $$
+CREATE PROCEDURE usp_verifyExists_documents(
+	p_key_mh VARCHAR(50)
+)
+BEGIN
+	SELECT d.id
+	FROM documents as d
+	WHERE d.key_mh = p_key_mh;
+END $$
+DELIMITER ;
+-- --------------------------------------

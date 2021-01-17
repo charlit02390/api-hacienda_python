@@ -222,7 +222,7 @@ components:
         - fecha
         - codigo
         - razon
-    doc_detail_tax_exemption:
+    doc_detail_tax_cut:
       type: object
       properties:
         Tipodocumento:
@@ -238,12 +238,14 @@ components:
             - '99'
         NumeroDocumento:
           type: string
+          pattern: ^([aA][lL])[-]([0-9]{8})[-]([0-9]{2})$ # format al-00000000-00
         NombreInstitucion:
           type: string
         FechaEmision:
           type: string
         porcentajeExoneracion:
           type: string
+          #pattern: ^([0-9]|[1][0-3])$ # digit range 0-13
         montoExoneracion:
           type: string
       required:
@@ -290,10 +292,10 @@ components:
           type: string
         exoneracion:
           anyOf:
-            - $ref: '#/components/schemas/doc_detail_tax_exemption'
+            - $ref: '#/components/schemas/doc_detail_tax_cut'
             - type: array
               items:
-                $ref: '#/components/schemas/doc_detail_tax_exemption'
+                $ref: '#/components/schemas/doc_detail_tax_cut'
       required:
         - monto
     doc_detail:
@@ -335,6 +337,7 @@ components:
           type: string
         descuento:
           type: array
+          maxItems: 5
           items:
             type: object
             properties:
@@ -499,6 +502,7 @@ components:
               anyOf:
               - type: object  # this is allowed, but ignored, for compatibility reasons
               - type: array
+                maxItems: 15
                 items:
                   $ref: '#/components/schemas/doc_otherCharges'
             referencia:

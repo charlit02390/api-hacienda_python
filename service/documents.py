@@ -9,7 +9,7 @@ from . import makepdf
 from . import emails
 from infrastructure import companies
 from infrastructure import documents
-from infrastructure.dbadapter import DbAdapterError, connectToMySql
+from infrastructure.dbadapter import connectToMySql
 from helpers.errors.enums import InputErrorCodes, InternalErrorCodes
 from helpers.errors.exceptions import InputError, ServerError
 from helpers.utils import build_response_data, run_and_summ_collec_job, get_smtp_error_code
@@ -17,12 +17,12 @@ from helpers.debugging import log_section
 from helpers.validations import document as document_validator
 from helpers.arrangers import document as document_arranger
 
-
 docLogger = logging.getLogger(__name__)
+
 
 def create_document(data):
     _company_user = data['nombre_usuario']
-    
+
     company_data = companies.get_company_data(_company_user)
     if not company_data:
         raise InputError('company',
@@ -31,6 +31,11 @@ def create_document(data):
 
     if not company_data['is_active']:
         raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+
+    _key_mh = data['clavelarga']
+    if documents.verify_exists(_key_mh):
+        raise InputError('Document with key {}'.format(_key_mh),
+                         status=InputErrorCodes.DUPLICATE_RECORD)
 
     signature = companies.get_sign_data(_company_user)
     if not signature:
@@ -43,8 +48,7 @@ def create_document(data):
     document_validator.validate_data(xml_data)
 
     _type_document = xml_data['tipo']
-    _key_mh = xml_data['clavelarga']
-    _email_costs = None # MARKED FOR DEATH . Using _additional_emails now
+    _email_costs = None  # MARKED FOR DEATH . Using _additional_emails now
     _additional_emails = []
     _email = None
 
@@ -93,8 +97,8 @@ def create_document(data):
             total_return_iva=xml_data['totalIVADevuelto'],
             total_document=_total_document
         )
-    except KeyError as ker: # atm, this is just a baseImponible exception.
-        raise # TODO : return {'error' : str(ker)} # INVALID DOCUMENT ERROR #TODO
+    except KeyError as ker:  # atm, this is just a baseImponible exception.
+        raise  # TODO : return {'error' : str(ker)} # INVALID DOCUMENT ERROR #TODO
 
     xml_to_sign = str(xml)
 
@@ -103,12 +107,12 @@ def create_document(data):
             signature['signature'],
             company_data['pin_sig'], xml_to_sign
         )
-    except Exception as ex: # todo: be more specific about exceptions #TODO
-         raise # TODO : return {'error' : 'A problem occurred when signing the XML Document.'}  # INTERNAL ERROR
+    except Exception as ex:  # todo: be more specific about exceptions #TODO
+        raise  # TODO : return {'error' : 'A problem occurred when signing the XML Document.'}  # INTERNAL ERROR
 
     xmlencoded = base64.b64encode(xml_sign)
-    
-    pdfencoded = None;  # Por si ES tiquete que guarde nada como pdf
+
+    pdfencoded = None  # Por si ES tiquete que guarde nada como pdf
     if _type_document != 'TE':
         _logo = companies.get_logo_data(_company_user)
         _logo = _logo['logo']
@@ -118,37 +122,37 @@ def create_document(data):
         try:
             pdf = makepdf.render_pdf(company_data,
                                      _logo,
-                                     pdf_data);
-        except Exception as ex: #TODO : be more specific about exceptions
-            raise # TODO : return {'error' : 'A problem occured when creating the PDF File for the document.'} # INTERNAL ERROR
-        #Prueba de creacion de correo
-        #emails.sent_email(pdf, xml_sign)
-        pdfencoded = base64.b64encode(pdf);
+                                     pdf_data)
+        except Exception as ex:  # TODO : be more specific about exceptions
+            raise  # TODO : 'A problem occured when creating the PDF File for the document.' # INTERNAL ERROR
+        # Prueba de creacion de correo
+        # emails.sent_email(pdf, xml_sign)
+        pdfencoded = base64.b64encode(pdf)
 
     # return {'status': 'procesando...'}
     # Managing connection here...
     conn = connectToMySql()
 
     try:
-            documents.save_document(_company_user, _key_mh, xmlencoded,
-                                    'creado', datecr, _type_document,
-                                     _receptor, _total_document, _total_taxes,
-                                     pdfencoded, _email, _email_costs,
-                                     connection=conn)
-            
-            _id_company = company_data['id']
+        documents.save_document(_company_user, _key_mh, xmlencoded,
+                                'creado', datecr, _type_document,
+                                _receptor, _total_document, _total_taxes,
+                                pdfencoded, _email, _email_costs,
+                                connection=conn)
 
-            if len(_additional_emails) > 0:
-                save_additional_emails(_key_mh, _additional_emails, conn)
+        _id_company = company_data['id']
 
-            save_document_lines(_lines,_id_company,_key_mh,conn)
-            conn.commit()
+        if len(_additional_emails) > 0:
+            save_additional_emails(_key_mh, _additional_emails, conn)
+
+        save_document_lines(_lines, _id_company, _key_mh, conn)
+        conn.commit()
     finally:
         conn.close()
 
     return {
-            'status': 'procesando',
-            'message' : 'Document successfully created.'
+        'status': 'procesando',
+        'message': 'Document successfully created.'
     }
 
 
@@ -164,11 +168,11 @@ def save_document_lines(lines, id_company, key_mh, conn):
 
         documents.save_document_line_info(id_company, _line_number,
                                           _quantity, _unity, _detail, _unit_price,
-                                          _net_tax, _total_line, key_mh,connection=conn)
+                                          _net_tax, _total_line, key_mh, connection=conn)
 
         _taxes = _line.get('impuesto')
         if _taxes:
-            save_document_taxes(_taxes,id_company, _line_number,
+            save_document_taxes(_taxes, id_company, _line_number,
                                 key_mh, conn)
 
     return True
@@ -176,7 +180,7 @@ def save_document_lines(lines, id_company, key_mh, conn):
 
 def save_document_taxes(taxes, id_company, line_number, key_mh, conn):
     for _tax in taxes:
-        _rate_code = _tax['codigoTarifa']
+        _rate_code = _tax.get('codigoTarifa')
         _code = _tax['codigo']
         _rate = _tax['tarifa']
         _amount = _tax['monto']
@@ -188,8 +192,8 @@ def save_document_taxes(taxes, id_company, line_number, key_mh, conn):
     return True
 
 
-def save_additional_emails(key_mh, emails, conn):
-    for email in emails:
+def save_additional_emails(key_mh, _emails, conn):
+    for email in _emails:
         documents.save_document_additional_email(key_mh, email,
                                                  connection=conn)
 
@@ -218,7 +222,7 @@ def validate_document(company_user, key_mh):
     if not company_data['is_active']:
         raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
 
-    date_cr= api_facturae.get_time_hacienda(False)
+    date_cr = api_facturae.get_time_hacienda(False)
     date = api_facturae.get_time_hacienda(True)
 
     try:
@@ -226,8 +230,8 @@ def validate_document(company_user, key_mh):
                                                     company_data['user_mh'],
                                                     company_data['pass_mh'],
                                                     company_data['env'])
-    except Exception as ex: #TODO : be more specific about exceptions
-        raise # TODO : return {'error' : 'A problem occured when attempting to get the token from Hacienda.'} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific about exceptions
+        raise  # TODO : 'A problem occured when attempting to get the token from Hacienda.' # INTERNAL ERROR
 
     try:
         response_json = api_facturae.send_xml_fe(company_data,
@@ -235,8 +239,8 @@ def validate_document(company_user, key_mh):
                                                  date_cr,
                                                  document_data['signxml'],
                                                  company_data['env'])
-    except Exception as ex: #TODO : be more specific about exceptions
-        raise # TODO: return {'error' : 'A problem occurred when attempting to send the document to Hacienda.'} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific about exceptions
+        raise  # TODO: 'error' : 'A problem occurred when attempting to send the document to Hacienda.' # INTERNAL ERROR
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
@@ -290,16 +294,16 @@ def consult_document(company_user, key_mh):
                                                     company_data['user_mh'],
                                                     company_data['pass_mh'],
                                                     company_data['env'])
-    except Exception as ex: #TODO
-        raise # TODO : return {'error' : 'A problem occured when attempting to get the token from Hacienda.'} # INTERNAL ERROR
+    except Exception as ex:  # TODO
+        raise  # TODO : 'error' : 'A problem occured when attempting to get the token from Hacienda.' # INTERNAL ERROR
 
     try:
         response_json = api_facturae.consulta_documentos(key_mh,
                                                          company_data['env'], token_m_h,
                                                          date,
                                                          document_data['document_type'])
-    except Exception as ex: #TODO : be more specific about exceptions
-        raise # TODO : return {'error' : 'A problem occurred when attempting to query the document to Hacienda.'} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific about exceptions
+        raise  # TODO : A problem occurred when attempting to query the document to Hacienda.' # INTERNAL ERROR
 
     response_status = response_json.get('ind-estado')
     response_text = response_json.get('respuesta-xml')
@@ -309,19 +313,19 @@ def consult_document(company_user, key_mh):
 
     result = {
         'status': response_status,
-        'data' : {
+        'data': {
             'date': date
-            }
         }
+    }
     if response_status == 'aceptado' \
             and document_data['document_type'] != "TE" \
             and document_data['isSent'] is None:
         mail_sent = 0
         try:
             emails.sent_email_fe(document_data)
-        except Exception as ex: #TODO : be more specific about exceptions
+        except Exception as ex:  # TODO : be more specific about exceptions
             docLogger.warning("***Email couldn't be sent for some reason:***", exc_info=ex)
-            result['data']['warning'] = 'A problem occurred when attempting to send the email.' # WARNING
+            result['data']['warning'] = 'A problem occurred when attempting to send the email.'  # WARNING
             # temp juggling insanity... nevermind, don't look at it...
             mail_sent = get_smtp_error_code(ex)
 
@@ -330,12 +334,13 @@ def consult_document(company_user, key_mh):
     if response_text:
         decoded = base64.b64decode(response_text)
         parsed_answer_xml = etree.fromstring(decoded)
-        result['data']['detail'] = parsed_answer_xml.findtext('{*}DetalleMensaje') \
-                or ''
+        result['data']['detail'] = parsed_answer_xml.findtext(
+            '{*}DetalleMensaje'
+        ) or ''
 
     result['data']['xml-respuesta'] = response_text
     return result
-    
+
 
 def consult_document_notdatabase(company_user, key_mh, document_type):
     company_data = companies.get_company_data(company_user)
@@ -350,24 +355,24 @@ def consult_document_notdatabase(company_user, key_mh, document_type):
                                                     company_data['user_mh'],
                                                     company_data['pass_mh'],
                                                     company_data['env'])
-    except Exception as ex: #TODO : be more specific about exceptions
-        raise # TODO : return {'error' : 'A problem occurred when attempting to get the token from Hacienda.'} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific about exceptions
+        raise  # TODO 'A problem occurred when attempting to get the token from Hacienda.' # INTERNAL ERROR
 
     try:
         response_json = api_facturae.consulta_documentos(key_mh,
                                                          company_data['env'],
                                                          token_m_h, date, document_type)
-    except Exception as ex: #TODO : be more specific about exceptions
-        raise # TODO: return {'error' : 'A problem occurred when attempting to fetch the document from Hacienda.'} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific about exceptions
+        raise  # TODO: 'A problem occurred when attempting to fetch the document from Hacienda.' # INTERNAL ERROR
 
     response_status = response_json.get('ind-estado')
     response_text = response_json.get('respuesta-xml')
 
     if response_text:
-        return build_response_data({'message' : response_status,
-                                    'data' : {'xml-respuesta' : response_text} })
+        return build_response_data({'message': response_status,
+                                    'data': {'xml-respuesta': response_text}})
     else:
-        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR) # TODO : new code: 2 bad data hacienda
+        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)  # TODO : new code: 2 bad data hacienda
 
 
 def processing_documents(company_user, key_mh, is_consult):
@@ -380,7 +385,7 @@ def processing_documents(company_user, key_mh, is_consult):
 
 def document_report(company_user, document_type):
     result = documents.get_documentsreport(company_user, document_type)
-    return build_response_data({'data' : { 'documents' : result}})
+    return build_response_data({'data': {'documents': result}})
 
 
 def consult_vouchers(company_user, emisor, receptor, offset, limit):
@@ -394,8 +399,8 @@ def consult_vouchers(company_user, emisor, receptor, offset, limit):
                                                     company_data['user_mh'],
                                                     company_data['pass_mh'],
                                                     company_data['env'])
-    except Exception as ex: #TODO : be more specific with exceptions
-        raise # TODO : new InternalErrorCode 3 token. return {'error' : 'A problem occurred when attempting to get the token from Hacienda.'} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific with exceptions
+        raise  # TODO:new InternalErrorCode 3 token. A problem occurred when attempting to get the token from Hacienda.'
 
     parameters = {}
     if emisor is not None:
@@ -409,16 +414,16 @@ def consult_vouchers(company_user, emisor, receptor, offset, limit):
 
     try:
         response_json = api_facturae.get_vouchers(token_m_h, parameters)
-    except Exception as ex: #TODO : be more specific with exceptions
-        raise # TODO : return {'error' : "A problem occurred when attempting to get the company's vouchers."} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific with exceptions
+        raise  # TODO : "A problem occurred when attempting to get the company's vouchers." # INTERNAL ERROR
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
 
     if 200 <= response_status <= 206:
-        return build_response_data({'data' : {'Comprobantes' : response_text}})
+        return build_response_data({'data': {'Comprobantes': response_text}})
     else:
-        raise ServerError(InternalErrorCodes.INTERNAL_ERROR) # TODO : Hacienda Unauthorized
+        raise ServerError(InternalErrorCodes.INTERNAL_ERROR)  # TODO : Hacienda Unauthorized
         # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
 
 
@@ -433,18 +438,18 @@ def consult_voucher_byid(company_user, clave):
                                                     company_data['user_mh'],
                                                     company_data['pass_mh'],
                                                     company_data['env'])
-    except Exception as ex: #TODO : be more specific with exceptions
-        raise # TODO : hacienda token error return {'error' : 'A problem occurred when attempting to get the token from Hacienda.'} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific with exceptions
+        raise  # TODO : hacienda token error return 'A problem occurred when attempting to get the token from Hacienda.'
 
     try:
         response_json = api_facturae.get_voucher_byid(clave, token_m_h)
-    except Exception as ex: #TODO : be more specific with exceptions
-        raise # TODO : Internal get voucher error return {'error' : "A problem occurred when attempting to fetch the specified document."} # INTERNAL ERROR
+    except Exception as ex:  # TODO : be more specific with exceptions
+        raise  # TODO : Internal get voucher error "A problem occurred when attempting to fetch the specified document."
 
     response_status = response_json.get('status')
     response_text = response_json.get('text')
-    if response_status == 200:        
-        return build_response_data({ 'data' : {'Comprobante' : response_text} })
+    if response_status == 200:
+        return build_response_data({'data': {'Comprobante': response_text}})
     else:
         raise ServerError(InternalErrorCodes.INTERNAL_ERROR)
         # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
@@ -463,7 +468,7 @@ def get_pdf(key: str):
             'message': """The specified document does not have a PDF file.
 Document Type: {}
 *If the document type is not 'TE', please contact the API Admin.""".format(
-                                                                           document['document_type'])
+                document['document_type'])
         }
 
     return build_response_data(data)
@@ -477,4 +482,4 @@ _run_and_summ_docs_job = partial(
     item_cb_kwargs_map={
         'company_user': 'company_user',
         'key_mh': 'key_mh'
-        })
+    })

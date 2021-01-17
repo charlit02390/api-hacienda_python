@@ -1,5 +1,5 @@
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from service import fe_enums, utils
 from helpers.debugging import time_my_func
@@ -7,6 +7,7 @@ from helpers.errors.exceptions import ValidationError
 from helpers.errors.enums import ValidationErrorCodes
 
 
+NO_PDF_TYPES = ('4',)
 DATETIME_DISPLAY_FORMAT = '%d-%m-%Y'
 DEFAULT_MONEY_VALUE = '0.00000'
 DEFAULT_PDF_DECIMAL_VALUE = '0.0'
@@ -20,12 +21,15 @@ se debe pagar al tipo de cambio oficial al dia de su cancelación."""
 @time_my_func
 def arrange_data(data: dict) -> tuple:
     xml_data = arrange_xml_data(data)
-    pdf_data = arrange_pdf_data(data)
+    if data['tipo'] not in NO_PDF_TYPES:
+        pdf_data = arrange_pdf_data(data)
+    else:
+        pdf_data = {}
 
-    xml_data['detalles'], pdf_data['lines'] =\
+    xml_data['detalles'], pdf_data['lines'] = \
         arrange_details(data['detalles'])
 
-    return (xml_data, pdf_data)
+    return xml_data, pdf_data
 
 
 @time_my_func
@@ -39,7 +43,7 @@ def arrange_xml_data(data: dict) -> dict:
     ).isoformat()
     if 'referencia' in xml_data:
         references = xml_data.pop('referencia')
-        if not isinstance(references, str): # if str, it's not useful, so let it out of our data
+        if not isinstance(references, str):  # if str, it's not useful, so let it out of our data
             if isinstance(references, dict) \
                     and len(references):
                 references = [references]
@@ -53,34 +57,34 @@ def arrange_xml_data(data: dict) -> dict:
 
     if 'receptor' in xml_data:
         recipient = xml_data['receptor']
-        
+
         additional_emails = recipient.get('correosAdicionales', [])
         if additional_emails:
-            additional_emails = list(set(additional_emails)) # remove duplicates
-        else: # for now... falling back to "correo_gastos" if exists
+            additional_emails = list(set(additional_emails))  # remove duplicates
+        else:  # for now... falling back to "correo_gastos" if exists
             fallback_email = recipient.get('correo_gastos')
             if fallback_email and isinstance(fallback_email, str):
                 additional_emails.append(fallback_email)
 
         recipient['correosAdicionales'] = additional_emails
 
-    otherCharges = xml_data.pop('otrosCargos', [])
-    if isinstance(otherCharges, dict):
-        if otherCharges.get('tipoDocumento'):
-            otherCharges = [otherCharges]
+    other_charges = xml_data.pop('otrosCargos', [])
+    if isinstance(other_charges, dict):
+        if other_charges.get('tipoDocumento'):
+            other_charges = [other_charges]
         else:
-            otherCharges = None
-    if otherCharges:
-        xml_data['otrosCargos'] = otherCharges
+            other_charges = None
+    if other_charges:
+        xml_data['otrosCargos'] = other_charges
 
     xml_data['totalServGravados'] = data.get('totalServGravados', DEFAULT_MONEY_VALUE)
     xml_data['totalServExentos'] = data.get('totalServExentos', DEFAULT_MONEY_VALUE)
     xml_data['totalServExonerado'] = data.get('totalServExonerado', DEFAULT_MONEY_VALUE)
     xml_data['totalMercanciasGravados'] = data.get('totalMercanciasGravados', DEFAULT_MONEY_VALUE)
     xml_data['totalMercanciasExentos'] = data.get('totalMercanciasExentos', DEFAULT_MONEY_VALUE)
-    xml_data['totalMercExonerada'] =  data.get('totalMercExonerada', DEFAULT_MONEY_VALUE)
+    xml_data['totalMercExonerada'] = data.get('totalMercExonerada', DEFAULT_MONEY_VALUE)
     xml_data['totalGravados'] = data.get('totalGravados', DEFAULT_MONEY_VALUE)
-    xml_data['totalExentos'] =  data.get('totalExentos', DEFAULT_MONEY_VALUE)
+    xml_data['totalExentos'] = data.get('totalExentos', DEFAULT_MONEY_VALUE)
     xml_data['totalExonerado'] = data.get('totalExonerado', DEFAULT_MONEY_VALUE)
     xml_data['totalDescuentos'] = data.get('totalDescuentos', DEFAULT_MONEY_VALUE)
     xml_data['totalImpuestos'] = data.get('totalImpuestos', DEFAULT_MONEY_VALUE)
@@ -117,51 +121,54 @@ def arrange_details(details: list) -> tuple:
 
         pdf_line = {
             '_cabys': line['codigo'],
-            'detalle': line.get('detalle',''),
-            'cantidad': utils.stringRound(line['cantidad']) \
-                    if line['cantidad'].strip('0.') \
-                    else DEFAULT_PDF_DECIMAL_VALUE,
-            'precioUnitario': utils.stringRound(line['precioUnitario']) \
-                    if line['precioUnitario'].strip('0.') \
-                    else DEFAULT_PDF_DECIMAL_VALUE,
-            'impuestoNeto': utils.stringRound(line['impuestoNeto']) \
-                    if line['impuestoNeto'].strip('0.') \
-                    else DEFAULT_PDF_DECIMAL_VALUE,
-            'subtotal': utils.stringRound(line['subtotal']) \
-                    if line['subtotal'].strip('0.') \
-                    else DEFAULT_PDF_DECIMAL_VALUE,
-            'totalLinea': utils.stringRound(line['totalLinea']) \
-                    if line['totalLinea'].strip('0.') \
-                    else DEFAULT_PDF_DECIMAL_VALUE
+            'detalle': line.get('detalle', ''),
+            'cantidad': utils.stringRound(line['cantidad'])
+            if line['cantidad'].strip('0.')
+            else DEFAULT_PDF_DECIMAL_VALUE,
+            'precioUnitario': utils.stringRound(line['precioUnitario'])
+            if line['precioUnitario'].strip('0.')
+            else DEFAULT_PDF_DECIMAL_VALUE,
+            'impuestoNeto': utils.stringRound(line['impuestoNeto'])
+            if line['impuestoNeto'].strip('0.')
+            else DEFAULT_PDF_DECIMAL_VALUE,
+            'subtotal': utils.stringRound(line['subtotal'])
+            if line['subtotal'].strip('0.')
+            else DEFAULT_PDF_DECIMAL_VALUE,
+            'totalLinea': utils.stringRound(line['totalLinea'])
+            if line['totalLinea'].strip('0.')
+            else DEFAULT_PDF_DECIMAL_VALUE
         }
         if 'impuesto' in line:
+            for tax in line['impuesto']:
+                if 'exoneracion' in tax \
+                        and isinstance(tax['exoneracion'], dict):
+                    tax['exoneracion'] = [tax['exoneracion']]
+
             pdf_line['impuesto'] = deepcopy(line['impuesto'])
 
-
         cabys = line['codigo']
-        amountTotal = line['montoTotal'].strip('0.')
-        if cabys and amountTotal:
+        amount_total = line['montoTotal'].strip('0.')
+        if cabys and amount_total:
             xml_line = deepcopy(line)
             xml_line['numero'] = pdf_line['numero'] = line_count
-            baseImponible = xml_line.pop('baseImponible', '')
-            if baseImponible.strip('0.'):
-                xml_line['baseImponible'] = baseImponible
+            base_imponible = xml_line.pop('baseImponible', '')
+            if base_imponible.strip('0.'):
+                xml_line['baseImponible'] = base_imponible
 
             xml_details.append(xml_line)
             line_count += 1
         else:
             pdf_line['numero'] = '∟'
-            pdf_line['_cabys'] =\
-                pdf_line['cantidad'] =\
-                pdf_line['precioUnitario'] =\
-                pdf_line['impuestoNeto'] =\
-                pdf_line['subtotal'] =\
+            pdf_line['_cabys'] = \
+                pdf_line['cantidad'] = \
+                pdf_line['precioUnitario'] = \
+                pdf_line['impuestoNeto'] = \
+                pdf_line['subtotal'] = \
                 pdf_line['totalLinea'] = ''
-
 
         pdf_details.append(pdf_line)
 
-    return (xml_details, pdf_details)
+    return xml_details, pdf_details
 
 
 @time_my_func
@@ -170,13 +177,12 @@ def build_pdf_body_data(data: dict) -> dict:
     recipient = data['receptor']
     currency = data['codigoTipoMoneda']
 
-    body_data = {}
-    body_data['key_mh'] = data['clavelarga']
-    body_data['total_document'] = total_document
-    body_data['total_taxes'] = utils.stringRound(data['totalImpuestos'])
-    body_data['total_discounts'] = utils.stringRound(data['totalDescuentos'])
-    body_data['total_sales'] = utils.stringRound(data['totalVentas'])
-    body_data['receiver'] = recipient
+    body_data = {'key_mh': data['clavelarga'],
+                 'total_document': total_document,
+                 'total_taxes': utils.stringRound(data['totalImpuestos']),
+                 'total_discounts': utils.stringRound(data['totalDescuentos']),
+                 'total_sales': utils.stringRound(data['totalVentas']),
+                 'receiver': recipient}
 
     payment_methods_csvs = ', '.join(
         list(
@@ -210,7 +216,7 @@ def build_pdf_body_data(data: dict) -> dict:
         'Tipo de identificación no especificada'
     )
 
-    order_num = data.get('numOrden', data.get('numFecha', '')).strip();
+    order_num = data.get('numOrden', data.get('numFecha', '')).strip()
     # just making sure "order_num" ain't suddenly a date...
     try:
         parse_datetime(order_num, 'numOrden/numFecha')
@@ -218,7 +224,7 @@ def build_pdf_body_data(data: dict) -> dict:
     except ValidationError:
         pass
     if order_num:
-        body_data['order_num'] =  order_num
+        body_data['order_num'] = order_num
 
     sale_condition = data['condicionVenta']
     if sale_condition == '02':
@@ -232,12 +238,16 @@ def build_pdf_body_data(data: dict) -> dict:
         body_data['credit_term'] = term_days
 
     details = data['detalles']
+    exemptions = {}
     for line in details:
-        exemption_found = False
         for tax in line.get('impuesto', []):
             exemption = tax.get('exoneracion')
-            if exemption:
-                body_data['exemption'] = {
+            if not exemption:
+                continue
+
+            ex_doc_num = exemption['NumeroDocumento']
+            if ex_doc_num not in exemptions:
+                exemptions[ex_doc_num] = {
                     'doc_type': fe_enums.ExemptionDocType[
                         exemption['Tipodocumento']
                     ],
@@ -246,13 +256,14 @@ def build_pdf_body_data(data: dict) -> dict:
                     'issued_date': parse_datetime(
                         exemption['FechaEmision'], 'exoneracion => FechaEmision'
                     ).isoformat(),
-                    'percentage': exemption['porcentajeExoneracion'],
-                    'total_amount': data['totalExonerado']
-                    }
-                exemption_found = True
-                break
-        if exemption_found:
-            break
+                    'percentage': exemption['porcentajeExoneracion']
+                }
+
+    if exemptions:
+        body_data['exemption'] = {
+            'items': tuple(exemptions.values()),
+            'total_exempt': data['totalExonerado']
+        }
 
     return body_data
 
@@ -265,7 +276,7 @@ def build_pdf_header_data(data: dict) -> dict:
     header_data['document_type'] = fe_enums.tagNamePDF.get(
         api_doc_type, 'Indefinido'
     )
-    header_data['consecutive'] =  data['consecutivo']
+    header_data['consecutive'] = data['consecutivo']
     header_data['ref_num'] = data['numReferencia']
     header_data['date'] = parse_datetime(
         data['fechafactura'], 'fechafactura'
@@ -278,13 +289,13 @@ def build_pdf_header_data(data: dict) -> dict:
 def build_pdf_footer_data(data: dict) -> dict:
     currency = data['codigoTipoMoneda']
 
-    footer_data =  {}
+    footer_data = {}
 
     pdf_notes = data.get('notas',
-                            data.get('observaciones',
+                         data.get('observaciones',
                                   data.get('piedepagina', [])
-        )
-    )
+                                  )
+                         )
     if not isinstance(pdf_notes, list):
         pdf_notes = []
 
@@ -302,20 +313,20 @@ def parse_datetime(value, field) -> datetime:
     if isinstance(value, datetime):
         return value
 
-    EXPECTED_DATETIME_FORMATS = (
+    expected_datetime_formats = (
         '%d-%m-%YT%H:%M:%S%z',
         '%d/%m/%Y'
-        )
+    )
     parsed = None
-    for format in EXPECTED_DATETIME_FORMATS:
+    for date_format in expected_datetime_formats:
         try:
-            parsed = datetime.strptime(value, format)
+            parsed = datetime.strptime(value, date_format)
             break
         except ValueError:
             pass
 
-    if not parsed: # if we still couldn't parse it, try isoformat
-        try: 
+    if not parsed:  # if we still couldn't parse it, try isoformat
+        try:
             parsed = datetime.fromisoformat(value)
         except ValueError as ver:
             raise ValidationError(value, field,

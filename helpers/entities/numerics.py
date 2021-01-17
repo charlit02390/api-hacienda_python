@@ -37,3 +37,10 @@ class DecimalMoney(Decimal):
                                                              str(cls._DECIMALS)))
         return _d
 
+    @classmethod
+    def mul(cls, x, y):
+        return (x * y).quantize(cls._EXP, cls._ROUNDING)
+
+    @classmethod
+    def div(cls, x, y):
+        return (x / y).quantize(cls._EXP, cls._ROUNDING)
