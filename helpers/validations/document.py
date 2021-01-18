@@ -410,7 +410,7 @@ def validate_line(line: dict, doc_type: str,
     line_number = line['numero']
 
     cabys = line['codigo']
-    #  check_cabys(cabys, line_number, request_session)
+    check_cabys(cabys, line_number, request_session)
 
     amount_total_prop = 'montoTotal'
     amount_total = Money(line[amount_total_prop])
