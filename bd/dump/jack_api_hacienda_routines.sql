@@ -1576,6 +1576,21 @@ DELIMITER ;
 -- ---------------------------------------
 
 -- ---------------------------------------
+DROP PROCEDURE IF EXISTS USP_UpdateCompanyState;
+DELIMITER $$
+CREATE PROCEDURE USP_UpdateCompanyState(
+	p_companyId INT UNSIGNED,
+	p_newState BOOLEAN
+)
+BEGIN
+	UPDATE companies
+	SET is_active = p_newState
+	WHERE id = p_companyId;
+END $$
+DELIMITER ;
+-- ---------------------------------------
+
+-- ---------------------------------------
 DROP PROCEDURE IF EXISTS usp_verifyExists_documents;
 DELIMITER $$
 CREATE PROCEDURE usp_verifyExists_documents(
