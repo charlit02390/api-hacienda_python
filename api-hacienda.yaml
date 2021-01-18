@@ -40,7 +40,7 @@ components:
         id_compania:
           type: string
         codigo_actividad:
-          type: integer
+          type: string
         otras_senas:
           type: string
         cod_telefono:
