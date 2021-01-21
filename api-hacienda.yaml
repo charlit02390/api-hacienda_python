@@ -963,13 +963,13 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
-  /api/companies/{id}:
+  /api/companies/{company_id}:
     get:
       tags:
         - companies
       operationId: routes.companies.route_get_company_byid
       parameters:
-        - name: id
+        - name: company_id
           in: path
           description: Company ID
           required: true
@@ -988,7 +988,7 @@ paths:
       description: deletes a single company based on the id supplied
       operationId: routes.companies.route_delete_company
       parameters:
-        - name: id
+        - name: company_id
           in: path
           description: id of the company
           required: true
@@ -1007,7 +1007,7 @@ paths:
       description: updates an attribute of the given company
       operationId: routes.companies.patch_company
       parameters:
-        - name: id
+        - name: company_id
           in: path
           description: the company's id
           required: true
@@ -1229,14 +1229,14 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
-  /api/users/{id}:
+  /api/users/{user_id}:
     delete:
       tags:
       - users
       description: deletes a single user based on the id supplied
       operationId: routes.users.route_delete_user
       parameters:
-      - name: id
+      - name: user_id
         in: path
         description: id of the user
         required: true
@@ -1255,7 +1255,7 @@ paths:
       description: get information of a single user based on the id supplied
       operationId: routes.users.route_get_user_byid
       parameters:
-      - name: id
+      - name: user_id
         in: path
         description: id of the user
         required: true
@@ -1268,7 +1268,7 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
-  /api/companies/{id}/smtp:
+  /api/companies/{company_id}/smtp:
     post:
       tags:
       - smtp data
@@ -1281,7 +1281,7 @@ paths:
               $ref: '#/components/schemas/companies_smtp'
       operationId: routes.company_smtp.route_save_company_smtp
       parameters:
-      - name: id
+      - name: company_id
         in: path
         description: Company ID
         required: true
@@ -1300,7 +1300,7 @@ paths:
       description: get information of a single company and it smtp data based on the id supplied
       operationId: routes.company_smtp.route_get_company_smtp
       parameters:
-      - name: id
+      - name: company_id
         in: path
         description: id of the company
         required: true
@@ -1319,7 +1319,7 @@ paths:
       description: delete information of a single company and it smtp data based on the id supplied
       operationId: routes.company_smtp.route_delete_company_smtp
       parameters:
-      - name: id
+      - name: company_id
         in: path
         description: id of the company
         required: true
@@ -1344,7 +1344,7 @@ paths:
               $ref: '#/components/schemas/companies_smtp'
       operationId: routes.company_smtp.route_modify_company_smtp
       parameters:
-      - name: id
+      - name: company_id
         in: path
         description: Company ID
         required: true
@@ -1589,14 +1589,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/stdResponse'
-  /registry/persons/{id}:
+  /registry/persons/{person_id}:
     get:
       tags:
       - registry
       summary: Obtains the specified person from the registry collection.
       operationId: routes.registry.route_get_person
       parameters:
-        - name: id
+        - name: person_id
           in: path
           description: The ID number for the person to get info from.
           required: true
