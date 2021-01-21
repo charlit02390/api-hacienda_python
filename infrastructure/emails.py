@@ -10,6 +10,7 @@ from mimetypes import guess_type
 
 _logger = logging.getLogger(__name__)
 
+
 def send_email(receiver, host, sender, port, encrypt_type,
                user, password, subject, content, attachments): # encrypt_type not used.       
     # recipient circus 'cuz don't know python well enough
@@ -61,44 +62,15 @@ def send_email(receiver, host, sender, port, encrypt_type,
         server.login(user, password)
         server.sendmail(sender, receiver, text)
     return True
-
-    # TODO : throw this into a custom SMTPError handler
-    # for now, all these exceptions are being captured by the InternalServerError
-    # handler, being logged and returned with a "nice" message to the user.
-    #
-    #except smtplib.SMTPConnectError as conne:
-    #    raise smtplib.SMTPException(50,
-    #                                """There was a problem with the connection to the server.""",
-    #                                str(conne)) from conne
-    #except smtplib.SMTPNotSupportedError as nosue:
-    #    raise smtplib.SMTPException(51,
-    #                                """The operation attempted was not supported by the server.""",
-    #                                str(nosue)) from nosue
-    #except smtplib.SMTPAuthenticationError as authe:
-    #    raise smtplib.SMTPException(52,
-    #                                """The authentication process failed.""",
-    #                                str(authe)) from authe
-    #except smtplib.SMTPSenderRefused as sende:
-    #    raise smtplib.SMTPException(53,
-    #                                """The sender's server refused the request.""",
-    #                                str(sende)) from sende
-    #except smtplib.SMTPDataError as datae:
-    #    raise smtplib.SMTPException(54,
-    #                                """The data sent to the server was refused.""",
-    #                                str(datae)) from datae
-    #except smtplib.SMTPRecipientsRefused as recie:
-    #    raise smtplib.SMTPException(55,
-    #                                """Mail was refused by all the recipients.""",
-    #                                str(recie)) from recie
     
 
 def create_email_files(file, filename):
-    type = guess_type(filename);
-    if not type:
+    _type = guess_type(filename)
+    if not _type:
         part = MIMEBase("application", "octet-stream")
     else:
-        type = type[0].split('/')
-        part = MIMEBase(type[0], type[1])
+        _type = _type[0].split('/')
+        part = MIMEBase(_type[0], _type[1])
     part.set_payload(file)
 
     # Encode file in ASCII characters to send by email

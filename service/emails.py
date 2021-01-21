@@ -2,7 +2,7 @@ import base64
 from infrastructure import company_smtp
 from infrastructure import documents
 from configuration import globalsettings
-from infrastructure.email import send_email
+from infrastructure.emails import send_email
 from service import fe_enums
 from email import encoders
 from email.mime.base import MIMEBase
@@ -73,7 +73,7 @@ def send_custom_email(data, file1, file2, file3):
     if not smtp_data:
         raise InputError('company SMTP', data['company_id'], InputErrorCodes.NO_RECORD_FOUND)
 
-    receivers = data['receivers'].split(',');
+    receivers = data['receivers'].split(',')
     if not receivers[0]:
         raise InputError(status=InputErrorCodes.MISSING_PROPERTY, message='No recipient(s) specified.')
 

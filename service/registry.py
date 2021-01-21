@@ -4,11 +4,11 @@ import json
 from infrastructure import registry
 from helpers import utils
 
-def get_person(id: str) -> dict:
+def get_person(person_id: str) -> dict:
     """
     Returns information about the specified person.
 
-    :param id: str - An 'id' string representing the unique
+    :param person_id: str - An 'id' string representing the unique
         identification to find.
     :returns: dict - A dictionary with keys:
 
@@ -23,7 +23,7 @@ def get_person(id: str) -> dict:
 
     """
     max_length = 12
-    if len(id) > max_length:
+    if len(person_id) > max_length:
       return utils.build_response_data({
         'error': {
           'http_status': 400,
@@ -35,7 +35,7 @@ def get_person(id: str) -> dict:
         }
       })
 
-    person =  registry.get_person(id)
+    person =  registry.get_person(person_id)
     if person is None:
       return utils.build_response_data({
         'error': {
@@ -50,6 +50,6 @@ def get_person(id: str) -> dict:
     response = utils.build_response_data(
         result,
         warn_msg='Person not found for the id: "{}".'.format(
-            id
+            person_id
             ))
     return response

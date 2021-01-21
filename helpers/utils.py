@@ -108,33 +108,32 @@ def build_response(data: dict):
         dispatched to the client.
     """
 
-    if not 'http_status' in data and not 'headers' in data:
+    if 'http_status' not in data and 'headers' not in data:
         return jsonify(data)
 
+    http_status = None
     if 'http_status' in data:
         http_status = data.pop('http_status')
 
+    headers = None
     if 'headers' in data:
         headers = data.pop('headers')
 
     response = jsonify(data)
-    try:
-        response.status_code = http_status
-    except NameError:
-        pass
 
-    try:
+    if http_status is not None:
+        response.status_code = http_status
+
+    if headers is not None:
         response.headers = headers
-    except NameError:
-        pass
 
     return response
 
 
 def run_and_summ_collec_job(collec_cb, item_cb,
                                      item_id_keys, collec_cb_args = (),
-                                     collec_cb_kwargs = {},
-                                     item_cb_kwargs_map = {}):
+                                     collec_cb_kwargs=None,
+                            item_cb_kwargs_map=None):
     """
     Very generic function that runs functions designed as
     scheduled jobs and summarizes their results.
@@ -155,6 +154,10 @@ def run_and_summ_collec_job(collec_cb, item_cb,
     :returns: str - a string with a summary for the
         executed operations.
     """
+    if item_cb_kwargs_map is None:
+        item_cb_kwargs_map = {}
+    if collec_cb_kwargs is None:
+        collec_cb_kwargs = {}
     try:
         collection = collec_cb(*collec_cb_args,
                                **collec_cb_kwargs)

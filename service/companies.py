@@ -18,7 +18,7 @@ def create_company(data, files):
     )
     if company_exists:
         raise InputError('The company with ID: {}'
-                         .format(company_user),
+                         .format(_company_user),
                          status=InputErrorCodes.DUPLICATE_RECORD)
 
     signature = files['firma'].read()
@@ -83,7 +83,7 @@ def modify_company(data, files):
         _company_user
     )
     if not company_exists:
-        raise InputError('Company', company_user,
+        raise InputError('Company', _company_user,
                          status=InputErrorCodes.NO_RECORD_FOUND)
 
     signature = files['firma'].read()

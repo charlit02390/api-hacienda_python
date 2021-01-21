@@ -2,12 +2,11 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 
 from service import fe_enums, utils
-from helpers.debugging import time_my_func
+# from helpers.debugging import time_my_func
 from helpers.errors.exceptions import ValidationError
 from helpers.errors.enums import ValidationErrorCodes
 
-
-NO_PDF_TYPES = ('4',)
+NO_PDF_TYPES = (fe_enums.TipoDocumentApiSwapped['TE'],)
 DATETIME_DISPLAY_FORMAT = '%d-%m-%Y'
 DEFAULT_MONEY_VALUE = '0.00000'
 DEFAULT_PDF_DECIMAL_VALUE = '0.0'
@@ -18,21 +17,18 @@ Si la factura no se cancela dentro del mes de su facturación, \
 se debe pagar al tipo de cambio oficial al dia de su cancelación."""
 
 
-@time_my_func
 def arrange_data(data: dict) -> tuple:
     xml_data = arrange_xml_data(data)
-    if data['tipo'] not in NO_PDF_TYPES:
+    if generates_pdf(data):
         pdf_data = arrange_pdf_data(data)
+        xml_data['detalles'], pdf_data['lines'] = arrange_details(data['detalles'])
     else:
-        pdf_data = {}
-
-    xml_data['detalles'], pdf_data['lines'] = \
-        arrange_details(data['detalles'])
+        pdf_data = None
+        xml_data['detalles'] = arrange_details(data['detalles'], False)
 
     return xml_data, pdf_data
 
 
-@time_my_func
 def arrange_xml_data(data: dict) -> dict:
     xml_data = deepcopy(data)
 
@@ -94,7 +90,6 @@ def arrange_xml_data(data: dict) -> dict:
     return xml_data
 
 
-@time_my_func
 def arrange_pdf_data(data: dict) -> dict:
     pdf_data = {}
 
@@ -110,8 +105,8 @@ def arrange_pdf_data(data: dict) -> dict:
     return pdf_data
 
 
-@time_my_func
-def arrange_details(details: list) -> tuple:
+# kinda convoluted...
+def arrange_details(details: list, process_pdf: bool = True):
     xml_details = []
     pdf_details = []
 
@@ -119,59 +114,70 @@ def arrange_details(details: list) -> tuple:
     for i in range(len(details)):
         line = deepcopy(details[i])
 
-        pdf_line = {
-            '_cabys': line['codigo'],
-            'detalle': line.get('detalle', ''),
-            'cantidad': utils.stringRound(line['cantidad'])
-            if line['cantidad'].strip('0.')
-            else DEFAULT_PDF_DECIMAL_VALUE,
-            'precioUnitario': utils.stringRound(line['precioUnitario'])
-            if line['precioUnitario'].strip('0.')
-            else DEFAULT_PDF_DECIMAL_VALUE,
-            'impuestoNeto': utils.stringRound(line['impuestoNeto'])
-            if line['impuestoNeto'].strip('0.')
-            else DEFAULT_PDF_DECIMAL_VALUE,
-            'subtotal': utils.stringRound(line['subtotal'])
-            if line['subtotal'].strip('0.')
-            else DEFAULT_PDF_DECIMAL_VALUE,
-            'totalLinea': utils.stringRound(line['totalLinea'])
-            if line['totalLinea'].strip('0.')
-            else DEFAULT_PDF_DECIMAL_VALUE
-        }
         if 'impuesto' in line:
-            for tax in line['impuesto']:
-                if 'exoneracion' in tax \
-                        and isinstance(tax['exoneracion'], dict):
-                    tax['exoneracion'] = [tax['exoneracion']]
-
-            pdf_line['impuesto'] = deepcopy(line['impuesto'])
+            arrange_taxes(line['impuesto'])
 
         cabys = line['codigo']
-        amount_total = line['montoTotal'].strip('0.')
+        amount_total = line['montoTotal'].strip().strip('0.')
         if cabys and amount_total:
             xml_line = deepcopy(line)
-            xml_line['numero'] = pdf_line['numero'] = line_count
+            xml_line['numero'] = line_count
             base_imponible = xml_line.pop('baseImponible', '')
             if base_imponible.strip('0.'):
                 xml_line['baseImponible'] = base_imponible
 
             xml_details.append(xml_line)
             line_count += 1
-        else:
-            pdf_line['numero'] = '∟'
-            pdf_line['_cabys'] = \
-                pdf_line['cantidad'] = \
-                pdf_line['precioUnitario'] = \
-                pdf_line['impuestoNeto'] = \
-                pdf_line['subtotal'] = \
-                pdf_line['totalLinea'] = ''
 
-        pdf_details.append(pdf_line)
+        if process_pdf:
+            pdf_line = {
+                'numero': line_count - 1,
+                '_cabys': line['codigo'],
+                'detalle': line.get('detalle', ''),
+                'cantidad': utils.stringRound(line['cantidad'])
+                if line['cantidad'].strip('0.')
+                else DEFAULT_PDF_DECIMAL_VALUE,
+                'precioUnitario': utils.stringRound(line['precioUnitario'])
+                if line['precioUnitario'].strip('0.')
+                else DEFAULT_PDF_DECIMAL_VALUE,
+                'impuestoNeto': utils.stringRound(line['impuestoNeto'])
+                if line['impuestoNeto'].strip('0.')
+                else DEFAULT_PDF_DECIMAL_VALUE,
+                'subtotal': utils.stringRound(line['subtotal'])
+                if line['subtotal'].strip('0.')
+                else DEFAULT_PDF_DECIMAL_VALUE,
+                'totalLinea': utils.stringRound(line['totalLinea'])
+                if line['totalLinea'].strip('0.')
+                else DEFAULT_PDF_DECIMAL_VALUE
+            }
 
-    return xml_details, pdf_details
+            if 'impuesto' in line:
+                pdf_line['impuesto'] = deepcopy(line['impuesto'])
+
+            if not cabys or not amount_total:
+                pdf_line['numero'] = '∟'
+                pdf_line['_cabys'] = \
+                    pdf_line['cantidad'] = \
+                    pdf_line['precioUnitario'] = \
+                    pdf_line['impuestoNeto'] = \
+                    pdf_line['subtotal'] = \
+                    pdf_line['totalLinea'] = ''
+
+            pdf_details.append(pdf_line)
+
+    if process_pdf:
+        return xml_details, pdf_details
+    else:
+        return xml_details
 
 
-@time_my_func
+def arrange_taxes(taxes: list):
+    for tax in taxes:
+        ex = tax.get('exoneracion')
+        if ex and isinstance(ex, dict):
+            tax['exoneracion'] = [ex]
+
+
 def build_pdf_body_data(data: dict) -> dict:
     total_document = utils.stringRound(data['totalComprobantes'])
     recipient = data['receptor']
@@ -268,7 +274,6 @@ def build_pdf_body_data(data: dict) -> dict:
     return body_data
 
 
-@time_my_func
 def build_pdf_header_data(data: dict) -> dict:
     header_data = {}
 
@@ -285,7 +290,6 @@ def build_pdf_header_data(data: dict) -> dict:
     return header_data
 
 
-@time_my_func
 def build_pdf_footer_data(data: dict) -> dict:
     currency = data['codigoTipoMoneda']
 
@@ -308,7 +312,6 @@ def build_pdf_footer_data(data: dict) -> dict:
     return footer_data
 
 
-@time_my_func
 def parse_datetime(value, field) -> datetime:
     if isinstance(value, datetime):
         return value
@@ -333,3 +336,41 @@ def parse_datetime(value, field) -> datetime:
                                   status=ValidationErrorCodes.INVALID_DATETIME_FORMAT) from ver
 
     return parsed
+
+
+def generates_pdf(data: dict) -> bool:
+    doctype = data['tipo']
+    if doctype in NO_PDF_TYPES:
+        return False
+
+    if doctype in CONDITIONAL_PDF_TYPES.keys():
+        return CONDITIONAL_PDF_TYPES[doctype](data)
+
+    return 'receptor' in data
+
+
+def references_fe(data: dict) -> bool:
+    ref = data.get('referencia', {})
+    if not isinstance(ref, dict):
+        raise ValidationError(
+            status=ValidationErrorCodes.INVALID_DOCUMENT,
+            message=('La propiedad "referencia" posee un valor de tipo inválido.'
+                     ' Tipo recibido: {} . Tipo esperado: object')
+            .format(type(ref))
+        )
+
+    doctype = ref['tipoDocumento'].strip()
+    if not doctype:
+        raise ValidationError(
+            status=ValidationErrorCodes.INVALID_DOCUMENT,
+            message=('La referencia recibida no posee un tipo de documento asociado válido. '
+                     'Valor de "tipoDocumento": {}'.format(doctype))
+        )
+
+    return doctype == fe_enums.TipoDocumento['FE']
+
+
+CONDITIONAL_PDF_TYPES = {
+    fe_enums.TipoDocumentApiSwapped['ND']: references_fe,
+    fe_enums.TipoDocumentApiSwapped['NC']: references_fe
+}

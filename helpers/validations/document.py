@@ -7,11 +7,11 @@ from email.errors import HeaderParseError
 
 from helpers.errors.exceptions import InputError, ValidationError, ServerError
 from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, InternalErrorCodes
-from helpers.debugging import time_my_func
+# from helpers.debugging import time_my_func
 from helpers.entities.numerics import DecimalMoney as Money
 from service.fe_enums import SituacionComprobante
 
-OPTIONAL_RECIPIENT_DOC_TYPES = ('TE',)
+OPTIONAL_RECIPIENT_DOC_TYPES = ('TE', 'FEE', 'NC', 'ND')
 CABYS_VALID_LENGTH = 13
 BASEIMPONIBLE_REQ_TAX_CODE = '07'
 IVAFACTOR_REQ_TAX_CODE = '08'
@@ -40,20 +40,21 @@ TAXRATE_HEALTH_SERVICE_CODE = '04'
 PAYMENT_METHOD_CARD_CODE = '02'
 
 
-@time_my_func
 def validate_data(data: dict):
+    validate_header(data)
+
     doc_type = data['tipo']
     details = data['detalles']
     validate_details(doc_type, details)
 
-    recipient = data.get('receptor')
-    validate_recipient(recipient, doc_type)
-
-    validate_header(data)
     validate_totals(data)
 
 
 def validate_header(data: dict):
+    doc_type = data['tipo']
+    recipient = data.get('receptor')
+    validate_recipient(recipient, doc_type)
+
     sequence = data['consecutivo']
     branch = data['sucursal']
     terminal = data['terminal']
@@ -212,9 +213,16 @@ def validate_sequence(sequence: str, branch: str,
 
 
 def validate_recipient(recipient: dict, doc_type: str):
-    if recipient is None \
-            and doc_type not in OPTIONAL_RECIPIENT_DOC_TYPES:
-        return True
+    if recipient is None:
+        if doc_type in OPTIONAL_RECIPIENT_DOC_TYPES:
+            return True
+        else:
+            raise ValidationError(
+                status=ValidationErrorCodes.INVALID_DOCUMENT,
+                message=('El tipo de documento especificado({}) requiere de un '
+                         'receptor y este no fue especificado.'
+                         .format(doc_type))
+            )
 
     email = recipient['correo']
     additional_emails = recipient.get('correosAdicionales', [])
@@ -230,14 +238,12 @@ def validate_recipient(recipient: dict, doc_type: str):
     return True
 
 
-@time_my_func
 def validate_details(doc_type: str, details: list):
     with requests.Session() as sess:
         for line in details:
             validate_line(line, doc_type, sess)
 
 
-@time_my_func
 def validate_totals(data: dict):
     calculated_totals = calculate_totals(data)
     for prop, total in calculated_totals.items():
@@ -246,7 +252,6 @@ def validate_totals(data: dict):
     return True
 
 
-@time_my_func
 def calculate_totals(data: dict):
     calc_serv_taxed = Money(0)
     calc_serv_exempt = Money(0)

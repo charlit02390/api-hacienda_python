@@ -25,14 +25,12 @@ _MIN_LENGTH = 3
 # for searching.
 # Then, dispatches it to the correct function based on "where"...
 def search(data, where):
-    # I think I'm already checking this in the yaml, but might as well...
-    if 'query' in data:
-        _query = data['query'].strip()
-        # Serve queries that conform to the minimal length
-        if len(_query) >= _MIN_LENGTH:
+    result = {}
+    _query = data.get('query', '').strip()
+    if _query and len(_query) >= _MIN_LENGTH:
             # Search. Asume all good
             # Dispatch to proper method depending on "where"
-            result = {'data' : where(format(_query))}
+            result = {'data' : where(format_query(_query))}
 
     else:
         error = { 'message' : "There was no query specified in the request's body.",
@@ -52,9 +50,8 @@ def search(data, where):
 # identifier in the requested place/collection/infrastructure
 # function... I don't know...
 def find(data, where):
-    # Better safe than sorry...?
-    if 'cabys' in data:
-        _code = data['cabys'].strip()
+    _code = data.get('cabys', '').strip()
+    if _code in data:
         # Go. Dispatch the "where" method
         result = { 'data' : where(_code)}
 
@@ -94,10 +91,10 @@ def get(code: str):
 
 
 # Formats a query into a Regular Expression matching pattern... maybe...
-def format(query):
+def format_query(query):
     # dunno what to do here, so just trying stuff. Better find a more efficient way
     # what a mess... meh, will look up into this better some other time...
-    separator = '|';
+    separator = '|'
 
     # le pattern
     pattern = re.compile(r'["](.*?)["]')
@@ -109,7 +106,7 @@ def format(query):
     queryNonQuotedParts = pattern.sub('', query)
 
     # Since these might mean different keywords, gotta split them with a whitespace
-    explodedquery = queryNonQuotedParts.split(' ');
+    explodedquery = queryNonQuotedParts.split(' ')
 
     # Clean any empty strings
     cleanerexplosion = [string for string in explodedquery if string != ""]

@@ -40,8 +40,8 @@ class IDN(ABC, object):
         super().__init_subclass__(**kwargs)
         cls.__class_registry[cls._IDN_TYPE] = cls
    
-    def __new__(cls, type, number):
-        subclass = cls.__class_registry.get(type)
+    def __new__(cls, subclass_type, number):
+        subclass = cls.__class_registry.get(subclass_type)
         if subclass:
             instance = object.__new__(subclass)
             instance.number = number
@@ -50,7 +50,7 @@ class IDN(ABC, object):
         else:
             raise IDN.IDNTypeNotFound(('No class'
                                        ' found for type {}'
-                                      ).format(type))
+                                      ).format(subclass_type))
 
     @classmethod
     def validate_idn(cls, idn):

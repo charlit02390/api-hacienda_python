@@ -113,7 +113,7 @@ def create_document(data):
     xmlencoded = base64.b64encode(xml_sign)
 
     pdfencoded = None  # Por si ES tiquete que guarde nada como pdf
-    if _type_document != 'TE':
+    if pdf_data is not None:  # _type_document != 'TE':
         _logo = companies.get_logo_data(_company_user)
         _logo = _logo['logo']
         if _logo is not None:

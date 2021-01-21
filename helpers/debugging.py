@@ -75,7 +75,7 @@ def time_my_func(func):
         s = timer()
         val = func(*args, **kwargs)
         e = timer()
-        print(('Function: {}. Execution Time: {}')
+        print('Function: {}. Execution Time: {}'
               .format(func.__qualname__, (e-s)))
         return val
     return decoratored

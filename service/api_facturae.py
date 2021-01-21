@@ -481,7 +481,7 @@ def receptor_xml(sb, receiver_company, document_type):
         sb.Append('<CorreoElectronico>' + str(receiver_company['email']) + '</CorreoElectronico>')
         sb.Append('</Receptor>')
     else:
-        if document_type == 'TE' or (document_type == 'NC' and not receiver_company.get('numero_identificacion')):
+        if not receiver_company: # document_type == 'TE' or (document_type == 'NC' and not receiver_company.get('numeroIdentificacion')):
             pass
         else:
             vat = re.sub('[^0-9]', '', receiver_company['numeroIdentificacion'])

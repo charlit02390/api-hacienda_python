@@ -1368,7 +1368,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/email'
-      operationId: routes.email.route_send_email
+      operationId: routes.emails.route_send_email
       responses:
         200:
           description: Everything is ok
@@ -1386,7 +1386,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/email_mh'
-      operationId: routes.email.send_email_fe
+      operationId: routes.emails.send_email_fe
       responses:
         200:
           description: Everything is ok

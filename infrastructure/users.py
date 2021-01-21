@@ -20,11 +20,11 @@ def save_user(id_user, password, name, idrol, idcompanies):
 
         # should prolly move to function or something
         usercom_proc = 'sp_createUser_Company'
-        for id in idcompanies:
-            if isinstance(id, (str,int)):
-                idcompany = id
-            elif isinstance(id, dict) and 'id' in id:
-                idcompany = id['id']
+        for cid in idcompanies:
+            if isinstance(cid, (str,int)):
+                idcompany = cid
+            elif isinstance(cid, dict) and 'id' in cid:
+                idcompany = cid['id']
             else:
                 conn.rollback()
                 raise InputError('companies array',
@@ -75,11 +75,11 @@ def modify_user(id_user, password, name, idrol, idcompanies):
 
         # add the companies received
         usercom_proc = 'sp_createUser_Company'
-        for id in idcompanies:
-            if isinstance(id, (str,int)):
-                idcompany = id
-            elif isinstance(id, dict) and 'id' in id:
-                idcompany = id['id']
+        for cid in idcompanies:
+            if isinstance(cid, (str,int)):
+                idcompany = cid
+            elif isinstance(cid, dict) and 'id' in cid:
+                idcompany = cid['id']
             else:
                 conn.rollback()
                 raise InputError('companies array',
