@@ -12,7 +12,7 @@ def search_meds():
 
 # Searches for cabys goods matching the received text
 def search_cabys():
-    body = connexion.request.json;
+    body = connexion.request.json
     response = service.search(body, service.Search.CABYS)
     return utils.build_response(response)
 

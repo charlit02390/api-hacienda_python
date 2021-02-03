@@ -9,14 +9,23 @@ from helpers.utils import build_response_data
 from flask import g
 
 
-def create_company(data, file, logo):
+def create_company(data, files):
     # verify company first, 'cuz can't save a company that already exists.
     _company_user = data['id_compania']
 
-    company_exists = companies.verify_company(_company_user)
+    company_exists = companies.verify_company(
+        _company_user
+    )
     if company_exists:
-        raise InputError('The company with ID: {}'.format(company_user),
+        raise InputError('The company with ID: {}'
+                         .format(_company_user),
                          status=InputErrorCodes.DUPLICATE_RECORD)
+
+    signature = files['firma'].read()
+    _pin = data['pin']
+    _expiration_date = utils_mh.p12_expiration_date(
+        signature, _pin
+    )
 
     # get the company data
     _name = data['nombre_compania']
@@ -34,21 +43,22 @@ def create_company(data, file, logo):
     _activity_code = data['codigo_actividad']
     _user_mh = data['usuario_hacienda']
     _pass_mh = data['password_hacienda']
-    _pin = data['pin']
     _env = data['ambiente']
     _is_active = data['estado']
 
+    b64signature = base64.b64encode(signature)
 
-    _signature = base64.b64encode(file)
-    _logo = base64.b64encode(logo)
-    
-    _expiration_date = utils_mh.p12_expiration_date(file, _pin)
+    _logo = None
+    if 'logo' in files:
+        _logo = base64.b64encode(files['logo'].read())
 
-
-    companies.create_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
-                                          _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code,
-                                          _is_active, _user_mh, _pass_mh, _signature, _logo,_pin, _env,
-                                          _expiration_date)
+    companies.create_company(_company_user, _name,
+                             _tradename, _type_identification, _dni,
+                             _state, _county, _district, _neighbor,
+                             _address, _phone_code, _phone, _email,
+                             _activity_code, _is_active, _user_mh,
+                             _pass_mh, b64signature, _logo,_pin,
+                             _env, _expiration_date)
 
     return build_response_data({'message': 'company created successfully!'})
 
@@ -67,8 +77,21 @@ def delete_company(id_company):
     return build_response_data({'message':'The company has been succesfully deleted.'})
 
 
-def modify_company(data, file, logo):
+def modify_company(data, files):
     _company_user = data['id_compania']
+    company_exists = companies.verify_company(
+        _company_user
+    )
+    if not company_exists:
+        raise InputError('Company', _company_user,
+                         status=InputErrorCodes.NO_RECORD_FOUND)
+
+    signature = files['firma'].read()
+    _pin = data['pin']
+    _expiration_date = utils_mh.p12_expiration_date(
+        signature, _pin
+    )
+
     _name = data['nombre_compania']
     _tradename = data['nombre_comercial']
     _type_identification = data['tipo_identificacion']
@@ -84,17 +107,44 @@ def modify_company(data, file, logo):
     _activity_code = data['codigo_actividad']
     _user_mh = data['usuario_hacienda']
     _pass_mh = data['password_hacienda']
-    _pin = data['pin']
     _env = data['ambiente']
     _is_active = data['estado']
 
-    _signature = base64.b64encode(file)
-    _logo = base64.b64encode(logo)
+    b64signature = base64.b64encode(signature)
+    _logo = None
+    if 'logo' in files:
+        _logo = base64.b64encode(files['logo'].read())
 
-    _expiration_date = utils_mh.p12_expiration_date(file, _pin)
-
-    result = companies.modify_company(_company_user, _name, _tradename, _type_identification, _dni, _state, _county,
-                                      _district, _neighbor, _address, _phone_code, _phone, _email, _activity_code,
-                                      _is_active, _user_mh, _pass_mh, _signature, _logo, _pin, _env, _expiration_date)
+    result = companies.modify_company(_company_user,
+                                      _name, _tradename,
+                                      _type_identification, _dni,
+                                      _state, _county, _district,
+                                      _neighbor, _address, _phone_code,
+                                      _phone, _email, _activity_code,
+                                      _is_active, _user_mh, _pass_mh,
+                                      b64signature, _logo, _pin, _env,
+                                      _expiration_date)
 
     return build_response_data({'message': 'company modified successfully!'})
+
+
+def patch_company(company_id, data, files):
+    # not using files for now...
+    # this be a catch all for updating stuff from the company...
+    # but, for now, just updating state
+    if 'estado' in data:
+        state = data['estado']
+        companies.update_state(company_id, state)
+        return build_response_data({
+            'message': 'Company patch succesful',
+            'data': {
+                'state': state
+            }
+        })
+    return build_response_data({
+        'message': 'Invalid data received.',
+        'http_status': 400,
+        'error': {
+            'message': 'No valid fields received in order to proceed with a patch.'
+        }
+    })

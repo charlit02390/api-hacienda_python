@@ -84,21 +84,21 @@ class StringBuilder:
     def __init__(self):
         self._file_str = StringIO()
 
-    def Append(self, str):
-        self._file_str.write( str )
+    def Append(self, _str):
+        self._file_str.write(_str)
 
     def __str__(self):
         return self._file_str.getvalue()
 
 
-def limit(str, limit):
-    return (str[:limit - 3] + '...') if len( str ) > limit else str
+def limit(_str, _limit):
+    return (_str[:_limit - 3] + '...') if len(_str) > _limit else _str
 
 
-def get_time_hacienda(format='N'):
+def get_time_hacienda(_format='N'):
     now_utc = datetime.datetime.now( pytz.timezone( 'UTC' ) )
     now_cr = now_utc.astimezone( pytz.timezone( 'America/Costa_Rica' ) )
-    if format == 'N':
+    if _format == 'N':
         date_cr = now_cr.strftime( "%Y-%m-%dT%H:%M:%S-06:00" )
     else:
         date_cr = now_cr.strftime( "%d%m%y" )

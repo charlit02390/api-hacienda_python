@@ -9,8 +9,8 @@ def create_new_user():
     return utils.build_response(result)
 
 
-def route_get_user_byid(id):
-    result = service.get_list_users(id)
+def route_get_user_byid(user_id):
+    result = service.get_list_users(user_id)
     return utils.build_response(result)
 
 
@@ -19,8 +19,8 @@ def route_list_users():
     return utils.build_response(result)
 
 
-def route_delete_user(id):
-    result = service.delete_user(id)
+def route_delete_user(user_id):
+    result = service.delete_user(user_id)
     return utils.build_response(result)
 
 

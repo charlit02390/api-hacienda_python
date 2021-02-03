@@ -35,9 +35,11 @@
         <div class="container">
             <table class="header table">
                 <tr>
+                    {% if logo %}
                     <td>
                         <img src="data:;base64,{{ logo }}" class="image" />
                     </td>
+                    {% endif %}
                     <td>
                         <table class="table table-sm">
                             <tr>
@@ -71,7 +73,7 @@
                         <table class="table table-sm invoice-info">
                             <tr>
                                 <td>
-                                    <b>{{type}}</b><br>
+                                    <b>{{document_type}}</b><br>
                                     {{consecutive}}
                                 </td>
                             </tr>

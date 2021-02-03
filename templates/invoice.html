@@ -71,7 +71,7 @@
 				</td>
 				<td> <b>Moneda:</b> </td>
 				<td>
-					{{currency.tipoMoneda}}{% if currency_exchange %} T.c. {{currency_exchange}}{% endif %}
+					{{currency.tipoMoneda}}{% if currency.tipoMoneda != "CRC" %} T.c. {{currency.tipoCambio}}{% endif %}
 				</td>
 			</tr>
 			<tr>
@@ -113,7 +113,7 @@
 					<td class="text-right">{{line.cantidad}}</td>
 					<td class="text-right">{{line.precioUnitario}}</td>
 					<td class="text-right">{{line.impuestoNeto}}</td>
-					<td class="text-right">{% if line.impuesto %}{{line.impuesto[0].tarifa|int}}{% else %}0{% endif %}</td>
+					<td class="text-right">{% if line.impuesto %}{{line.impuesto[0].tarifa|int}}{% elif line._cabys %}0{% endif %}</td>
 					<td class="text-right">{{line.totalLinea}}</td>
 				</tr>
 				{%endfor%}
@@ -157,15 +157,20 @@
 		{% if exemption %}
 		<div class="new-page">
 			<hr />
+			<h5>Esta factura está exonerada con base en los siguientes documentos:</h5>
+			{% for exem in exemption['items'] %}
 			<div>
 				<p>
-					Esta factura está exonerada con base en el documento tipo "{{exemption.doc_type}}". <br />
-					Número exoneración o autorizacion: {{exemption.doc_number}}. <br />
-					Con fecha de emisión del día {{exemption.issued_date}}.<br />
-					Emitido por {{exemption.issuer}}.<br />
-					Por un porcentaje del {{exemption.percentage}}%. Siendo el total de lo exonerado por un monto de {{currencySymbol}}{{exemption.total_amount|float|round(2)}}.
+					Documento tipo "{{exem.doc_type}}". <br />
+					Número exoneración o autorizacion: {{exem.doc_number}}. <br />
+					Con fecha de emisión del día {{exem.issued_date}}.<br />
+					Emitido por {{exem.issuer}}.<br />
+					Por un porcentaje del {{exem.percentage}}%.
 				</p>
 			</div>
+			<hr />
+			{% endfor %}
+			Siendo el total de lo exonerado por un monto de {{currencySymbol}}{{exemption.total_exempt|float|round(2)}}.
 			<hr />
 		</div>
 		{% endif %}

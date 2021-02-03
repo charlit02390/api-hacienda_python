@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+
 # ENUMS
 class AuthErrorCodes(IntEnum):
     _BASE = 10
@@ -23,7 +24,13 @@ class ValidationErrorCodes(IntEnum):
     _BASE = 3 * 10
     INVALID_KEY_COMPOSITION = _BASE + 1
     INVALID_DATETIME_FORMAT = _BASE + 2
-    INVALID_EMAIL = _BASE + 5
+    INVALID_EMAIL = _BASE + 3
+    INVALID_DETAIL_LINE = _BASE + 4
+    CABYS_NOT_FOUND = _BASE + 5
+    INVALID_SEQUENCE = _BASE + 6
+    INVALID_TOTAL = _BASE + 7
+    TAXCUT_AUTH_NOT_FOUND = _BASE + 8
+    INVALID_DOCUMENT = _BASE + 9
 
 
 class EmailErrorCodes(IntEnum):
@@ -91,6 +98,7 @@ class DBErrorCodes(IntEnum):
     DB_DOCUMENT_SELECT_ADDITIONAL_EMAILS_BY_KEY = _DOCUMENT + 10
     DB_DOCUMENT_JOBS = _DOCUMENT + 11
     DB_DOCUMENT_UPDATE_ISSENT = _DOCUMENT + 12
+    DB_DOCUMENT_VERIFY = _DOCUMENT + 13
     #   END_DOCUMENT
 
     #   CABYS

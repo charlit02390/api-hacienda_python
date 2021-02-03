@@ -20,7 +20,7 @@ from infrastructure import companies as dao_company
 from infrastructure import message as dao_message
 from infrastructure import company_smtp as dao_smtp
 from infrastructure import documents as dao_document
-from infrastructure import email
+from infrastructure import emails
 from configuration import globalsettings
 
 
@@ -429,7 +429,7 @@ def _send_mail_invoice(document: dict, smtp: dict):
              'file': b64decode(document['answerxml'])}
         ]
     }
-    return email.send_email(receivers=recipients, **smtp, **mail_data)
+    return emails.send_email(receiver=recipients, **smtp, **mail_data)
 
 
 def _send_mail_message(document: dict, smtp: dict):
@@ -452,8 +452,8 @@ Se le informa que su documento emitido con clave: "{}","""
                     doc_message_code_desc),
         'attachments': []
         }
-    return email.send_email(receiver=primary_recipient, **smtp,
-                            **mail_data)
+    return emails.send_email(receiver=primary_recipient, **smtp,
+                             **mail_data)
 
 
 def _get_idn(data: dict):

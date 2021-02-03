@@ -39,7 +39,7 @@ components:
         id_compania:
           type: string
         codigo_actividad:
-          type: integer
+          type: string
         otras_senas:
           type: string
         cod_telefono:
@@ -80,28 +80,31 @@ components:
           format: binary
         estado:
           type: string
-      required:
-          - logo
-          - id_compania
-          - codigo_actividad
-          - otras_senas
-          - cod_telefono
-          - canton
-          - distrito
-          - email
-          - ambiente
-          - cedula
-          - nombre_compania
-          - barrio
-          - password_hacienda
-          - telefono
-          - pin
-          - provincia
-          - nombre_comercial
-          - tipo_identificacion
-          - usuario_hacienda
-          - firma
-          - estado
+    company_post_put:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/company'
+      - required:
+        - id_compania
+        - codigo_actividad
+        - otras_senas
+        - cod_telefono
+        - canton
+        - distrito
+        - email
+        - ambiente
+        - cedula
+        - nombre_compania
+        - barrio
+        - password_hacienda
+        - telefono
+        - pin
+        - provincia
+        - nombre_comercial
+        - tipo_identificacion
+        - usuario_hacienda
+        - firma
+        - estado
     doc_recipient:
       type: object
       properties:
@@ -214,8 +217,11 @@ components:
           type: string
       required:
         - tipoDocumento
+        - numeroReferencia
         - fecha
-    doc_detail_tax_exemption:
+        - codigo
+        - razon
+    doc_detail_tax_cut:
       type: object
       properties:
         Tipodocumento:
@@ -231,12 +237,14 @@ components:
             - '99'
         NumeroDocumento:
           type: string
+          pattern: ^([aA][lL])[-]([0-9]{8})[-]([0-9]{2})$ # format al-00000000-00
         NombreInstitucion:
           type: string
         FechaEmision:
           type: string
         porcentajeExoneracion:
           type: string
+          #pattern: ^([0-9]|[1][0-3])$ # digit range 0-13
         montoExoneracion:
           type: string
       required:
@@ -282,9 +290,11 @@ components:
         montoExportacion:
           type: string
         exoneracion:
-          type: array
-          items:
-            $ref: '#/components/schemas/doc_detail_tax_exemption'
+          anyOf:
+            - $ref: '#/components/schemas/doc_detail_tax_cut'
+            - type: array
+              items:
+                $ref: '#/components/schemas/doc_detail_tax_cut'
       required:
         - monto
     doc_detail:
@@ -294,6 +304,7 @@ components:
           type: string
         codigo:
           type: string
+          maxLength: 13
         cantidad:
           type: string
         codigoComercial:
@@ -325,6 +336,7 @@ components:
           type: string
         descuento:
           type: array
+          maxItems: 5
           items:
             type: object
             properties:
@@ -351,6 +363,7 @@ components:
           type: string
       required:
         - numero
+        - codigo
         - cantidad
         - unidad
         - precioUnitario
@@ -436,6 +449,8 @@ components:
                       - '99'
                 required:
                   - codigo
+              minItems: 1
+              maxItems: 4
             detalles:
               type: array
               items:
@@ -486,6 +501,7 @@ components:
               anyOf:
               - type: object  # this is allowed, but ignored, for compatibility reasons
               - type: array
+                maxItems: 15
                 items:
                   $ref: '#/components/schemas/doc_otherCharges'
             referencia:
@@ -495,6 +511,7 @@ components:
                 - type: array
                   items:
                     $ref: '#/components/schemas/doc_reference'
+                    maxItems: 10
                 - type: object # allowed for compatibility reasons
             otros:
               anyOf:
@@ -918,7 +935,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/company'
+              $ref: '#/components/schemas/company_post_put'
       operationId: routes.companies.route_save_company
       responses:
         200:
@@ -936,7 +953,7 @@ paths:
         content:
           multipart/from-data:
             schema:
-              $ref: '#/components/schemas/company'
+              $ref: '#/components/schemas/company_post_put'
       operationId: routes.companies.route_modify_company
       responses:
         200:
@@ -945,13 +962,13 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
-  /api/companies/{id}:
+  /api/companies/{company_id}:
     get:
       tags:
         - companies
       operationId: routes.companies.route_get_company_byid
       parameters:
-        - name: id
+        - name: company_id
           in: path
           description: Company ID
           required: true
@@ -970,7 +987,7 @@ paths:
       description: deletes a single company based on the id supplied
       operationId: routes.companies.route_delete_company
       parameters:
-        - name: id
+        - name: company_id
           in: path
           description: id of the company
           required: true
@@ -981,6 +998,35 @@ paths:
           description: The company has been deleted
         500:
           description: there was an error starting the facial recognition system
+      security:
+        - jwt: []
+    patch:
+      tags:
+       - companies
+      description: updates an attribute of the given company
+      operationId: routes.companies.patch_company
+      parameters:
+        - name: company_id
+          in: path
+          description: the company's id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/company'
+      responses:
+        200:
+          description: company successfully patched
+        400:
+          description: invalid data
+        404:
+          description: company not found
+        500:
+          description: internal error
       security:
         - jwt: []
   /api/consult:
@@ -1182,14 +1228,14 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
-  /api/users/{id}:
+  /api/users/{user_id}:
     delete:
       tags:
       - users
       description: deletes a single user based on the id supplied
       operationId: routes.users.route_delete_user
       parameters:
-      - name: id
+      - name: user_id
         in: path
         description: id of the user
         required: true
@@ -1208,7 +1254,7 @@ paths:
       description: get information of a single user based on the id supplied
       operationId: routes.users.route_get_user_byid
       parameters:
-      - name: id
+      - name: user_id
         in: path
         description: id of the user
         required: true
@@ -1221,7 +1267,7 @@ paths:
           description: there was an error starting the facial recognition system
       security:
         - jwt: []
-  /api/companies/{id}/smtp:
+  /api/companies/{company_id}/smtp:
     post:
       tags:
       - smtp data
@@ -1234,7 +1280,7 @@ paths:
               $ref: '#/components/schemas/companies_smtp'
       operationId: routes.company_smtp.route_save_company_smtp
       parameters:
-      - name: id
+      - name: company_id
         in: path
         description: Company ID
         required: true
@@ -1253,7 +1299,7 @@ paths:
       description: get information of a single company and it smtp data based on the id supplied
       operationId: routes.company_smtp.route_get_company_smtp
       parameters:
-      - name: id
+      - name: company_id
         in: path
         description: id of the company
         required: true
@@ -1272,7 +1318,7 @@ paths:
       description: delete information of a single company and it smtp data based on the id supplied
       operationId: routes.company_smtp.route_delete_company_smtp
       parameters:
-      - name: id
+      - name: company_id
         in: path
         description: id of the company
         required: true
@@ -1297,7 +1343,7 @@ paths:
               $ref: '#/components/schemas/companies_smtp'
       operationId: routes.company_smtp.route_modify_company_smtp
       parameters:
-      - name: id
+      - name: company_id
         in: path
         description: Company ID
         required: true
@@ -1321,7 +1367,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/email'
-      operationId: routes.email.route_send_email
+      operationId: routes.emails.route_send_email
       responses:
         200:
           description: Everything is ok
@@ -1339,7 +1385,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/email_mh'
-      operationId: routes.email.send_email_fe
+      operationId: routes.emails.send_email_fe
       responses:
         200:
           description: Everything is ok
@@ -1542,14 +1588,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/stdResponse'
-  /registry/persons/{id}:
+  /registry/persons/{person_id}:
     get:
       tags:
       - registry
       summary: Obtains the specified person from the registry collection.
       operationId: routes.registry.route_get_person
       parameters:
-        - name: id
+        - name: person_id
           in: path
           description: The ID number for the person to get info from.
           required: true

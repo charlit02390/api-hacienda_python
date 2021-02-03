@@ -67,3 +67,15 @@ def log_section(name: str, time_it: bool = False):
         return wrapper_log_section
 
     return decoratored
+
+
+def time_my_func(func):
+    @functools.wraps(func)
+    def decoratored(*args, **kwargs):
+        s = timer()
+        val = func(*args, **kwargs)
+        e = timer()
+        print('Function: {}. Execution Time: {}'
+              .format(func.__qualname__, (e-s)))
+        return val
+    return decoratored

@@ -5,7 +5,7 @@ DELIMITER //
 -- User Stored Procedure usp_obtenerpersona_registrocivil --
 -- ---------------------------
 CREATE PROCEDURE usp_obtenerpersona_registrocivil (
-    p_cedula VARCHAR(9)
+    p_cedula VARCHAR(15)
 )
 BEGIN
 	SELECT `cedula`,
