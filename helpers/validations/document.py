@@ -9,6 +9,7 @@ from helpers.errors.exceptions import InputError, ValidationError, ServerError
 from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, InternalErrorCodes
 # from helpers.debugging import time_my_func
 from helpers.entities.numerics import DecimalMoney as Money
+from helpers.entities.strings import IDN, IDNType
 from service.fe_enums import SituacionComprobante
 
 OPTIONAL_RECIPIENT_DOC_TYPES = ('TE', 'FEE', 'NC', 'ND')
@@ -220,9 +221,29 @@ def validate_recipient(recipient: dict, doc_type: str):
             raise ValidationError(
                 status=ValidationErrorCodes.INVALID_DOCUMENT,
                 message=('El tipo de documento especificado({}) requiere de un '
-                         'receptor y este no fue especificado.'
-                         .format(doc_type))
+                         'receptor y este no fue especificado.').format(doc_type)
             )
+
+    rec_idn_type = recipient['tipoIdentificacion']
+    try:  # should be unnecesary since it's validated in yaml
+        idn_type_inst = IDNType(rec_idn_type)
+    except ValueError:
+        raise ValidationError(
+            status=ValidationErrorCodes.INVALID_DOCUMENT,
+            message=('El tipo de identificación ("{}") no es un tipo de '
+                     'identificación válido.').format(rec_idn_type)
+        )
+
+    idn = recipient['numeroIdentificacion']
+    try:
+        IDN(idn_type_inst, idn)
+    except ValueError:
+        raise ValidationError(
+            status=ValidationErrorCodes.INVALID_DOCUMENT,
+            message=('La identificación del receptor("{}") no posee la estructura '
+                     'correcta para el tipo de identificación("{}") especificada.'
+                     ).format(idn, rec_idn_type)
+        )
 
     email = recipient['correo']
     additional_emails = recipient.get('correosAdicionales', [])
@@ -278,9 +299,9 @@ def calculate_totals(data: dict):
         else:
             tax_ratio = calculate_tax_ratio(taxes)
 
-            taxed = Money(amount_total * (1 - tax_ratio))
+            taxed = Money.mul(amount_total, (1 - tax_ratio))
             exempt = Money(0)
-            taxcut = Money(amount_total * tax_ratio)
+            taxcut = Money.mul(amount_total, tax_ratio)
 
         if line_is_service:
             calc_serv_taxed += taxed
@@ -421,7 +442,7 @@ def validate_line(line: dict, doc_type: str,
     amount_total = Money(line[amount_total_prop])
     unit_price = Money(line['precioUnitario'])
     amount = Money(line['cantidad'])
-    calc_amount_total = Money(amount * unit_price)
+    calc_amount_total = Money.mul(amount, unit_price)
     if amount_total != calc_amount_total:
         raise_invalid_detail_line(line_number, amount_total_prop, amount_total,
                                   calc_amount_total)
@@ -452,10 +473,13 @@ def validate_line(line: dict, doc_type: str,
         tax_amount = Money(tax[tax_amount_prop])
         if tax_code == IVAFACTOR_REQ_TAX_CODE:
             iva_factor = Money(iva_factor) - 1
-            calc_tax_amount = Money(tax_subtotal * iva_factor)
+            calc_tax_amount = Money.mul(tax_subtotal, iva_factor)
         else:
             tax_rate = Money(tax['tarifa'])
-            calc_tax_amount = Money(tax_subtotal * tax_rate / 100)
+            calc_tax_amount = Money.div(
+                Money.mul(tax_subtotal, tax_rate),
+                100
+            )
 
         if calc_tax_amount != tax_amount:
             raise_invalid_detail_line(line_number, tax_amount_prop, tax_amount,
@@ -498,8 +522,8 @@ def validate_line(line: dict, doc_type: str,
 
 def validate_line_tax_cut_amount(cut_amount_prop, cut_amount,
                                  cut_percentage, line_subtotal, line_number):
-    calc_cut_amount = Money(
-        line_subtotal * (Money.div(Money(cut_percentage), Money(100)))
+    calc_cut_amount = Money.mul(
+        line_subtotal, (Money.div(Money(cut_percentage), Money(100)))
     )
     if calc_cut_amount != cut_amount:
         remarks = ('Porcentaje Exoneracion: {}.'.format(cut_percentage),)

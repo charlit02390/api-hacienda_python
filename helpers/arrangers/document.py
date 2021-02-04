@@ -64,12 +64,7 @@ def arrange_xml_data(data: dict) -> dict:
 
         recipient['correosAdicionales'] = additional_emails
 
-    other_charges = xml_data.pop('otrosCargos', [])
-    if isinstance(other_charges, dict):
-        if other_charges.get('tipoDocumento'):
-            other_charges = [other_charges]
-        else:
-            other_charges = None
+    other_charges = arrange_other_charges(xml_data.pop('otrosCargos', []))
     if other_charges:
         xml_data['otrosCargos'] = other_charges
 
@@ -88,6 +83,28 @@ def arrange_xml_data(data: dict) -> dict:
     xml_data['totalOtrosCargos'] = data.get('totalOtrosCargos', DEFAULT_MONEY_VALUE)
 
     return xml_data
+
+
+def arrange_other_charges(other_charges) -> list:
+    if not other_charges:
+        return []
+
+    _other_charges = other_charges
+    if isinstance(other_charges, dict):
+        _other_charges = [other_charges]
+
+    arranged = []
+    for charge in _other_charges:
+        if not charge.get('tipoDocumento'):
+            continue
+
+        arranged_charge = {}
+        for prop, value in charge.items():
+            if value.strip():
+                arranged_charge[prop] = value
+        arranged.append(arranged_charge)
+
+    return arranged
 
 
 def arrange_pdf_data(data: dict) -> dict:
