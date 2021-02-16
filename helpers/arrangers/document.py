@@ -2,6 +2,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 
 from service import fe_enums, utils
+from infrastructure import companies as companies_dao
 # from helpers.debugging import time_my_func
 from helpers.errors.exceptions import ValidationError
 from helpers.errors.enums import ValidationErrorCodes
@@ -17,10 +18,10 @@ Si la factura no se cancela dentro del mes de su facturación, \
 se debe pagar al tipo de cambio oficial al dia de su cancelación."""
 
 
-def arrange_data(data: dict) -> tuple:
+def arrange_data(data: dict, company_data: dict) -> tuple:
     xml_data = arrange_xml_data(data)
     if generates_pdf(data):
-        pdf_data = arrange_pdf_data(data)
+        pdf_data = arrange_pdf_data(data, company_data)
         xml_data['detalles'], pdf_data['lines'] = arrange_details(data['detalles'])
     else:
         pdf_data = None
@@ -107,16 +108,18 @@ def arrange_other_charges(other_charges) -> list:
     return arranged
 
 
-def arrange_pdf_data(data: dict) -> dict:
+def arrange_pdf_data(data: dict, company_data: dict) -> dict:
     pdf_data = {}
 
-    body_data = build_pdf_body_data(data)
+    _data = arrange_pdf_parties(data, company_data)
+
+    body_data = build_pdf_body_data(_data)
     pdf_data['body'] = body_data
 
-    header_data = build_pdf_header_data(data)
+    header_data = build_pdf_header_data(_data)
     pdf_data['header'] = header_data
 
-    footer_data = build_pdf_footer_data(data)
+    footer_data = build_pdf_footer_data(_data)
     pdf_data['footer'] = footer_data
 
     return pdf_data
@@ -195,9 +198,45 @@ def arrange_taxes(taxes: list):
             tax['exoneracion'] = [ex]
 
 
+def arrange_pdf_parties(data: dict, company_data: dict) -> dict:
+    arranged = deepcopy(data)
+
+    # the company the api is generating the pdf for
+    first_party = {
+        'company_user': company_data['company_user'],
+        'name': company_data['name'],
+        'idn_type': company_data['type_identification'],
+        'idn_number': company_data['identification_dni'],
+        'phone': company_data['phone'],
+        'email': company_data['email'],
+        'address': company_data['address']
+    }
+
+    # the "recipient" specified in our json data. This would be an issuer instead if document type is '8' (FEC)
+    recipient = data['receptor']
+    second_party = {
+        'name': recipient['nombre'],
+        'idn_type': recipient.get('tipoIdentificacion',''),
+        'idn_number': recipient.get('numeroIdentificacion',''),
+        'phone': recipient.get('telefono',''),
+        'email': recipient.get('correo',''),
+        'address': recipient.get('otrasSenas','')
+    }
+
+    # if document type is '8' (FEC), flip first party for second party (issuer <=> recipient)
+    if data['tipo'] == '8':
+        arranged['issuer'] = second_party
+        arranged['recipient'] = first_party
+    else:
+        arranged['issuer'] = first_party
+        arranged['recipient'] = second_party
+
+    return arranged
+
+
 def build_pdf_body_data(data: dict) -> dict:
     total_document = utils.stringRound(data['totalComprobantes'])
-    recipient = data['receptor']
+    recipient = data['recipient']
     currency = data['codigoTipoMoneda']
 
     body_data = {'key_mh': data['clavelarga'],
@@ -205,7 +244,7 @@ def build_pdf_body_data(data: dict) -> dict:
                  'total_taxes': utils.stringRound(data['totalImpuestos']),
                  'total_discounts': utils.stringRound(data['totalDescuentos']),
                  'total_sales': utils.stringRound(data['totalVentas']),
-                 'receiver': recipient}
+                 'recipient': recipient}
 
     payment_methods_csvs = ', '.join(
         list(
@@ -234,8 +273,8 @@ def build_pdf_body_data(data: dict) -> dict:
         total_document, currency['tipoMoneda']
     ).upper()
     body_data['total_returned_iva'] = utils.stringRound(data['totalIVADevuelto'])
-    body_data['type_iden_receptor'] = fe_enums.tipoCedulaPDF.get(
-        recipient.get('tipoIdentificacion'),
+    body_data['type_iden_recipient'] = fe_enums.tipoCedulaPDF.get(
+        recipient.get('idn_type'),
         'Tipo de identificación no especificada'
     )
 
@@ -298,6 +337,17 @@ def build_pdf_header_data(data: dict) -> dict:
     header_data['document_type'] = fe_enums.tagNamePDF.get(
         api_doc_type, 'Indefinido'
     )
+    issuer = data['issuer']
+    header_data['type_iden_issuer'] = fe_enums.tipoCedulaPDF.get(
+        issuer.get('idn_type'),
+        'Tipo de identificación no especificada'
+    )
+    if 'company_user' in issuer:
+        logo = companies_dao.get_logo_data(issuer['company_user'])['logo']
+        if logo is not None:
+            header_data['logo'] = logo.decode('utf-8')
+
+    header_data['issuer'] = issuer
     header_data['consecutive'] = data['consecutivo']
     header_data['ref_num'] = data['numReferencia']
     header_data['date'] = parse_datetime(
@@ -325,6 +375,7 @@ def build_pdf_footer_data(data: dict) -> dict:
         pdf_notes.insert(0,
                          CREDIT_CURRENCY_EXCHANGE_POLICY)
 
+    # footer_data['email'] = data['issuer'].get('email', '')  # jic
     footer_data['notes'] = pdf_notes
     return footer_data
 

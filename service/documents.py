@@ -44,7 +44,7 @@ def create_document(data):
                                   " for the company; can't sign the document,"
                                   " so the document can't be created."))
 
-    xml_data, pdf_data = document_arranger.arrange_data(data)
+    xml_data, pdf_data = document_arranger.arrange_data(data, company_data)
     document_validator.validate_data(xml_data)
 
     _type_document = xml_data['tipo']
@@ -114,15 +114,8 @@ def create_document(data):
 
     pdfencoded = None  # Por si ES tiquete que guarde nada como pdf
     if pdf_data is not None:  # _type_document != 'TE':
-        _logo = companies.get_logo_data(_company_user)
-        _logo = _logo['logo']
-        if _logo is not None:
-            _logo = _logo.decode('utf-8')
-
         try:
-            pdf = makepdf.render_pdf(company_data,
-                                     _logo,
-                                     pdf_data)
+            pdf = makepdf.render_pdf(pdf_data)
         except Exception as ex:  # TODO : be more specific about exceptions
             raise  # TODO : 'A problem occured when creating the PDF File for the document.' # INTERNAL ERROR
         # Prueba de creacion de correo
