@@ -241,7 +241,8 @@ Setting it to None/Null""".format(ver, message_query_key))
 
     result = {
         'data': {
-            'message': status
+            'message': status,
+            'date': _curr_datetime_cr()
         }
     }
     if status.lower() == 'aceptado' \
