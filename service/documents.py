@@ -467,6 +467,29 @@ Document Type: {}
     return build_response_data(data)
 
 
+def get_property(key: str, prop_name: str):
+    document = documents.get_document(key)
+    if not document:
+        raise InputError('document', key,
+                         status=InputErrorCodes.NO_RECORD_FOUND)
+
+    if document[prop_name]:
+        return build_response_data({
+            'data': {
+                prop_name: document[prop_name]
+            }
+        })
+    else:
+        return build_response_data({
+            'data': {
+                'message': """The specified document does not have a {}.
+Document Type: {}
+*If the document type is not 'TE', please contact the API Admin.""".format(
+                    prop_name, document['document_type'])
+            }
+        })
+
+
 # if this fails horribly, I will rollback and apply a simpler solution...
 _run_and_summ_docs_job = partial(
     run_and_summ_collec_job,

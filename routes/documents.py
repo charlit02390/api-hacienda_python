@@ -43,6 +43,17 @@ def route_get_voucher_byid(clave):
     result = service.consult_voucher_byid(body['data']['id_compania'], clave)
     return utils.build_response(result)
 
+
 def get_pdf(key: str):
     result = service.get_pdf(key)
+    return utils.build_response(result)
+
+
+def get_signed(key: str):
+    result = service.get_property(key, 'signxml')
+    return utils.build_response(result)
+
+
+def get_answer(key: str):
+    result = service.get_property(key, 'answerxml')
     return utils.build_response(result)
