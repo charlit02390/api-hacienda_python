@@ -29,10 +29,8 @@ def insert(company_id: str, message: RecipientMessage,
     return True
 
 
-def update_from_answer(company_id: str, message_key: str,
-                       message_rec_seq_num: str, encoded_answer_xml: bytes,
-                       status: str, answer_date: str,
-                       connection: Connection = None):
+def update_from_answer(company_id: str, message_key: str, message_rec_seq_num: str, status: str,
+                       answer_date: str = None, encoded_answer_xml: bytes = None, connection: Connection = None):
     procedure = 'usp_updateFromAnswer_message'
     args = (company_id, message_key, message_rec_seq_num,
             encoded_answer_xml, status, answer_date)

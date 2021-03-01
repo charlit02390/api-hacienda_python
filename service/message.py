@@ -191,16 +191,12 @@ def _handle_created_message(company: dict, message: dict, token: str):
     info = _handle_hacienda_api_response(response)
     if 'error' in info:
         if info['error']['http_status'] == 400:  # gotta update only if the response is 400...
-            dao_message.update_from_answer(company_user,
-                                           key, sequence, None, 'procesando',
-                                           None)
+            dao_message.update_from_answer(company_user, key, sequence, 'procesando')
         return info
     elif 'unexpected' in info:
         return info
 
-    dao_message.update_from_answer(company_user,
-                                   key, sequence, None, 'procesando',
-                                   None)
+    dao_message.update_from_answer(company_user, key, sequence, 'procesando')
 
     result = {
         'message': 'Confirmación recibida por Hacienda.',
@@ -235,9 +231,7 @@ Setting it to None/Null""".format(ver, message_query_key))
                          " provide a date. Setting it to None/Null**"))
         answer_date = None
 
-    dao_message.update_from_answer(company['company_user'],
-                                   key, sequence, answer_xml,
-                                   status, answer_date)
+    dao_message.update_from_answer(company['company_user'], key, sequence, status, answer_date, answer_xml)
 
     result = {
         'data': {
@@ -339,11 +333,13 @@ def _handle_hacienda_api_response(response: requests.Response):
                 }
             }
 
-    elif response.status_code in _confirmation_statuses:  # response that confirms creation or reception of a resource. Typically from a post request
+    # response that confirms creation or reception of a resource. Typically from a post request
+    elif response.status_code in _confirmation_statuses:
         location = response.headers.get('Location', '')
         info = {'location': location}
 
-    elif response.status_code == 400:  # response that rejected a request due to not passing validation. Usually from post requests
+    # response that rejected a request due to not passing validation. Usually from post requests
+    elif response.status_code == 400:
         val_exc = response.headers.get('validation-exception')
         cause = response.headers.get('X-Error-Cause', '')
         _logger.warning("""**Document not accepted by Hacienda**:
@@ -357,7 +353,8 @@ def _handle_hacienda_api_response(response: requests.Response):
             }
         }
 
-    elif response.status_code == 404:  # not found response. Either the resource wasn't found or we have the wrong url...
+    # not found response. Either the resource wasn't found or we have the wrong url...
+    elif response.status_code == 404:
         cause = response.headers.get('X-Error-Cause')
         if not cause:
             cause = 'Bad URL'
@@ -372,18 +369,20 @@ def _handle_hacienda_api_response(response: requests.Response):
             }
         }
 
-    elif response.status_code == 401:  # unathorized response. Either the oauth token is bad or something else happened...
+    # unathorized response. Either the oauth token is bad or something else happened...
+    elif response.status_code == 401:
         _logger.error("""***Authorization challenge failed:
         Response Headers: {}
         Response Body: {}
         Request Headers: {}""".format(response.headers, response.text,
                                       response.request.headers))
-        info = {'error':
-            {
-                'http_status': 401,
-                'code': 401,
-                'detail': response.reason
-            }
+        info = {
+            'error':
+                {
+                    'http_status': 401,
+                    'code': 401,
+                    'detail': response.reason
+                }
         }
 
     else:  # undocumented Hacienda response.
