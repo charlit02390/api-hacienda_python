@@ -23,7 +23,6 @@ from infrastructure import documents as dao_document
 from infrastructure import emails
 from configuration import globalsettings
 
-
 _logger = logging.getLogger(__name__)
 _data_statuses = (200, 206)
 _confirmation_statuses = (201, 202)
@@ -48,7 +47,7 @@ def create(data: dict):
     password = company['pin_sig']
 
     message = RecipientMessage()
-    message.key = data['claveHacienda'] #ignore clavelarga?
+    message.key = data['claveHacienda']  # ignore clavelarga?
 
     issuer = data['emisor']
     message.issuerIDN = _get_idn(issuer)
@@ -62,36 +61,35 @@ def create(data: dict):
     message.taxTotalAmount = DecimalMoney(data['montoImpuesto'])
     message.invoiceTotalAmount = DecimalMoney(data['total'])
 
-    issueDate = _curr_datetime_cr(False)
-    message.issueDate = issueDate.isoformat()
-
+    issue_date = _curr_datetime_cr(False)
+    message.issueDate = issue_date.isoformat()
 
     signed = api_facturae.sign_xml(cert,
-                            password,
-                            message.toXml())
+                                   password,
+                                   message.toXml())
 
     encoded = b64encode(signed)
 
     issuer_email = data.get('correoEmisor')
 
-    dao_message.insert(company_id, message, issueDate,
+    dao_message.insert(company_id, message, issue_date,
                        encoded, 'creado', issuer_email=issuer_email)
 
     return process_message('-'.join((message.key,
-                                       message.recipientSequenceNumber)))
+                                     message.recipientSequenceNumber)))
 
 
 def process_message(key_mh: str, rec_seq_num: str = None):
     key = key_mh
     sequence = rec_seq_num
-    if sequence is None: # attempt to coerce sequence from the full key
+    if sequence is None:  # attempt to coerce sequence from the full key
         key, *sequence = key.split('-', 1)
         sequence = sequence[0] if sequence else None
     message = dao_message.select(key, sequence)
     if not message:
-        raise InputError('message', key if sequence is None else \
-            '-'.join((key, sequence)),
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+        raise InputError(
+            'message', key if sequence is None else '-'.join((key, sequence)),
+            status=InputErrorCodes.NO_RECORD_FOUND)
 
     company_user = message['company_user']
     company = dao_company.get_company_data(company_user)
@@ -108,14 +106,28 @@ def process_message(key_mh: str, rec_seq_num: str = None):
                                                    company['pass_mh'],
                                                    company['env'])
     except Exception as ex:
-        raise # TODO: should prolly raise a 400 code, but dunno what to say...?
+        raise  # TODO: should prolly raise a 400 code, but dunno what to say...?
 
     if message['status'] == 'creado':
         result = _handle_created_message(company, message, mh_token)
     else:
-        result = _handle_sent_message(company, message, mh_token)# query_message(key_mh, mh_token, company['env'])
+        result = _handle_sent_message(company, message, mh_token)  # query_message(key_mh, mh_token, company['env'])
 
     return build_response_data(result)
+
+
+def get_by_company(company: str):
+    company_data = dao_company.get_company_data(company)
+    if company_data is None:
+        raise InputError(
+            'company', company,
+            status=InputErrorCodes.NO_RECORD_FOUND
+        )
+    if not company_data['is_active']:
+        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+
+    messages = dao_message.select_by_company(company)
+    return build_response_data({'data': messages})
 
 
 def send_mail(document: dict):
@@ -126,7 +138,7 @@ def send_mail(document: dict):
     else:
         smtp_data.pop('company_user')
 
-    primary_recipient = document.get('email') # using this as a way to tell between invoices and messages... # BIG TODO
+    primary_recipient = document.get('email')  # using this as a way to tell between invoices and messages... # BIG TODO
     if primary_recipient:
         _send_mail_invoice(document, smtp_data)
     else:
@@ -139,17 +151,16 @@ def send_mail(document: dict):
 def job_process_messages():
     collec_cb = dao_message.select_by_status
     item_cb = process_message
-    item_id_key = ('key_mh','recipient_seq_number')
+    item_id_key = ('key_mh', 'recipient_seq_number')
     collec_cb_args = ('procesando', None, True)
     item_cb_kwargs_map = {
         'key_mh': 'key_mh',
         'rec_seq_num': 'recipient_seq_number'
-        }
+    }
     return run_and_summ_collec_job(collec_cb,
                                    item_cb, item_id_key,
                                    collec_cb_args, {},
                                    item_cb_kwargs_map)
-
 
 
 def _handle_created_message(company: dict, message: dict, token: str):
@@ -165,40 +176,36 @@ def _handle_created_message(company: dict, message: dict, token: str):
         'issue_date': issue_date,
         'recipient_seq_number': message['recipient_seq_number'],
         'signed_xml': message['signed_xml']
-        }
-    issuer = { # these could be an helpers.entities.strings.IDN instance...
+    }
+    issuer = {  # these could be an helpers.entities.strings.IDN instance...
         'idn_type': message['issuer_idn_type'],
         'idn_num': message['issuer_idn_num']
-        }
+    }
     recipient = {
         'idn_type': company['type_identification'],
         'idn_num': company['identification_dni']
-        } # end possible helpers.entities.strings.IDN instances
+    }  # end possible helpers.entities.strings.IDN instances
 
     response = send_document(env=env, document=document,
                              issuer=issuer, token=token, recipient=recipient)
     info = _handle_hacienda_api_response(response)
     if 'error' in info:
-        if info['error']['http_status'] == 400: # gotta update only if the response is 400...
-            dao_message.update_from_answer(company_user,
-                                           key, sequence, None, 'procesando',
-                                           None)
+        if info['error']['http_status'] == 400:  # gotta update only if the response is 400...
+            dao_message.update_from_answer(company_user, key, sequence, 'procesando')
         return info
     elif 'unexpected' in info:
         return info
 
-    dao_message.update_from_answer(company_user,
-                                   key, sequence, None, 'procesando',
-                                   None)
+    dao_message.update_from_answer(company_user, key, sequence, 'procesando')
 
     result = {
         'message': 'Confirmación recibida por Hacienda.',
         'data': info
-        }
+    }
     return result
 
 
-def _handle_sent_message(company: dict, message:dict, token: str):
+def _handle_sent_message(company: dict, message: dict, token: str):
     key = message['key_mh']
     sequence = message['recipient_seq_number']
     message_query_key = '-'.join((key, sequence))
@@ -209,9 +216,9 @@ def _handle_sent_message(company: dict, message:dict, token: str):
         return info
 
     status = info.get('ind-estado', '')
-    answer_xml = info.get('respuesta-xml')
+    answer_xml = info.get('respuesta-xml', None)
     try:
-        temp_date = info.get('fecha')
+        temp_date = info.get('fecha', '')
         answer_date = datetime.fromisoformat(temp_date)
     except ValueError as ver:
         _logger.warning("""**Hacienda's answer date format was not isoformat:**
@@ -224,18 +231,17 @@ Setting it to None/Null""".format(ver, message_query_key))
                          " provide a date. Setting it to None/Null**"))
         answer_date = None
 
-    dao_message.update_from_answer(company['company_user'],
-                                   key, sequence, answer_xml,
-                                   status, answer_date)
+    dao_message.update_from_answer(company['company_user'], key, sequence, status, answer_date, answer_xml)
 
     result = {
         'data': {
-            'message': status
-            }
+            'message': status,
+            'date': _curr_datetime_cr()
         }
+    }
     if status.lower() == 'aceptado' \
-        and message['issuer_email'] \
-        and message['email_sent'] is None: # should only send mail if one was given for the issuer
+            and message['issuer_email'] \
+            and message['email_sent'] is None:  # should only send mail if one was given for the issuer
         email_sent = 0
         try:
             send_mail(message)
@@ -258,7 +264,7 @@ Setting it to None/Null""".format(ver, message_query_key))
 
 # could use a requests.Session for this and be efficient about headers and connection pooling
 # dunno how to go about it... this shouldn't receive the token, then... hmmmm
-def send_document(env: str, document: dict, issuer: dict, 
+def send_document(env: str, document: dict, issuer: dict,
                   token: str, recipient: dict = None):
     endpoint = fe_enums.UrlHaciendaRecepcion[env]
 
@@ -275,14 +281,14 @@ def send_document(env: str, document: dict, issuer: dict,
             'emisor': {
                 'tipoIdentificacion': issuer['idn_type'],
                 'numeroIdentificacion': issuer['idn_num']
-                },
+            },
             'comprobanteXml': xml
             }
     if recipient:
         data['receptor'] = {
-                'tipoIdentificacion': recipient['idn_type'],
-                'numeroIdentificacion': recipient['idn_num']
-                }
+            'tipoIdentificacion': recipient['idn_type'],
+            'numeroIdentificacion': recipient['idn_num']
+        }
     rec_seq_num = document.get('recipient_seq_number')
     if rec_seq_num:
         data['consecutivoReceptor'] = rec_seq_num
@@ -292,10 +298,10 @@ def send_document(env: str, document: dict, issuer: dict,
     except requests.exceptions.RequestException as reqex:
         _logger.error('***requests Exception happened:***',
                       exc_info=reqex)
-        raise # TODO: raise an IB_Exception so it looks nice on response
+        raise  # TODO: raise an IB_Exception so it looks nice on response
 
 
-def query_document(env: str, key: str, token: str) -> dict:
+def query_document(env: str, key: str, token: str):
     endpoint = fe_enums.UrlHaciendaRecepcion[env] + key
 
     headers = {'Authorization': 'bearer {}'.format(token),
@@ -308,11 +314,11 @@ def query_document(env: str, key: str, token: str) -> dict:
     except requests.exceptions.RequestException as reqex:
         _logger.error('***requests Exception happened:***',
                       exc_info=reqex)
-        raise # TODO: raise an IB_Exception so it looks nice on response
+        raise  # TODO: raise an IB_Exception so it looks nice on response
 
 
 def _handle_hacienda_api_response(response: requests.Response):
-    if response.status_code in _data_statuses: # responses that return info. Usuarlly from a get request
+    if response.status_code in _data_statuses:  # responses that return info. Usuarlly from a get request
         try:
             info = response.json()
         except ValueError as ver:
@@ -324,57 +330,62 @@ def _handle_hacienda_api_response(response: requests.Response):
                     'message': 'Bad response body format received from Hacienda.',
                     'http_status': 400,
                     'code': 400
-                    }
                 }
+            }
 
-    elif response.status_code in _confirmation_statuses: # response that confirms creation or reception of a resource. Typically from a post request
+    # response that confirms creation or reception of a resource. Typically from a post request
+    elif response.status_code in _confirmation_statuses:
         location = response.headers.get('Location', '')
         info = {'location': location}
 
-    elif response.status_code == 400: # response that rejected a request due to not passing validation. Usually from post requests
+    # response that rejected a request due to not passing validation. Usually from post requests
+    elif response.status_code == 400:
         val_exc = response.headers.get('validation-exception')
         cause = response.headers.get('X-Error-Cause', '')
         _logger.warning("""**Document not accepted by Hacienda**:
         Validation-Exception: {}
         Cause: {}""".format(val_exc, cause))
-        info = { 'error': 
-                {
-                    'http_status': 400,
-                    'code': 400,
-                    'detail': cause
-                    }
-                }
+        info = {
+            'error': {
+                'http_status': 400,
+                'code': 400,
+                'detail': cause
+            }
+        }
 
-    elif response.status_code == 404: # not found response. Either the resource wasn't found or we have the wrong url...
+    # not found response. Either the resource wasn't found or we have the wrong url...
+    elif response.status_code == 404:
         cause = response.headers.get('X-Error-Cause')
         if not cause:
             cause = 'Bad URL'
 
         _logger.warning("""**Document not found:**
         Cause: {}""".format(cause))
-        info = { 'error':
-                {
-                    'http_status': 404,
-                    'code': 404,
-                    'detail': cause
-                    }
-                }
+        info = {
+            'error': {
+                'http_status': 404,
+                'code': 404,
+                'detail': cause
+            }
+        }
 
-    elif response.status_code == 401: # unathorized response. Either the oauth token is bad or something else happened...
+    # unathorized response. Either the oauth token is bad or something else happened...
+    elif response.status_code == 401:
         _logger.error("""***Authorization challenge failed:
         Response Headers: {}
         Response Body: {}
         Request Headers: {}""".format(response.headers, response.text,
                                       response.request.headers))
-        info = {'error': 
+        info = {
+            'error':
                 {
                     'http_status': 401,
                     'code': 401,
                     'detail': response.reason
-                    }
                 }
+        }
 
-    else: # undocumented Hacienda response.
+    else:  # undocumented Hacienda response.
         _logger.info("""*Undocumented Hacienda response:*
         Status: {}
         Reason: {}
@@ -387,17 +398,17 @@ def _handle_hacienda_api_response(response: requests.Response):
                     'status': response.status_code,
                     'reason': response.reason,
                     'content': response.text
-                    }
                 }
+            }
         except requests.exceptions.HTTPError as httper:
-            info = {'error':
+            info = {
+                'error':
                     {
                         'http_status': response.status_code,
                         'code': response.status_code,
                         'detail': response.reason + '/' + response.text
-                        }
                     }
-
+            }
 
     return info
 
@@ -412,7 +423,6 @@ def _send_mail_invoice(document: dict, smtp: dict):
     if isinstance(additional_recipients, list):
         recipients += list(x['email'] for x in additional_recipients)
 
-
     doc_type = document['document_type']
     doc_type_desc = fe_enums.tagNamePDF[doc_type]
 
@@ -420,7 +430,7 @@ def _send_mail_invoice(document: dict, smtp: dict):
         'subject': "Envio de {} número: {}".format(doc_type_desc,
                                                    doc_key),
         'content': "Adjuntamos los datos de la {}".format(doc_type_desc),
-        'attachments' : [
+        'attachments': [
             {'name': "{}_{}.pdf".format(doc_type_desc, doc_key),
              'file': b64decode(document['pdfdocument'])},
             {'name': "{}_{}.xml".format(doc_type, doc_key),
@@ -445,13 +455,13 @@ def _send_mail_message(document: dict, smtp: dict):
         'content': ("""Saludos cordiales,
         
 Se le informa que su documento emitido con clave: "{}","""
-        """ para el receptor con identificación: "{}", """
-        """numeración consecutiva: "{}", """
-        """fue confirmado con un estado de: {}."""
-            ).format(doc_key, document['recipient_idn'], doc_sequence,
-                    doc_message_code_desc),
+                    """ para el receptor con identificación: "{}", """
+                    """numeración consecutiva: "{}", """
+                    """fue confirmado con un estado de: {}."""
+                    ).format(doc_key, document['recipient_idn'], doc_sequence,
+                             doc_message_code_desc),
         'attachments': []
-        }
+    }
     return emails.send_email(receiver=primary_recipient, **smtp,
                              **mail_data)
 

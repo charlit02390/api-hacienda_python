@@ -1459,9 +1459,9 @@ SELECT	msg.id,
 	msg.issuer_email,
 	msg.recipient_idn,
 	msg.recipient_seq_number,
-	msg.signed_xml,
+	CONVERT(msg.signed_xml USING utf8),
 	msg.answer_date,
-	msg.answer_xml,
+	CONVERT(msg.answer_xml USING utf8),
 	cmp.is_active as company_is_active,
 	msg.email_sent
 FROM	`message` AS msg INNER JOIN

@@ -1493,6 +1493,39 @@ paths:
                 $ref: '#/components/schemas/stdResponse'
       security:
       - api_key: []
+    get:
+      tags:
+        - RecipientMessage
+      summary: Returns the RecipientMessages issued by a Company.
+      operationId: routes.messages.get_by_company
+      parameters:
+        - name: company
+          in: query
+          required: true
+          description: results will be filtered through this company identifier.
+          schema:
+            type: string
+      responses:
+        200:
+          description: returned messages for the company
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/stdResponse'
+        400:
+          description: the requested company is inactive
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/stdResponse'
+        404:
+          description: no company found for the requested id
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/stdResponse'
+      security:
+        - api_key: []
   /api/messages/{key}:
     get:
       tags:
@@ -1514,7 +1547,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/stdResponse'
         404:
-          description: Messate not found.
+          description: Message not found.
           content:
             'application/json':
               schema:

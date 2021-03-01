@@ -7,6 +7,7 @@ from helpers.entities.messages import RecipientMessage
 from helpers.errors.enums import DBErrorCodes
 from helpers.errors.exceptions import DatabaseError
 
+
 def insert(company_id: str, message: RecipientMessage,
            issue_date: datetime, encoded_xml: bytes, status: str,
            issuer_email: str = None, connection: Connection = None):
@@ -28,10 +29,8 @@ def insert(company_id: str, message: RecipientMessage,
     return True
 
 
-def update_from_answer(company_id: str, message_key: str,
-                       message_rec_seq_num: str, encoded_answer_xml: bytes,
-                       status: str, answer_date: str,
-                       connection: Connection = None):
+def update_from_answer(company_id: str, message_key: str, message_rec_seq_num: str, status: str,
+                       answer_date: str = None, encoded_answer_xml: bytes = None, connection: Connection = None):
     procedure = 'usp_updateFromAnswer_message'
     args = (company_id, message_key, message_rec_seq_num,
             encoded_answer_xml, status, answer_date)
@@ -73,9 +72,9 @@ def select_by_company(company_user: str, limit: int = None):
     procedure = 'usp_selectByCompany_message'
     args = (company_user, limit)
     try:
-        return dba.fetchone_from_proc(procname=procedure, args=args)
+        return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_MESSAGE_SELECT_BY_COMPANY)
+        raise DatabaseError(status=DBErrorCodes.DB_MESSAGE_SELECT_BY_COMPANY) from dbae
 
 
 def select_by_status(status: str, company_user: str = None,
