@@ -3,6 +3,7 @@ import connexion
 from service import cabys as service
 from helpers import utils
 
+
 # Searches for medicaments matching the received text
 def search_meds():
     body = connexion.request.json
@@ -22,6 +23,7 @@ def find_sacs_by_cabys():
     body = connexion.request.json
     response = service.find(body, service.Find.SACS)
     return utils.build_response(response)
+
 
 def get(code: str):
     response = service.get(code)

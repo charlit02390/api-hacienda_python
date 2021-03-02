@@ -651,7 +651,7 @@ def check_cabys(code: str, line_number: str,
     return True
 
 
-def requests_get(endpoint: str, params: dict, timeout: int = 4,
+def requests_get(endpoint: str, params: dict, timeout: int = 28,
                  request_session: requests.sessions.Session = None):
     try:
         if request_session is not None:
@@ -662,8 +662,8 @@ def requests_get(endpoint: str, params: dict, timeout: int = 4,
             response = requests.get(endpoint,
                                     params=params,
                                     timeout=timeout)
-    except requests.exceptions.RequestException:  # TODO: branch into more specific exceptions
+    except requests.exceptions.RequestException as reqex:  # TODO: branch into more specific exceptions
         raise ServerError(message=('Se presentó un problema'
-                                   ' al enviar la verificación de CABYS'
-                                   ' a Hacienda.'))
+                                   ' al verificar los códigos CABYS contra'
+                                   ' Hacienda.'))
     return response

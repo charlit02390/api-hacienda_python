@@ -18,6 +18,7 @@ class InputErrorCodes(IntEnum):
     NO_RECORD_FOUND = _BASE + 4
     P12_PIN_MISMATCH = _BASE + 5
     INACTIVE_COMPANY = _BASE + 6
+    DOCUMENT_NOT_YET_SENT = _BASE + 7
 
 
 class ValidationErrorCodes(IntEnum):
