@@ -272,6 +272,10 @@ def consult_document(company_user, key_mh):
         raise InputError('document', key_mh,
                          status=InputErrorCodes.NO_RECORD_FOUND)
 
+    if document_data['status'] == 'creado':
+        raise InputError(status=InputErrorCodes.DOCUMENT_NOT_YET_SENT,
+                         message='Este documento aun no ha sido enviado a Hacienda.')
+
     company_data = companies.get_company_data(company_user)
     if not company_data:
         raise InputError('company', company_user,

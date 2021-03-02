@@ -645,7 +645,8 @@ def gen_xml_v43(company_data, document_type, key_mh,
             sb.Append('<OtroTexto>' + str(_other_text) + ' </OtroTexto>')
 
         # killing off OtroContenido 'cuz not used. This section can handle it when it's relevant
-        _other_content = invoice_comments.pop('otroContenido')
+        if 'otroContenido' in invoice_comments:
+            _other_content = invoice_comments.pop('otroContenido')
         # OtroContenido
 
         # for wallmart stuff

@@ -241,8 +241,8 @@ def build_pdf_body_data(data: dict) -> dict:
 
     body_data = {'key_mh': data['clavelarga'],
                  'total_document': total_document,
-                 'total_taxes': utils.stringRound(data['totalImpuestos']),
-                 'total_discounts': utils.stringRound(data['totalDescuentos']),
+                 'total_taxes': utils.stringRound(data.get('totalImpuestos', '0')),
+                 'total_discounts': utils.stringRound(data.get('totalDescuentos', '0')),
                  'total_sales': utils.stringRound(data['totalVentas']),
                  'recipient': recipient}
 
@@ -272,7 +272,10 @@ def build_pdf_body_data(data: dict) -> dict:
     body_data['total_document_words'] = utils.numToWord(
         total_document, currency['tipoMoneda']
     ).upper()
-    body_data['total_returned_iva'] = utils.stringRound(data['totalIVADevuelto'])
+
+    if 'totalIVADevuelto' in data:
+        body_data['total_returned_iva'] = utils.stringRound(data['totalIVADevuelto'])
+
     body_data['type_iden_recipient'] = fe_enums.tipoCedulaPDF.get(
         recipient.get('idn_type'),
         'Tipo de identificación no especificada'
