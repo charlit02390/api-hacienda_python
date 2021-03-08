@@ -25,6 +25,7 @@ from num2words.lang_ES_CO import Num2Word_ES
 from helpers.errors.exceptions import InputError
 from helpers.errors.enums import InputErrorCodes
 
+
 class Num2Words_ES_CR(Num2Word_ES):
     CURRENCY_FORMS = {
             'EUR': (('euro', 'euros'), ('céntimo', 'céntimos')),
@@ -38,7 +39,7 @@ class Num2Words_ES_CR(Num2Word_ES):
         if not isinstance(val, float):
             try:
                 val = float(val)
-            except ValueError as ver: # assuming totalComprobante is the only place where we are using this function... too lazy to properly change this... for now...
+            except ValueError as ver:  # assuming totalComprobante is the only place where we are using this function... too lazy to properly change this... for now...
                 raise InputError('totalComprobante', str(ver), status=InputErrorCodes.INCORRECT_TYPE)
 
         return self.to_currency(val, currency=currency)

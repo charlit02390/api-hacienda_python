@@ -12,7 +12,7 @@ from jose import jwt, JWTError
 from service import utils
 from helpers.errors.enums import InputErrorCodes, AuthErrorCodes, InternalErrorCodes
 from helpers.errors.exceptions import InputError, AuthError, ServerError
-from helpers.utils import build_response_data # CONSIDER MAKING THIS A DECORATOR
+from helpers.utils import build_response_data  # CONSIDER MAKING THIS A DECORATOR
 
 cfg = globalsettings.cfg
 
@@ -30,7 +30,7 @@ def create_user(data):
 
     users.save_user(_email, _password, _name, _idrol, _idcompanies)
 
-    return build_response_data({'message' : 'User created successfully'})
+    return build_response_data({'message': 'User created successfully'})
 
 
 def modify_user(data):
@@ -42,27 +42,27 @@ def modify_user(data):
 
     users.modify_user(_email, _password, _name, _idrol, _idcompanies)
 
-    return build_response_data({'message' : 'User updated successfully'})
+    return build_response_data({'message': 'User updated successfully'})
 
 
 def get_list_users(id_user=0):
     if id_user == 0:
-        result = { 'data': {'users': users.get_users()}}
+        result = {'data': {'users': users.get_users()}}
     else:
-        result = { 'data':{'user': users.get_user_data(id_user)}}
+        result = {'data': {'user': users.get_user_data(id_user)}}
 
     return build_response_data(result)
 
 
 def delete_user(id_user):
     users.delete_user_data(id_user)
-    return build_response_data({'message' : 'The user has been deleted successfully.'})
+    return build_response_data({'message': 'The user has been deleted successfully.'})
 
 
 def delete_user_companies(data):
     _email = data['email']
     users.delete_user_companies(_email)
-    return build_response_data({'message' : "The user's associated companies have been cleared."})
+    return build_response_data({'message': "The user's associated companies have been cleared."})
 
 
 def login(data):
@@ -73,14 +73,13 @@ def login(data):
     if not user_check:
         raise AuthError(status=AuthErrorCodes.WRONG_CREDENTIALS)
 
-
     try:
         token = generate_token(email)
-    except Exception as ex: # Internal Error Code: token generation error
+    except Exception as ex:  # Internal Error Code: token generation error
         raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR,
-                            message='A problem was found while generating the JWT')
-        
-    result = { 'data' : {'token' : token, 'user' : user_check}}
+                          message='A problem was found while generating the JWT') from ex
+
+    result = {'data': {'token': token, 'user': user_check}}
 
     return build_response_data(result)
 

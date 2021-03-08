@@ -1,4 +1,3 @@
-
 import traceback
 
 from werkzeug.exceptions import InternalServerError, HTTPException
@@ -22,12 +21,12 @@ def internal_server_error_handler(exception: InternalServerError):
 
 
 def generic_exception_handler(exception: InternalServerError):
-    error = {'http_status' : 500,
-             'status' : InternalErrorCodes.INTERNAL_ERROR,
-            'details' : exception.description}
+    error = {'http_status': 500,
+             'status': InternalErrorCodes.INTERNAL_ERROR,
+             'details': exception.description}
     if g.get(DEBUG_G_VAR_NAME):
         error['debug'] = exceptions.IBError._build_debug_info(exception.original_exception)
-        
+
     mimetype = 'application/json'
     return FlaskApi.get_response(build_response(error), mimetype)
 

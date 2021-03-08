@@ -44,7 +44,10 @@ class IBError(HTTPException):
         except IndexError:
             # TODO : change exceptions or messages to include amount of args required for formatting.
             warnings.warn(
-                'Message formatting failed. Returning message without formatting. Check that the amount of arguments passed to the Exception matches the exception type.')
+                'Message formatting failed. Returning message without formatting. '
+                'Check that the amount of arguments passed to the Exception'
+                ' matches the exception type.'
+            )
             return message
 
     def to_response(self):
