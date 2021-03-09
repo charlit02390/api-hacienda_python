@@ -7,7 +7,7 @@ from werkzeug.exceptions import Unauthorized
 from infrastructure import users
 from infrastructure.dbadapter import DbAdapterError
 
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 
 from service import utils
 from helpers.errors.enums import InputErrorCodes, AuthErrorCodes, InternalErrorCodes
@@ -26,7 +26,7 @@ def create_user(data):
 
     user_exist = users.verify_email(_email)
     if user_exist:
-        raise InputError('Email {}'.format(_email), status=InputErrorCodes.DUPLICATE_RECORD)
+        raise InputError('Email {}'.format(_email), error_code=InputErrorCodes.DUPLICATE_RECORD)
 
     users.save_user(_email, _password, _name, _idrol, _idcompanies)
 
@@ -71,15 +71,19 @@ def login(data):
 
     user_check = users.check_user(email, password)
     if not user_check:
-        raise AuthError(status=AuthErrorCodes.WRONG_CREDENTIALS)
+        raise AuthError(error_code=AuthErrorCodes.WRONG_CREDENTIALS)
 
     try:
         token = generate_token(email)
     except Exception as ex:  # Internal Error Code: token generation error
-        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR,
-                          message='A problem was found while generating the JWT') from ex
+        raise ServerError(
+            error_code=InternalErrorCodes.INTERNAL_ERROR,
+            message='A problem was found while generating the JWT') from ex
 
-    result = {'data': {'token': token, 'user': user_check}}
+    result = {
+        'status': 'success',
+        'data': {'token': token, 'user': user_check}
+    }
 
     return build_response_data(result)
 
@@ -99,6 +103,8 @@ def generate_token(email):
 def decode_token(token):
     try:
         return jwt.decode(token, cfg['jwt_secret'], algorithms=cfg['jwt_algorithm'])
+    except ExpiredSignatureError as ese:
+        raise AuthError(error_code=AuthErrorCodes.EXPIRED_JWT) from ese
     except JWTError as e:
         six.raise_from(Unauthorized, e)
 

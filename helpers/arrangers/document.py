@@ -216,11 +216,11 @@ def arrange_pdf_parties(data: dict, company_data: dict) -> dict:
     recipient = data['receptor']
     second_party = {
         'name': recipient['nombre'],
-        'idn_type': recipient.get('tipoIdentificacion',''),
-        'idn_number': recipient.get('numeroIdentificacion',''),
-        'phone': recipient.get('telefono',''),
-        'email': recipient.get('correo',''),
-        'address': recipient.get('otrasSenas','')
+        'idn_type': recipient.get('tipoIdentificacion', ''),
+        'idn_number': recipient.get('numeroIdentificacion', ''),
+        'phone': recipient.get('telefono', ''),
+        'email': recipient.get('correo', ''),
+        'address': recipient.get('otrasSenas', '')
     }
 
     # if document type is '8' (FEC), flip first party for second party (issuer <=> recipient)
@@ -404,7 +404,7 @@ def parse_datetime(value, field) -> datetime:
             parsed = datetime.fromisoformat(value)
         except ValueError as ver:
             raise ValidationError(value, field,
-                                  status=ValidationErrorCodes.INVALID_DATETIME_FORMAT) from ver
+                                  error_code=ValidationErrorCodes.INVALID_DATETIME_FORMAT) from ver
 
     return parsed
 
@@ -424,16 +424,15 @@ def references_fe(data: dict) -> bool:
     ref = data.get('referencia', {})
     if not isinstance(ref, dict):
         raise ValidationError(
-            status=ValidationErrorCodes.INVALID_DOCUMENT,
+            error_code=ValidationErrorCodes.INVALID_DOCUMENT,
             message=('La propiedad "referencia" posee un valor de tipo inválido.'
-                     ' Tipo recibido: {} . Tipo esperado: object')
-            .format(type(ref))
+                     ' Tipo recibido: {} . Tipo esperado: object').format(type(ref))
         )
 
     doctype = ref['tipoDocumento'].strip()
     if not doctype:
         raise ValidationError(
-            status=ValidationErrorCodes.INVALID_DOCUMENT,
+            error_code=ValidationErrorCodes.INVALID_DOCUMENT,
             message=('La referencia recibida no posee un tipo de documento asociado válido. '
                      'Valor de "tipoDocumento": {}'.format(doctype))
         )

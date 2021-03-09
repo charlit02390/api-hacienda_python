@@ -4,6 +4,7 @@ import json
 from infrastructure import registry
 from helpers import utils
 
+
 def get_person(person_id: str) -> dict:
     """
     Returns information about the specified person.
@@ -24,26 +25,26 @@ def get_person(person_id: str) -> dict:
     """
     max_length = 12
     if len(person_id) > max_length:
-      return utils.build_response_data({
-        'error': {
-          'http_status': 400,
-          'code': 400,
-          'detail': (
-            'ID length is too long.'
-            ' Must be {} characters or less.'
-            ).format(max_length)
-        }
-      })
+        return utils.build_response_data({
+            'error': {
+                'http_status': 400,
+                'code': 400,
+                'detail': (
+                    'ID length is too long.'
+                    ' Must be {} characters or less.'
+                ).format(max_length)
+            }
+        })
 
-    person =  registry.get_person(person_id)
+    person = registry.get_person(person_id)
     if person is None:
-      return utils.build_response_data({
-        'error': {
-          'http_status': 404,
-          'code': 404,
-          'detail': 'Person not found.'
-          }
-      })
+        return utils.build_response_data({
+            'error': {
+                'http_status': 404,
+                'code': 404,
+                'detail': 'Person not found.'
+            }
+        })
 
     result = {'data': person}
 
@@ -51,5 +52,5 @@ def get_person(person_id: str) -> dict:
         result,
         warn_msg='Person not found for the id: "{}".'.format(
             person_id
-            ))
+        ))
     return response

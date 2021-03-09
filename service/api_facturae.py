@@ -359,7 +359,7 @@ def receptor_xml(sb, receiver_company, document_type):
         sb.Append('<CorreoElectronico>' + str(receiver_company['email']) + '</CorreoElectronico>')
         sb.Append('</Receptor>')
     else:
-        if not receiver_company: # document_type == 'TE' or (document_type == 'NC' and not receiver_company.get('numeroIdentificacion')):
+        if not receiver_company:  # document_type == 'TE' or (document_type == 'NC' and not receiver_company.get('numeroIdentificacion')):
             pass
         else:
             vat = re.sub('[^0-9]', '', receiver_company['numeroIdentificacion'])
@@ -872,7 +872,8 @@ def consulta_clave(clave, token,
     except requests.exceptions.RequestException as e:
         _logger.error('Exception %s' % e)
         raise ServerError(
-            status=InternalErrorCodes.INTERNAL_ERROR)  # TODO : new internal error code 4 hacienda key query
+            error_code=InternalErrorCodes.INTERNAL_ERROR
+        )  # TODO : new internal error code 4 hacienda key query
 
     if 200 <= response.status_code <= 299:
         response_json = {
@@ -910,7 +911,7 @@ Response Body: {}
             http_status=response.status_code,
             headers=response.headers,
             body=response.text,
-            status=InternalErrorCodes.HACIENDA_ERROR)
+            error_code=InternalErrorCodes.HACIENDA_ERROR)
     return response_json
 
 
@@ -990,7 +991,7 @@ def send_message(inv, date_cr, xml, token, env):  # duplicated in utils_mh... an
 
     except requests.exceptions.RequestException as e:
         _logger.info('Exception %s' % e)
-        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)
+        raise ServerError(error_code=InternalErrorCodes.INTERNAL_ERROR)
         # return {'status': 400, 'text': u'Excepción de envio XML'}
         # raise Exception(e)
 

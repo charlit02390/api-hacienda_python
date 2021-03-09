@@ -28,19 +28,19 @@ from helpers.errors.enums import InputErrorCodes
 
 class Num2Words_ES_CR(Num2Word_ES):
     CURRENCY_FORMS = {
-            'EUR': (('euro', 'euros'), ('céntimo', 'céntimos')),
-            'ESP': (('peseta', 'pesetas'), ('céntimo', 'céntimos')),
-            'USD': (('dolar', 'dólares'), ('centavo', 'centavos')),
-            'PEN': (('sol', 'soles'), ('céntimo', 'céntimos')),
-            'CRC': (('colón', 'colones'), ('céntimo', 'céntimos')),
-            }
+        'EUR': (('euro', 'euros'), ('céntimo', 'céntimos')),
+        'ESP': (('peseta', 'pesetas'), ('céntimo', 'céntimos')),
+        'USD': (('dolar', 'dólares'), ('centavo', 'centavos')),
+        'PEN': (('sol', 'soles'), ('céntimo', 'céntimos')),
+        'CRC': (('colón', 'colones'), ('céntimo', 'céntimos')),
+    }
 
     def num2words(self, val, currency='CRC'):
         if not isinstance(val, float):
             try:
                 val = float(val)
             except ValueError as ver:  # assuming totalComprobante is the only place where we are using this function... too lazy to properly change this... for now...
-                raise InputError('totalComprobante', str(ver), status=InputErrorCodes.INCORRECT_TYPE)
+                raise InputError('totalComprobante', str(ver), error_code=InputErrorCodes.INCORRECT_TYPE)
 
         return self.to_currency(val, currency=currency)
 
@@ -57,7 +57,7 @@ def stringRound(s):
 
 # CONVIERTE UN STRING A BASE 64
 def stringToBase64(s):
-    return base64.b64encode( s ).decode()
+    return base64.b64encode(s).decode()
 
 
 # TOMA UNA CADENA Y ELIMINA LOS CARACTERES AL INICIO Y AL FINAL
@@ -68,13 +68,13 @@ def stringStrip(s, start, end):
 # Tomamos el XML y le hacemos el decode de base 64, esto por ahora es solo para probar
 # la posible implementacion de la firma en python
 def base64decode(string_decode):
-    return base64.b64decode( string_decode )
+    return base64.b64decode(string_decode)
 
 
 # TOMA UNA CADENA EN BASE64 Y LA DECODIFICA PARA ELIMINAR EL b' Y DEJAR EL STRING CODIFICADO
 # DE OTRA MANERA HACIENDA LO RECHAZA
 def base64UTF8Decoder(s):
-    return s.decode( "utf-8" )
+    return s.decode("utf-8")
 
 
 # CLASE PERSONALIZADA (NO EXISTE EN PYTHON) QUE CONSTRUYE UNA CADENA MEDIANTE APPEND SEMEJANTE
@@ -97,18 +97,18 @@ def limit(_str, _limit):
 
 
 def get_time_hacienda(_format='N'):
-    now_utc = datetime.datetime.now( pytz.timezone( 'UTC' ) )
-    now_cr = now_utc.astimezone( pytz.timezone( 'America/Costa_Rica' ) )
+    now_utc = datetime.datetime.now(pytz.timezone('UTC'))
+    now_cr = now_utc.astimezone(pytz.timezone('America/Costa_Rica'))
     if _format == 'N':
-        date_cr = now_cr.strftime( "%Y-%m-%dT%H:%M:%S-06:00" )
+        date_cr = now_cr.strftime("%Y-%m-%dT%H:%M:%S-06:00")
     else:
-        date_cr = now_cr.strftime( "%d%m%y" )
+        date_cr = now_cr.strftime("%d%m%y")
 
     return date_cr
 
 
 def parse_xml(name):
-    return etree.parse( name ).getroot()
+    return etree.parse(name).getroot()
 
 
 def api_key_auth(token, required_scopes=None):

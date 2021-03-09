@@ -1,7 +1,7 @@
-
 import connexion
 from service import companies as service
 from helpers import utils
+
 
 def route_list_companies():
     result = service.get_list_companies()

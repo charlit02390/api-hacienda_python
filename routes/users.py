@@ -3,6 +3,7 @@ import json
 from service import users as service
 from helpers import utils
 
+
 def create_new_user():
     body = json.loads(connexion.request.data)
     result = service.create_user(body['data'])
@@ -40,4 +41,3 @@ def login():
     body = connexion.request.form
     result = service.login(body)
     return utils.build_response(result)
-

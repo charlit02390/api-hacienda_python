@@ -6,6 +6,7 @@ from flask import request
 from service import references as service
 from helpers import utils
 
+
 def generated_key():
     body = json.loads(connexion.request.data)
     result = service.generate_key(body['data'])

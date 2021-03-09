@@ -16,12 +16,17 @@ class IBError(HTTPException):
     """
     Base class for the other system exceptions to be handled for custom responses.
     """
-    status = enums.InternalErrorCodes.INTERNAL_ERROR
+    status = 'Error Interno'
+    error_code = enums.InternalErrorCodes.INTERNAL_ERROR
     message_dictionary = {}
     default_message = InternalServerError.description
 
-    def __init__(self, *args, status=None, message=None):
+    def __init__(self, *args, error_code=None, status=None, message=None):
         super().__init__()
+
+        if error_code is not None:
+            self.error_code = error_code
+
         if status is not None:
             self.status = status
 
@@ -33,7 +38,7 @@ class IBError(HTTPException):
             return self.message
 
         try:
-            return self._format_message(self.message_dictionary[self.status], self.args)
+            return self._format_message(self.message_dictionary[self.error_code], self.args)
         except KeyError:
             return self.default_message
 
@@ -51,8 +56,11 @@ class IBError(HTTPException):
             return message
 
     def to_response(self):
-        exc = {'status': self.status,
-               'detail': self.get_message()}
+        exc = {
+            'status': self.status,
+            'code': self.error_code,
+            'detail': self.get_message()
+        }
         if g.get(DEBUG_G_VAR_NAME):
             exc['debug'] = self._build_debug_info(self)
 
@@ -61,10 +69,10 @@ class IBError(HTTPException):
     @staticmethod
     def _build_debug_info(exception: Exception):
         info = """Exception Type: {type}
-        Args: {args}
-        Traceback: {trace}""".format(type=type(exception),
-                                     args=exception.args,
-                                     trace=traceback.format_exc())
+Args: {args}
+Traceback: {trace}""".format(type=type(exception),
+                             args=exception.args,
+                             trace=traceback.format_exc())
         return info
 
 
@@ -88,6 +96,7 @@ class HaciendaError(IBError):
     HTTP Status code for this will be 502.
     """
     code = 502
+    status = 'Error Hacienda'
 
     def __init__(self, *args, http_status, headers, body, **kwargs):
         super().__init__(*args, **kwargs)
@@ -101,9 +110,9 @@ class HaciendaError(IBError):
             htmldoc = etree.HTML(self.body)
             data = htmldoc.findtext('.//title')
 
-        return """An error ocurred in Hacienda's Server during a request:
+        return """Se presentó un error en el servidor de Hacienda durante la solicitud:
 HTTP Status: {}
-Data: {}""".format(self.http_status, data)
+Datos: {}""".format(self.http_status, data)
 
 
 class AuthError(IBError):
@@ -114,9 +123,11 @@ class AuthError(IBError):
     code = 401
 
     # IBError overrides
-    status = enums.AuthErrorCodes._BASE
+    status = 'Error Auth'
+    error_code = enums.AuthErrorCodes._BASE
     message_dictionary = {
-        enums.AuthErrorCodes.WRONG_CREDENTIALS: 'Incorrect credentials. Please, try again.',
+        enums.AuthErrorCodes.WRONG_CREDENTIALS:
+            'Credenciales incorrectas. Por favor, intente nuevamente.',
         **dict.fromkeys([
             enums.AuthErrorCodes.WRONG_API_KEY,
             enums.AuthErrorCodes.WRONG_JWT
@@ -133,16 +144,23 @@ class InputError(IBError):
     code = 400
 
     # IBError overrides
-    status = enums.InputErrorCodes._BASE
+    error_code = enums.InputErrorCodes._BASE
+    status = 'Incorrecto'
     message_dictionary = {
-        enums.InputErrorCodes.MISSING_PROPERTY: 'Missing property: "{}"{}',
-        enums.InputErrorCodes.INCORRECT_TYPE: 'Incorrect type in: {} => {}',
-        enums.InputErrorCodes.DUPLICATE_RECORD: '{} is already registered in the system.',
-        enums.InputErrorCodes.NO_RECORD_FOUND: 'Requested {} with identifier: "{}" was not found in the system.',
-        enums.InputErrorCodes.P12_PIN_MISMATCH: "The PIN provided for the p12 signature doesn't match.",
-        enums.InputErrorCodes.INACTIVE_COMPANY: "The operation cannot be completed on an inactive company."
+        enums.InputErrorCodes.MISSING_PROPERTY:
+            'Propiedad faltante: "{}"{}',
+        enums.InputErrorCodes.INCORRECT_TYPE:
+            'Tipo incorrecto en: {} => {}',
+        enums.InputErrorCodes.DUPLICATE_RECORD:
+            '{} ya se encuentra registrado en el sistema.',
+        enums.InputErrorCodes.NO_RECORD_FOUND:
+            'Solicitado {} con identificador: "{}" no fue encontrado en el sistema.',
+        enums.InputErrorCodes.P12_PIN_MISMATCH:
+            'El PIN provisto para la firma p12 no es correcto.',
+        enums.InputErrorCodes.INACTIVE_COMPANY:
+            'La operación no se puede completar para una compañia inactiva.'
     }
-    default_message = 'Received data is not properly formatted.'
+    default_message = 'Los datos recibidos no posee el formato correcto.'
 
 
 class ValidationError(InputError):
@@ -150,18 +168,22 @@ class ValidationError(InputError):
     Exception raised when data received doesn't pass validation.
     """
     # IBError overrides
-    status = enums.ValidationErrorCodes._BASE
+    status = 'Invalido'
+    error_code = enums.ValidationErrorCodes._BASE
     message_dictionary = {
-        enums.ValidationErrorCodes.INVALID_KEY_COMPOSITION: "Document's Key is not valid. Reasons: {}",
-        enums.ValidationErrorCodes.INVALID_DATETIME_FORMAT: r'''The date value - {} - in "{}" is not any of these expected formats:
-             YYYY-MM-DDThh:mi:ss[Z|(+|-)hh:mm]
-             or
-             DD-MM-YYYYThh:mi:ss[Z|(+|-)hh:mm]
-             or
-             DD/MM/YYYY''',
-        enums.ValidationErrorCodes.INVALID_EMAIL: 'Invalid email: {}'
+        enums.ValidationErrorCodes.INVALID_KEY_COMPOSITION:
+            "La clave del documento no es válida. Razones: {}",
+        enums.ValidationErrorCodes.INVALID_DATETIME_FORMAT:
+            r'''El valor de fecha - {} - en "{}" no corresponde a alguno de los siguientes formatos:
+YYYY-MM-DDThh:mi:ss[Z|(+|-)hh:mm]
+ó
+DD-MM-YYYYThh:mi:ss[Z|(+|-)hh:mm]
+ó
+DD/MM/YYYY''',
+        enums.ValidationErrorCodes.INVALID_EMAIL:
+            'Correo inválido: {}'
     }
-    default_message = 'Invalid data.'
+    default_message = 'Datos inválidos.'
 
 
 class EmailError(ServerError):
@@ -169,16 +191,23 @@ class EmailError(ServerError):
     Exception raised when a problem related to the email module occurs.
     """
     # IBError overrides
-    status = enums.EmailErrorCodes._BASE
+    status = 'Error Email'
+    error_code = enums.EmailErrorCodes._BASE
     message_dictionary = {
-        enums.EmailErrorCodes.SMTP_CONNECTION_ERROR: "There was a problem with the connection to the server.",
-        enums.EmailErrorCodes.SMTP_NOT_SUPPORTED_ERROR: 'The operation attempted was not supported by the server.',
-        enums.EmailErrorCodes.SMTP_AUTH_ERROR: 'The authentication process failed.',
-        enums.EmailErrorCodes.SENDER_REFUSED: "The sender's server refused the request.",
-        enums.EmailErrorCodes.SMTP_DATA_ERROR: 'The data sent to the server was refused.',
-        enums.EmailErrorCodes.ALL_RECIPIENTS_REFUSED: 'Mail was refused by all the recipients.'
+        enums.EmailErrorCodes.SMTP_CONNECTION_ERROR:
+            'Se presentó un problema con la conexión al servidor SMTP.',
+        enums.EmailErrorCodes.SMTP_NOT_SUPPORTED_ERROR:
+            'La operación intentada no es soportada por el servidor SMTP.',
+        enums.EmailErrorCodes.SMTP_AUTH_ERROR:
+            'El proceso de autentificación falló.',
+        enums.EmailErrorCodes.SENDER_REFUSED:
+            'El servidor del emisor rechazo la solicitud.',
+        enums.EmailErrorCodes.SMTP_DATA_ERROR:
+            'Los datos enviados al servidor fueron rechazados.',
+        enums.EmailErrorCodes.ALL_RECIPIENTS_REFUSED:
+            'El correo fue rechazado por todos los receptores.'
     }
-    default_message = 'A problem was encountered when sending email.'
+    default_message = 'Se presentó un problema enviando el correo.'
 
 
 class DatabaseError(ServerError):
@@ -186,51 +215,97 @@ class DatabaseError(ServerError):
     Exception raised when a problem related to database operations occurs.
     """
     # IBError overrides
-    status = enums.DBErrorCodes._BASE
+    status = 'Error BaseDatos'
+    error_code = enums.DBErrorCodes._BASE
     message_dictionary = {
-        enums.DBErrorCodes.DB_CABYS_SEARCH_MEDICATION: 'An issue was found while searching for the medication.',
-        enums.DBErrorCodes.DB_CABYS_SEARCH_CODE: 'An issue was found while searching for the CABYS code.',
-        enums.DBErrorCodes.DB_CABYS_SEARCH_SACS: 'An issue was found while searching for the SACS code.',
-        enums.DBErrorCodes.DB_REGISTRY_SELECT_ONE: 'An issue was found while searching for the person.',
-        enums.DBErrorCodes.DB_COMPANY_CREATE: "The company couldn't be created. {}",
-        enums.DBErrorCodes.DB_COMPANY_CREATE_MH: "The company's Hacienda data couldn't be saved. {}",
-        enums.DBErrorCodes.DB_COMPANY_UPDATE: "The company couldn't be updated. {}",
-        enums.DBErrorCodes.DB_COMPANY_UPDATE_MH: "The company's Hacienda data couldn't be updated. {}",
-        enums.DBErrorCodes.DB_COMPANY_DELETE: "The company couldn't be deleted. {}",
-        enums.DBErrorCodes.DB_COMPANY_SELECT_ONE: "A problem occurred when obtaining the data for the company.",
-        enums.DBErrorCodes.DB_COMPANY_SELECT_ALL: "An issue was found while obtaining the system's companies' data.",
-        enums.DBErrorCodes.DB_COMPANY_SIGNATURE: "An issue was found while obtaining the company's signature information.",
-        enums.DBErrorCodes.DB_COMPANY_LOGO: "An issue was found while obtaining the company's logo.",
-        enums.DBErrorCodes.DB_COMPANY_VERIFY: "An issue was found while trying to verify the company.",
-        enums.DBErrorCodes.DB_COMPANY_SMTP_CREATE: "The company's SMTP couldn't be saved. {}",
-        enums.DBErrorCodes.DB_COMPANY_SMTP_UPDATE: "The company's SMTP couldn't be updated. {}",
-        enums.DBErrorCodes.DB_COMPANY_SMTP_DELETE: "The company's SMTP couldn't be deleted. {}",
-        enums.DBErrorCodes.DB_COMPANY_SMTP_SELECT_ONE: "The company's SMTP data couldn't be obtained.",
-        enums.DBErrorCodes.DB_COMPANY_SMTP_VERIFY: "A problem occurred when trying to verify the SMTP.",
-        enums.DBErrorCodes.DB_DOCUMENT_CREATE: "The document couldn't be saved. {}",
-        enums.DBErrorCodes.DB_DOCUMENT_DETAIL_LINE_CREATE: "A detail line for the document couldn't be saved, so the operation stopped. {}",
-        enums.DBErrorCodes.DB_DOCUMENT_LINE_TAX_CREATE: "The tax information for the document couldn't be saved, so the operation stopped. {}",
-        enums.DBErrorCodes.DB_DOCUMENT_ADDITIONAL_EMAIL_CREATE: "A problem occurred when processing the additional emails provided. {}",
-        enums.DBErrorCodes.DB_DOCUMENT_UPDATE: "The document couldn't be updated. {}",
-        enums.DBErrorCodes.DB_DOCUMENT_SELECT_ONE: "An issue was found while obtaining the document's data.",
-        enums.DBErrorCodes.DB_DOCUMENT_SELECT_BY_COMPANY_AND_TYPE: "An issue was found while trying to obtain the documents for the company.",
-        enums.DBErrorCodes.DB_DOCUMENT_SELECT_ADDITIONAL_EMAILS_BY_KEY: "An issue was found while trying to obtain the additional emails registered for the document.",
-        enums.DBErrorCodes.DB_DOCUMENT_JOBS: "An issue was found while querying documents from the database during a scheduled job. Action involved: {}",
-        enums.DBErrorCodes.DB_DOCUMENT_UPDATE_ISSENT: "An issue was found while trying to set if the mail for the document was sent. {}",
-        enums.DBErrorCodes.DB_USER_CREATE: "The user couldn't be created. {}",
-        enums.DBErrorCodes.DB_USER_COMPANIES_LINK: "Couldn't assign the user's companies. {}",
-        enums.DBErrorCodes.DB_USER_COMPANIES_UNLINK: "The user couldn't be updated. {}",
-        enums.DBErrorCodes.DB_USER_UPDATE: "The user couldn't be updated. {}",
-        enums.DBErrorCodes.DB_USER_DELETE: "The user couldn't be deleted. {}",
-        enums.DBErrorCodes.DB_USER_SELECT_ONE: "A problem occurred when attempting to obtain the user's data.",
-        enums.DBErrorCodes.DB_USER_COMPANIES_SELECT_ALL: "A problem occured when attempting to obtain the user's companies.",
-        enums.DBErrorCodes.DB_USER_SELECT_ALL: "An issue was found while trying to obtain the users' data.",
-        enums.DBErrorCodes.DB_USER_EMAIL_VERIFY: "A problem occured when attempting to verify the user by their email.",
-        enums.DBErrorCodes.DB_USER_VERIFY: "An issue was found while trying to verify the user.",
-        enums.DBErrorCodes.DB_MESSAGE_CREATE: "An issue was found while trying to create the message. {}",
-        enums.DBErrorCodes.DB_MESSAGE_UPDATE_ANSWER: "An issue was found while trying to update a message from an Hacienda answer. {}",
-        enums.DBErrorCodes.DB_MESSAGE_UPDATE_EMAILSENT: "An issue was found while trying to set if the email for the message was sent. {}"
+        enums.DBErrorCodes.DB_CABYS_SEARCH_MEDICATION:
+            'Se presentó un problema al buscar el medicamento solicitado.',
+        enums.DBErrorCodes.DB_CABYS_SEARCH_CODE:
+            'Se presentó un problema buscando el código CABYS solicitado.',
+        enums.DBErrorCodes.DB_CABYS_SEARCH_SACS:
+            'Se presentó un problema buscando el código SACS solicitado.',
+        enums.DBErrorCodes.DB_REGISTRY_SELECT_ONE:
+            'Se presentó un problema buscando la persona solicitada.',
+        enums.DBErrorCodes.DB_COMPANY_CREATE:
+            'La compañia no se pudo guardar. {}',
+        enums.DBErrorCodes.DB_COMPANY_CREATE_MH:
+            'Los datos de Hacienda de la compañia no se pudieron crear. {}',
+        enums.DBErrorCodes.DB_COMPANY_UPDATE:
+            'La compañia no pudo ser actualizada. {}',
+        enums.DBErrorCodes.DB_COMPANY_UPDATE_MH:
+            'Los datos de Hacienda de la compañia no pudieron ser actualizados. {}',
+        enums.DBErrorCodes.DB_COMPANY_DELETE:
+            'La compañia no pudo ser eliminada. {}',
+        enums.DBErrorCodes.DB_COMPANY_SELECT_ONE:
+            'Se presentó un problema al obtener los datos de la compañia.',
+        enums.DBErrorCodes.DB_COMPANY_SELECT_ALL:
+            'Se presentó un problema al obtener las compañias del sistema.',
+        enums.DBErrorCodes.DB_COMPANY_SIGNATURE:
+            'Se presentó un problema al obtener los datos de la firma de la compañia.',
+        enums.DBErrorCodes.DB_COMPANY_LOGO:
+            'Se presentó un problema al obtener el logo de la compañia.',
+        enums.DBErrorCodes.DB_COMPANY_VERIFY:
+            'Se presentó un problema al verificar la compañia.',
+        enums.DBErrorCodes.DB_COMPANY_SMTP_CREATE:
+            'El SMTP de la compañia no se logró guardar. {}',
+        enums.DBErrorCodes.DB_COMPANY_SMTP_UPDATE:
+            'El SMTP de la compañia no se logro actualizar. {}',
+        enums.DBErrorCodes.DB_COMPANY_SMTP_DELETE:
+            'El SMTP de la compañia no se logro eliminar. {}',
+        enums.DBErrorCodes.DB_COMPANY_SMTP_SELECT_ONE:
+            'Los datos del SMTP de la compañia no se lograron obtener.',
+        enums.DBErrorCodes.DB_COMPANY_SMTP_VERIFY:
+            'Se presentó un problema al verificar el SMTP de la compañia.',
+        enums.DBErrorCodes.DB_DOCUMENT_CREATE:
+            'El documento no se pudo guardar. {}',
+        enums.DBErrorCodes.DB_DOCUMENT_DETAIL_LINE_CREATE:
+            'Una linea de detalle para el documento no se logro guardar.'
+            ' La operación no se pudo completar {}',
+        enums.DBErrorCodes.DB_DOCUMENT_LINE_TAX_CREATE:
+            'La información de impuestos para el documento no se logro guardar.'
+            ' La operación no se pudo completar. {}',
+        enums.DBErrorCodes.DB_DOCUMENT_ADDITIONAL_EMAIL_CREATE:
+            'Se presentó un problema al procesar los correos adicionales provistos. {}',
+        enums.DBErrorCodes.DB_DOCUMENT_UPDATE:
+            'El documento no se logró actualizar. {}',
+        enums.DBErrorCodes.DB_DOCUMENT_SELECT_ONE:
+            'Se presentó un problema al obtener los datos del documento.',
+        enums.DBErrorCodes.DB_DOCUMENT_SELECT_BY_COMPANY_AND_TYPE:
+            'Se presentó un problema obteniendo los documentos de la compañia.',
+        enums.DBErrorCodes.DB_DOCUMENT_SELECT_ADDITIONAL_EMAILS_BY_KEY:
+            "Se presentó un problema obteniendo los correos adicionales del documento.",
+        enums.DBErrorCodes.DB_DOCUMENT_JOBS:
+            'Se presentó un problema al obtener los documentos para una tarea programada.'
+            ' Acción relacionada: {}',
+        enums.DBErrorCodes.DB_DOCUMENT_UPDATE_ISSENT:
+            'Se presentó un problema al actualizar si el correo para el documento fue enviado. {}',
+        enums.DBErrorCodes.DB_USER_CREATE:
+            'El usuario no se pudo guardar. {}',
+        enums.DBErrorCodes.DB_USER_COMPANIES_LINK:
+            'No se pudieron asignar las compañias del usuario. {}',
+        enums.DBErrorCodes.DB_USER_COMPANIES_UNLINK:
+            "No se pudieron quitar las compañias del usuario. {}",
+        enums.DBErrorCodes.DB_USER_UPDATE:
+            'El usuario no pudo ser actualizado. {}',
+        enums.DBErrorCodes.DB_USER_DELETE:
+            'El usuario no pudo ser eliminado. {}',
+        enums.DBErrorCodes.DB_USER_SELECT_ONE:
+            'Se presentó un problema al intentar obtener los datos del usuario. {}',
+        enums.DBErrorCodes.DB_USER_COMPANIES_SELECT_ALL:
+            'Se presentó un problema obteniendo las compañias del usuario.',
+        enums.DBErrorCodes.DB_USER_SELECT_ALL:
+            'Se presentó un problema obteniendo los usuarios del sistema.',
+        enums.DBErrorCodes.DB_USER_EMAIL_VERIFY:
+            'Se presentó un problema verificando al usuario por su email.',
+        enums.DBErrorCodes.DB_USER_VERIFY:
+            'Se presentó un problema verificando al usuario.',
+        enums.DBErrorCodes.DB_MESSAGE_CREATE:
+            'Se presentó un problema al guardar el mensaje. {}',
+        enums.DBErrorCodes.DB_MESSAGE_UPDATE_ANSWER:
+            'Se presentó un problema al actualizar el mensaje con la respuesta de Hacienda. {}',
+        enums.DBErrorCodes.DB_MESSAGE_UPDATE_EMAILSENT:
+            'Se presentó un problema al actualizar si el correo del mensaje fue enviado. {}'
     }
-    default_message = 'A problem was encountered during database operations.'
+    default_message = 'Se presentó un problema en las operaciones de la base de datos.'
 
 # END_CUSTOM_EXCEPTIONS

@@ -1,4 +1,3 @@
-
 import connexion
 from service import cabys as service
 from helpers import utils
@@ -7,7 +6,7 @@ from helpers import utils
 # Searches for medicaments matching the received text
 def search_meds():
     body = connexion.request.json
-    response = service.search(body, service.Search.MEDS) # I'M BAD A NAMING THINGS
+    response = service.search(body, service.Search.MEDS)  # I'M BAD A NAMING THINGS
     return utils.build_response(response)
 
 

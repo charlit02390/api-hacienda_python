@@ -24,8 +24,8 @@ class DecimalMoney(Decimal):
                                                        str(cls._MIN))))
         if _d > cls._MAX:
             raise ValueError(('Value: {} is over the specified'
-                             ' maximum of: ').format(str(_d),
-                                                     str(cls._MAX)))
+                              ' maximum of: ').format(str(_d),
+                                                      str(cls._MAX)))
 
         try:
             _d = _d.quantize(cls._EXP,

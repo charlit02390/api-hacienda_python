@@ -38,7 +38,7 @@ components:
           schema:
             $ref: '#/components/schemas/errorResponse'
     Error:
-      description: an internal server error as produced
+      description: an internal server error was produced
       content:
         application/json:
           schema:
@@ -856,7 +856,7 @@ components:
         status:
           type: string
         code:
-          type: int
+          type: number
         message:
           type: string
         detail:
