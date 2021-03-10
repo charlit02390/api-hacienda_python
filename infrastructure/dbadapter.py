@@ -15,27 +15,22 @@ from helpers.errors.exceptions import DatabaseError as IBDatabaseError
 
 class DbAdapterError(IBDatabaseError):
     """Exception thrown when operations on the database fail."""
-    status = DBAdapterErrorCodes._BASE
+    status = 'Error BaseDatos'
+    error_code = DBAdapterErrorCodes._BASE
     message_dictionary = {
-        DBAdapterErrorCodes.DBA_CONNECTION : ('A problem'
-                                              ' occurred when attempting to connect'
-                                              ' to the database.'),
-        DBAdapterErrorCodes.DBA_STATEMENT_EXECUTION : ('An'
-                                                       ' issue was encountered during'
-                                                       ' database operations.'),
-        DBAdapterErrorCodes.DBA_NON_UNIQUE_OPERATION : ('An'
-                                                        ' unintended behavior occured'
-                                                        ' during the operation and'
-                                                        ' execution was stopped.'),
-        DBAdapterErrorCodes.DBA_FETCHING : ('An issue was'
-                                            ' encountered when reading data'
-                                            ' from the database.'),
-        DBAdapterErrorCodes.DBA_GENERAL_DATABASE : ('An issue'
-                                                    ' was encountered during'
-                                                    ' database operations.')
-        }
-    default_message = ('An issue was encountered during database'
-                       ' operations.')
+        DBAdapterErrorCodes.DBA_CONNECTION:
+            'Se presentó un problema al iniciar conexión con la base de datos.',
+        DBAdapterErrorCodes.DBA_STATEMENT_EXECUTION:
+            'Se presentó un problema durante operaciones en la base de datos.',
+        DBAdapterErrorCodes.DBA_NON_UNIQUE_OPERATION:
+            'Se detuvo la ejecución debido a que se presentó un comportamiento'
+            ' inesperado durante operaciones en la base de datos.',
+        DBAdapterErrorCodes.DBA_FETCHING:
+            'Se presentó un problema leyendo información de la base de datos.',
+        DBAdapterErrorCodes.DBA_GENERAL_DATABASE:
+            'Se presentó un problema durante operaciones en la base de datos.'
+    }
+    default_message = 'Se presentó un problema durante operaciones en la base de datos.'
 
 
 class NonUniqueResultError(Exception):
@@ -43,7 +38,6 @@ class NonUniqueResultError(Exception):
         expected only affected row, but instead returned either
         no rows, or more than one."""
     pass
-
 
 
 class FetchType(Enum):
@@ -59,13 +53,13 @@ class FetchType(Enum):
     :FetchType.ALL_UNBUFFERED: Prompts the creation of a
         generator. Should only be used with buffered as False.
     """
-    ONE = {'_warning' : 'No data found.'}
-    ALL = {'_warning' : 'No matches found.'}
-    ALL_UNBUFFERED = {'_warning' : 'No data found.'}
+    ONE = {'_warning': 'No data found.'}
+    ALL = {'_warning': 'No matches found.'}
+    ALL_UNBUFFERED = {'_warning': 'No data found.'}
 
 
-def fetchall_from_proc(procname: str, args: tuple=(),
-                       headers: list=None) -> list:
+def fetchall_from_proc(procname: str, args: tuple = (),
+                       headers: list = None) -> list:
     """
     Fetches all rows from the given database procedure name and
     returns them in a list.
@@ -89,8 +83,8 @@ def fetchall_from_proc(procname: str, args: tuple=(),
                             args, headers)
 
 
-def fetchone_from_proc(procname: str, args: tuple=(),
-                       headers: list=None):
+def fetchone_from_proc(procname: str, args: tuple = (),
+                       headers: list = None):
     """
     Fetches the first row from the given database procedure name
     and returns it in a dictionary.
@@ -111,11 +105,11 @@ def fetchone_from_proc(procname: str, args: tuple=(),
     """
     return _fetch_from_proc(FetchType.ONE, False, procname,
                             args, headers)
-    
+
 
 def _fetch_from_proc(fetchtype: FetchType, buffered: bool,
-                     procname: str, args: tuple=(),
-                     headers: list=None):
+                     procname: str, args: tuple = (),
+                     headers: list = None):
     """
     Fetches data from the database from the given database
     procedure name.
@@ -166,40 +160,40 @@ def _fetch_from_proc(fetchtype: FetchType, buffered: bool,
                     conn.commit()
                     _data = []
                     for row in _resultSet:
-                        _data.append(dict(zip(row_headers,row)))
+                        _data.append(dict(zip(row_headers, row)))
 
                     data = _data
 
             elif fetchtype is FetchType.ONE:
                 _resultSet = cursor.fetchone()
                 if _resultSet is not None:
-                    data = dict(zip(row_headers,_resultSet))
+                    data = dict(zip(row_headers, _resultSet))
 
             elif fetchtype is FetchType.ALL_UNBUFFERED \
-                and not buffered:
+                    and not buffered:
                 data = cursor.fetchall_unbuffered()
 
             # gotta raise an exception for when no proper fetching was done... but... too lazy rn
     except DatabaseError as dbe:
-        logging.error(str(dbe)) # todo
+        logging.error(str(dbe))  # todo
         raise DbAdapterError(
-            status=DBAdapterErrorCodes.DBA_FETCHING) from dbe
+            error_code=DBAdapterErrorCodes.DBA_FETCHING
+        ) from dbe
 
     except Exception as e:
-        logging.error(str(e)) # todo
+        logging.error(str(e))  # todo
         raise DbAdapterError(
-            status=DBAdapterErrorCodes.DBA_GENERAL_DATABASE
-            ) from e
+            error_code=DBAdapterErrorCodes.DBA_GENERAL_DATABASE
+        ) from e
 
     finally:
         conn.close()
 
-
     return data
 
 
-def execute_proc(proc_name: str, args: tuple=(), conn=None,
-                 assert_unique: bool=False) -> bool:
+def execute_proc(proc_name: str, args: tuple = (), conn=None,
+                 assert_unique: bool = False) -> bool:
     """
     Executes the given procedure on the database.
 
@@ -229,8 +223,8 @@ def execute_proc(proc_name: str, args: tuple=(), conn=None,
                     conn=conn, assert_unique=assert_unique, callproc=True)
 
 
-def execute_sql(sql_statement: str, args: tuple=(), conn=None,
-                assert_unique: bool=False) -> bool:
+def execute_sql(sql_statement: str, args: tuple = (), conn=None,
+                assert_unique: bool = False) -> bool:
     """
     Executes the provided SQL Statement string on the database
 
@@ -261,9 +255,9 @@ def execute_sql(sql_statement: str, args: tuple=(), conn=None,
                     conn=conn, assert_unique=assert_unique)
 
 
-def _execute(exec_string:str, args: tuple=(), conn=None,
-             assert_unique: bool=False,
-             callproc: bool=False) -> bool:
+def _execute(exec_string: str, args: tuple = (), conn=None,
+             assert_unique: bool = False,
+             callproc: bool = False) -> bool:
     """
     Executes the given string either as an SQL Statement or as an
         Stored Procedure.
@@ -296,16 +290,17 @@ def _execute(exec_string:str, args: tuple=(), conn=None,
         exceptions were raised.
     :raises pymysql.err.DatabaseError: when an error occurs.
     """
-    self_managed = False # controls whether we are responsible for committing and closing the connection or if an external manager is in charge of that.
+    # controls whether we are responsible for committing and closing
+    # the connection or if an external manager is in charge of that.
+    self_managed = False
 
-    if conn is None: # if no connection was received, we make our own and we must manage it
+    if conn is None:  # if no connection was received, we make our own and we must manage it
         conn = connectToMySql()
         self_managed = True
 
     try:
         with conn.cursor() as cur:
             if assert_unique:
-                affected = -1
                 if callproc:
                     cur.callproc(exec_string, args)
                     affected = cur.rowcount
@@ -327,20 +322,20 @@ def _execute(exec_string:str, args: tuple=(), conn=None,
                 conn.commit()
 
     except NonUniqueResultError as nure:
-        logging.error(str(nure)) # todo
+        logging.error(str(nure))  # todo
         if self_managed:
             conn.rollback()
         raise DbAdapterError(
             str(nure),
-            status=DBAdapterErrorCodes.DBA_NON_UNIQUE_OPERATION
-            ) from nure
+            error_code=DBAdapterErrorCodes.DBA_NON_UNIQUE_OPERATION
+        ) from nure
     except DatabaseError as dbe:
-        logging.error(str(dbe)) # todo
+        logging.error(str(dbe))  # todo
         if self_managed:
             conn.rollback()
         raise DbAdapterError(
-            status=DBAdapterErrorCodes.DBA_STATEMENT_EXECUTION
-            ) from dbe
+            error_code=DBAdapterErrorCodes.DBA_STATEMENT_EXECUTION
+        ) from dbe
 
     finally:
         if self_managed:
@@ -379,7 +374,7 @@ def _log_unique_assertion_failure(no_rows_affected: bool,
     if is_proc:
         message_main = ('Procedure: {} was expected to produce'
                         ' a unique matched registry, but').format(
-                            exec_string)
+            exec_string)
         message_detail = ' | Arguments used: {}'.format(args)
     else:
         message_main = ('The executed SQL Statement was expected'
@@ -393,7 +388,7 @@ def _log_unique_assertion_failure(no_rows_affected: bool,
         message_reason = ' it yielded more than one(1) affected rows.'
 
     message = message_main + message_reason + message_detail
-    logging.error(message) # todo
+    logging.error(message)  # todo
     return message
 
 
@@ -410,10 +405,11 @@ def connectToMySql():
     """
     conn = None
     try:
-        conn =  mysql.connect()
+        conn = mysql.connect()
     except (OperationalError, InternalError) as e:
-        logging.error(str(e)) # todo
+        logging.error(str(e))  # todo
         raise DbAdapterError(
-            status=DBAdapterErrorCodes.DBA_CONNECTION) from e
-    
+            error_code=DBAdapterErrorCodes.DBA_CONNECTION
+        ) from e
+
     return conn

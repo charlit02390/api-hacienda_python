@@ -7,12 +7,12 @@ from werkzeug.exceptions import Unauthorized
 from infrastructure import users
 from infrastructure.dbadapter import DbAdapterError
 
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 
 from service import utils
 from helpers.errors.enums import InputErrorCodes, AuthErrorCodes, InternalErrorCodes
 from helpers.errors.exceptions import InputError, AuthError, ServerError
-from helpers.utils import build_response_data # CONSIDER MAKING THIS A DECORATOR
+from helpers.utils import build_response_data  # CONSIDER MAKING THIS A DECORATOR
 
 cfg = globalsettings.cfg
 
@@ -26,11 +26,11 @@ def create_user(data):
 
     user_exist = users.verify_email(_email)
     if user_exist:
-        raise InputError('Email {}'.format(_email), status=InputErrorCodes.DUPLICATE_RECORD)
+        raise InputError('Email {}'.format(_email), error_code=InputErrorCodes.DUPLICATE_RECORD)
 
     users.save_user(_email, _password, _name, _idrol, _idcompanies)
 
-    return build_response_data({'message' : 'User created successfully'})
+    return build_response_data({'message': 'User created successfully'})
 
 
 def modify_user(data):
@@ -42,27 +42,27 @@ def modify_user(data):
 
     users.modify_user(_email, _password, _name, _idrol, _idcompanies)
 
-    return build_response_data({'message' : 'User updated successfully'})
+    return build_response_data({'message': 'User updated successfully'})
 
 
 def get_list_users(id_user=0):
     if id_user == 0:
-        result = { 'data': {'users': users.get_users()}}
+        result = {'data': {'users': users.get_users()}}
     else:
-        result = { 'data':{'user': users.get_user_data(id_user)}}
+        result = {'data': {'user': users.get_user_data(id_user)}}
 
     return build_response_data(result)
 
 
 def delete_user(id_user):
     users.delete_user_data(id_user)
-    return build_response_data({'message' : 'The user has been deleted successfully.'})
+    return build_response_data({'message': 'The user has been deleted successfully.'})
 
 
 def delete_user_companies(data):
     _email = data['email']
     users.delete_user_companies(_email)
-    return build_response_data({'message' : "The user's associated companies have been cleared."})
+    return build_response_data({'message': "The user's associated companies have been cleared."})
 
 
 def login(data):
@@ -71,16 +71,19 @@ def login(data):
 
     user_check = users.check_user(email, password)
     if not user_check:
-        raise AuthError(status=AuthErrorCodes.WRONG_CREDENTIALS)
-
+        raise AuthError(error_code=AuthErrorCodes.WRONG_CREDENTIALS)
 
     try:
         token = generate_token(email)
-    except Exception as ex: # Internal Error Code: token generation error
-        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR,
-                            message='A problem was found while generating the JWT')
-        
-    result = { 'data' : {'token' : token, 'user' : user_check}}
+    except Exception as ex:  # Internal Error Code: token generation error
+        raise ServerError(
+            error_code=InternalErrorCodes.INTERNAL_ERROR,
+            message='A problem was found while generating the JWT') from ex
+
+    result = {
+        'status': 'success',
+        'data': {'token': token, 'user': user_check}
+    }
 
     return build_response_data(result)
 
@@ -100,6 +103,8 @@ def generate_token(email):
 def decode_token(token):
     try:
         return jwt.decode(token, cfg['jwt_secret'], algorithms=cfg['jwt_algorithm'])
+    except ExpiredSignatureError as ese:
+        raise AuthError(error_code=AuthErrorCodes.EXPIRED_JWT) from ese
     except JWTError as e:
         six.raise_from(Unauthorized, e)
 

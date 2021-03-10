@@ -38,10 +38,10 @@ def create(data: dict):
     company = dao_company.get_company_data(company_id)
     if not company:
         raise InputError('company', company_id,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if not company['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+        raise InputError(error_code=InputErrorCodes.INACTIVE_COMPANY)
 
     cert = company['signature']
     password = company['pin_sig']
@@ -89,16 +89,16 @@ def process_message(key_mh: str, rec_seq_num: str = None):
     if not message:
         raise InputError(
             'message', key if sequence is None else '-'.join((key, sequence)),
-            status=InputErrorCodes.NO_RECORD_FOUND)
+            error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     company_user = message['company_user']
     company = dao_company.get_company_data(company_user)
     if not company:
         raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if not company['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+        raise InputError(error_code=InputErrorCodes.INACTIVE_COMPANY)
 
     try:
         mh_token = api_facturae.get_token_hacienda(company_user,
@@ -121,10 +121,10 @@ def get_by_company(company: str):
     if company_data is None:
         raise InputError(
             'company', company,
-            status=InputErrorCodes.NO_RECORD_FOUND
+            error_code=InputErrorCodes.NO_RECORD_FOUND
         )
     if not company_data['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+        raise InputError(error_code=InputErrorCodes.INACTIVE_COMPANY)
 
     messages = dao_message.select_by_company(company)
     return build_response_data({'data': messages})

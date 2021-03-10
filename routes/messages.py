@@ -1,4 +1,3 @@
-
 import connexion
 
 from service import message as model_message

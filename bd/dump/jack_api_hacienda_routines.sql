@@ -624,7 +624,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`()
 BEGIN
 Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "procesando" limit 20;
+inner join companies cp on d.company_id = cp.id where d.status = "procesando" ORDER BY d.document_type limit 20;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -673,7 +673,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsValidate`()
 BEGIN
 	Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "creado" limit 20;
+inner join companies cp on d.company_id = cp.id where d.status = "creado" ORDER BY d.document_type limit 20;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;

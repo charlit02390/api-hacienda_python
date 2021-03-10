@@ -6,6 +6,7 @@ from lxml import etree
 from .numerics import DecimalMoney
 from .strings import IDN
 
+
 class Message(ABC):
     """
     Abstract Implementation for an Hacienda Message.
@@ -17,13 +18,13 @@ class Message(ABC):
         'detail': 'DetalleMensaje',
         'taxTotalAmount': 'MontoTotalImpuesto',
         'invoiceTotalAmount': 'TotalFactura'
-        })
+    })
     _XML_HACIENDA_NAMESPACE = ''
     _XML_HACIENDA_SCHEMA_LOCATION = ''
     _XMLNS_DS = 'http://www.w3.org/2000/09/xmldsig#'
     _XMLNS_XSD = 'http://www.w3.org/2001/XMLSchema'
     _XMLNS_XSI = 'http://www.w3.org/2001/XMLSchema-instance'
-    
+
     key: str
     code: int
     detail: str
@@ -39,7 +40,7 @@ class Message(ABC):
             'ds': self._XMLNS_DS,
             'xsd': self._XMLNS_XSD,
             'xsi': self._XMLNS_XSI
-            }
+        }
 
         schemaLocation_attr = etree.QName(self._XMLNS_XSI,
                                           'schemaLocation')
@@ -47,7 +48,7 @@ class Message(ABC):
         root = etree.Element(self._XML_ROOT_TAG,
                              attrib={
                                  schemaLocation_attr: self._XML_HACIENDA_SCHEMA_LOCATION
-                                 },
+                             },
                              nsmap=nsmap)
 
         tagmap = self._XML_TAG_MAP
@@ -71,7 +72,7 @@ class Message(ABC):
 class RecipientMessage(Message):
     _XML_ROOT_TAG = 'MensajeReceptor'
     _XML_HACIENDA_NAMESPACE = 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/mensajeReceptor'
-    _XML_HACIENDA_SCHEMA_LOCATION = 'https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.3/MensajeReceptor_V4.3.xsd'    
+    _XML_HACIENDA_SCHEMA_LOCATION = 'https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2016/v4.3/MensajeReceptor_V4.3.xsd'
     issuerIDN: IDN
     issueDate: str
     activityCode: str
@@ -91,7 +92,7 @@ class RecipientMessage(Message):
             'applicableExpenseTotalAmount': 'MontoTotalDeGastoAplicable',
             'recipientIDN': 'NumeroCedulaReceptor',
             'recipientSequenceNumber': 'NumeroConsecutivoReceptor'
-            })
+        })
         super().__init__()
 
     def _order_tag_map(self):
@@ -104,4 +105,3 @@ class RecipientMessage(Message):
 
         for key in key_order:
             self._XML_TAG_MAP.move_to_end(key)
-

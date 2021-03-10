@@ -1,9 +1,11 @@
 from traceback import format_exc
-from smtplib import SMTPConnectError, SMTPNotSupportedError, SMTPAuthenticationError, SMTPSenderRefused, SMTPDataError, SMTPRecipientsRefused
+from smtplib import SMTPConnectError, SMTPNotSupportedError, SMTPAuthenticationError, SMTPSenderRefused, SMTPDataError, \
+    SMTPRecipientsRefused
 
 from flask import jsonify
 
 from .errors.enums import InternalErrorCodes
+
 
 def build_response_data(result: dict,
                         warn_msg: str = 'No data was found',
@@ -41,23 +43,21 @@ def build_response_data(result: dict,
     :returns: dict - A dictionary with data to be used to
         generate a proper response.
     """
-    response = {'http_status' : 200,
-                'status' : 0 }
+    response = {'http_status': 200,
+                'status': 'ok'}
 
     if 'message' in result:
         message = result['message']
         response['message'] = message if message else warn_msg
 
-
     if 'error' in result:
         error = result['error']
         response['http_status'] = result.get('http_status',
                                              error.get('http_status', 500))
-        response['status'] = error.get('code',
-                                       error.get('status',
-                                                 InternalErrorCodes.INTERNAL_ERROR
-                                                 )
-                                       )
+        response['error_code'] = error.get('error_code',
+                                           error.get('code', InternalErrorCodes.INTERNAL_ERROR)
+                                           )
+        response['status'] = error.get('status', 'Error')
         response['detail'] = error.get('message',
                                        error.get('detail',
                                                  error.get('details',
@@ -68,10 +68,11 @@ def build_response_data(result: dict,
         if 'debug' in error:
             response['debug'] = error['debug']
 
-    elif 'unexpected' in result: # meh
+    elif 'unexpected' in result:  # meh
         unexpected = result['unexpected']
         response['http_status'] = unexpected['status']
-        response['status'] = InternalErrorCodes.HACIENDA_ERROR
+        response['status'] = 'Error Hacienda'
+        response['error_code'] = InternalErrorCodes.HACIENDA_ERROR
         response['detail'] = """Unexpected Response from Hacienda.
 Reason: {}
 Content: {}""".format(unexpected['reason'],
@@ -80,12 +81,10 @@ Content: {}""".format(unexpected['reason'],
     elif 'data' in result:
         response['data'] = result['data']
 
-
     if 'headers' in result:
         headers = result['headers']
         if headers and isinstance(headers, dict):
             response['headers'] = headers
-
 
     return response
 
@@ -130,9 +129,10 @@ def build_response(data: dict):
     return response
 
 
+# TODO
 def run_and_summ_collec_job(collec_cb, item_cb,
-                                     item_id_keys, collec_cb_args = (),
-                                     collec_cb_kwargs=None,
+                            item_id_keys, collec_cb_args=(),
+                            collec_cb_kwargs=None,
                             item_cb_kwargs_map=None):
     """
     Very generic function that runs functions designed as
@@ -173,7 +173,7 @@ Callback Kwargs: {}
     summary = {
         'success': 0,
         'errors': []
-        }
+    }
     param_names = item_cb_kwargs_map.keys()
     item_keys = item_cb_kwargs_map.values()
     for item in collection:
@@ -188,15 +188,16 @@ Item Id: {}
 Callback: {}
 Params: {}
 {}
-""".format(item[item_id_keys] if isinstance(item_id_keys, str) \
-    else (', '.join(item[key] for key in item_id_keys)),
-           item_cb.__qualname__,
-           params, format_exc()))
+""".format(
+                item[item_id_keys] if isinstance(item_id_keys, str) else (', '.join(item[key] for key in item_id_keys)),
+                item_cb.__qualname__,
+                params, format_exc())
+            )
 
     summary_str = """-Successful counter: {}
 -Errors ({}):
 """.format(summary['success'], len(summary['errors']))
-    
+
     summary_str += '\n'.join(summary['errors'])
 
     return summary_str
@@ -204,7 +205,7 @@ Params: {}
 
 def get_smtp_error_code(exception: Exception):
     """
-    Function that returns a code depending on the specific
+    Function that returns a error_code depending on the specific
     type of SMTPException the parameter "exception" is.
 
     @todo: Enum the codes...

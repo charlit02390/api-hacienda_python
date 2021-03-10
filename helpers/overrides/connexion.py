@@ -9,6 +9,7 @@ from connexion.decorators.validation import RequestBodyValidator, ValidationErro
 
 logger = logging.getLogger(__name__)
 
+
 class DetailedRequestBodyValidator(RequestBodyValidator):
     # doing pretty much what the function does, except extending
     # the caught exception code.
@@ -25,13 +26,13 @@ class DetailedRequestBodyValidator(RequestBodyValidator):
             response_data = []
             for error in errors:
                 response_data.append("""-In {}: {}.""".format(
-                    str(list(error.absolute_path)), error.message))
-            response = jsonify({ 'status': 400,
+                    str(list(error.absolute_path)), error.message)
+                )
+            response = jsonify({'status': 'invalido',
                                 'detail': ("""The received json has the """
-                                                """following errors:
+                                           """following errors:
 """) + str(response_data)})
             response.status_code = 400
             return response
 
         return None
-

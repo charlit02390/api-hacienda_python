@@ -23,6 +23,7 @@ def set_debug_mode(func):
     :param func: function - the function to decorate
     :returns: function - the decorated function
     """
+
     @functools.wraps(func)
     def decoratored(*args, **kwargs):
         debugVal = True if \
@@ -30,8 +31,8 @@ def set_debug_mode(func):
             == DEBUG_SWITCH_KEYWORD else \
             False
         g.is_debug = debugVal
-        
-        return func(*args,**kwargs)
+
+        return func(*args, **kwargs)
 
     return decoratored
 
@@ -48,6 +49,7 @@ def log_section(name: str, time_it: bool = False):
 
     :returns: function - the decorated function
     """
+
     def decoratored(func):
         @functools.wraps(func)
         def wrapper_log_section(*args, **kwargs):
@@ -76,6 +78,7 @@ def time_my_func(func):
         val = func(*args, **kwargs)
         e = timer()
         print('Function: {}. Execution Time: {}'
-              .format(func.__qualname__, (e-s)))
+              .format(func.__qualname__, (e - s)))
         return val
+
     return decoratored

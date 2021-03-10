@@ -24,7 +24,7 @@ def insert(company_id: str, message: RecipientMessage,
 
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_MESSAGE_CREATE) from dbae
+                            error_code=DBErrorCodes.DB_MESSAGE_CREATE) from dbae
 
     return True
 
@@ -40,7 +40,7 @@ def update_from_answer(company_id: str, message_key: str, message_rec_seq_num: s
                          conn=connection, assert_unique=True)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_MESSAGE_UPDATE_ANSWER) from dbae
+                            error_code=DBErrorCodes.DB_MESSAGE_UPDATE_ANSWER) from dbae
 
     return True
 
@@ -55,7 +55,7 @@ def update_email_sent(message_key: str, message_rec_seq_num: str,
                          conn=connection, assert_unique=True)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_MESSAGE_UPDATE_EMAILSENT
+                            error_code=DBErrorCodes.DB_MESSAGE_UPDATE_EMAILSENT
                             ) from dbae
 
 
@@ -65,7 +65,7 @@ def select(key_mh: str, rec_seq_num: str = None):
     try:
         return dba.fetchone_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_MESSAGE_SELECT_ONE) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_MESSAGE_SELECT_ONE) from dbae
 
 
 def select_by_company(company_user: str, limit: int = None):
@@ -74,7 +74,7 @@ def select_by_company(company_user: str, limit: int = None):
     try:
         return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_MESSAGE_SELECT_BY_COMPANY) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_MESSAGE_SELECT_BY_COMPANY) from dbae
 
 
 def select_by_status(status: str, company_user: str = None,
@@ -84,7 +84,7 @@ def select_by_status(status: str, company_user: str = None,
     try:
         return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_MESSAGE_SELECT_BY_STATUS) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_MESSAGE_SELECT_BY_STATUS) from dbae
 
 
 def select_by_code(code: str, company_user: str = None,
@@ -94,7 +94,7 @@ def select_by_code(code: str, company_user: str = None,
     try:
         return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_MESSAGE_SELECT_BY_CODE) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_MESSAGE_SELECT_BY_CODE) from dbae
 
 
 def select_by_issuer_idn(issuer_idn: str, company_user: str = None,
@@ -104,4 +104,4 @@ def select_by_issuer_idn(issuer_idn: str, company_user: str = None,
     try:
         return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_MESSAGE_SELECT_BY_ISSUER_IDN) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_MESSAGE_SELECT_BY_ISSUER_IDN) from dbae

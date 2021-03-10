@@ -27,19 +27,19 @@ def create_document(data):
     if not company_data:
         raise InputError('company',
                          _company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if not company_data['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+        raise InputError(error_code=InputErrorCodes.INACTIVE_COMPANY)
 
     _key_mh = data['clavelarga']
     if documents.verify_exists(_key_mh):
         raise InputError('Document with key {}'.format(_key_mh),
-                         status=InputErrorCodes.DUPLICATE_RECORD)
+                         error_code=InputErrorCodes.DUPLICATE_RECORD)
 
     signature = companies.get_sign_data(_company_user)
     if not signature:
-        raise InputError(status=InputErrorCodes.NO_RECORD_FOUND,
+        raise InputError(error_code=InputErrorCodes.NO_RECORD_FOUND,
                          message=("No signature information was found"
                                   " for the company; can't sign the document,"
                                   " so the document can't be created."))
@@ -193,7 +193,7 @@ def save_additional_emails(key_mh, _emails, conn):
     return True
 
 
-@log_section('Sending Documents')
+# @log_section('Sending Documents')
 def validate_documents():
     item_cb = validate_document
     collec_cb_args = (0,)
@@ -205,15 +205,15 @@ def validate_document(company_user, key_mh):
     document_data = documents.get_document(key_mh)
     if not document_data:
         raise InputError('document', str(key_mh),
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     company_data = companies.get_company_data(company_user)
     if not company_data:
         raise InputError('company', str(company_user),
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if not company_data['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+        raise InputError(error_code=InputErrorCodes.INACTIVE_COMPANY)
 
     date_cr = api_facturae.get_time_hacienda(False)
     date = api_facturae.get_time_hacienda(True)
@@ -258,7 +258,7 @@ def validate_document(company_user, key_mh):
     }
 
 
-@log_section('Fetching Documents\' Statuses')
+# @log_section("Fetching Documents' Statuses")
 def consult_documents():
     item_cb = consult_document
     collec_cb_args = (1,)
@@ -270,19 +270,19 @@ def consult_document(company_user, key_mh):
     document_data = documents.get_document(key_mh)
     if not document_data:
         raise InputError('document', key_mh,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if document_data['status'] == 'creado':
-        raise InputError(status=InputErrorCodes.DOCUMENT_NOT_YET_SENT,
+        raise InputError(error_code=InputErrorCodes.DOCUMENT_NOT_YET_SENT,
                          message='Este documento aun no ha sido enviado a Hacienda.')
 
     company_data = companies.get_company_data(company_user)
     if not company_data:
         raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if not company_data['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+        raise InputError(error_code=InputErrorCodes.INACTIVE_COMPANY)
 
     date = api_facturae.get_time_hacienda(True)
 
@@ -343,7 +343,7 @@ def consult_document_notdatabase(company_user, key_mh, document_type):
     company_data = companies.get_company_data(company_user)
     if not company_data:
         raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     date = api_facturae.get_time_hacienda(True)
 
@@ -369,7 +369,7 @@ def consult_document_notdatabase(company_user, key_mh, document_type):
         return build_response_data({'message': response_status,
                                     'data': {'xml-respuesta': response_text}})
     else:
-        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)  # TODO : new code: 2 bad data hacienda
+        raise ServerError(error_code=InternalErrorCodes.INTERNAL_ERROR)  # TODO : new code: 2 bad data hacienda
 
 
 def processing_documents(company_user, key_mh, is_consult):
@@ -389,7 +389,7 @@ def consult_vouchers(company_user, emisor, receptor, offset, limit):
     company_data = companies.get_company_data(company_user)
     if not company_data:
         raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     try:
         token_m_h = api_facturae.get_token_hacienda(company_user,
@@ -420,7 +420,7 @@ def consult_vouchers(company_user, emisor, receptor, offset, limit):
     if 200 <= response_status <= 206:
         return build_response_data({'data': {'Comprobantes': response_text}})
     else:
-        raise ServerError(InternalErrorCodes.INTERNAL_ERROR)  # TODO : Hacienda Unauthorized
+        raise ServerError(error_code=InternalErrorCodes.INTERNAL_ERROR)  # TODO : Hacienda Unauthorized
         # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
 
 
@@ -428,7 +428,7 @@ def consult_voucher_byid(company_user, clave):
     company_data = companies.get_company_data(company_user)
     if not company_data:
         raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     try:
         token_m_h = api_facturae.get_token_hacienda(company_user,
@@ -448,7 +448,7 @@ def consult_voucher_byid(company_user, clave):
     if response_status == 200:
         return build_response_data({'data': {'Comprobante': response_text}})
     else:
-        raise ServerError(InternalErrorCodes.INTERNAL_ERROR)
+        raise ServerError(error_code=InternalErrorCodes.INTERNAL_ERROR)
         # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
 
 
@@ -456,7 +456,7 @@ def get_pdf(key: str):
     document = documents.get_document(key)
     if not document:
         raise InputError('document', key,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if document['pdfdocument']:
         data = {'data': {'pdf': document['pdfdocument']}}
@@ -475,7 +475,7 @@ def get_property(key: str, prop_name: str):
     document = documents.get_document(key)
     if not document:
         raise InputError('document', key,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if document[prop_name]:
         return build_response_data({
