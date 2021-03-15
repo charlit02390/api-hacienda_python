@@ -624,7 +624,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`()
 BEGIN
 Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "procesando" ORDER BY d.document_type limit 20;
+inner join companies cp on d.company_id = cp.id where d.status = "procesando" and cp.is_active = true ORDER BY d.document_type limit 20;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -673,7 +673,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsValidate`()
 BEGIN
 	Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "creado" ORDER BY d.document_type limit 20;
+inner join companies cp on d.company_id = cp.id where d.status = "creado" and cp.is_active = true ORDER BY d.document_type limit 20;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1271,7 +1271,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_obtenerpersona_registrocivil`(
-    p_cedula VARCHAR(9)
+    p_cedula VARCHAR(15)
 )
 BEGIN
 	SELECT `cedula`,
