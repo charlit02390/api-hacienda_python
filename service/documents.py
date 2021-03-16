@@ -13,7 +13,7 @@ from infrastructure.dbadapter import connectToMySql
 from helpers.errors.enums import InputErrorCodes, InternalErrorCodes
 from helpers.errors.exceptions import InputError, ServerError
 from helpers.utils import build_response_data, run_and_summ_collec_job, get_smtp_error_code
-from helpers.debugging import log_section
+# from helpers.debugging import log_section
 from helpers.validations import document as document_validator
 from helpers.arrangers import document as document_arranger
 
@@ -477,21 +477,19 @@ def get_property(key: str, prop_name: str):
         raise InputError('document', key,
                          error_code=InputErrorCodes.NO_RECORD_FOUND)
 
-    if document[prop_name]:
-        return build_response_data({
-            'data': {
-                prop_name: document[prop_name]
-            }
-        })
-    else:
-        return build_response_data({
-            'data': {
-                'message': """The specified document does not have a {}.
-Document Type: {}
-*If the document type is not 'TE', please contact the API Admin.""".format(
-                    prop_name, document['document_type'])
-            }
-        })
+    if prop_name not in document:
+        raise InputError(
+            error_code=InputErrorCodes.MISSING_PROPERTY,
+            message='"{}" no es una propiedad del recurso solicitado.'.format(
+                prop_name
+            )
+        )
+
+    return build_response_data({
+        'data': {
+            prop_name: document[prop_name]
+        }
+    })
 
 
 # if this fails horribly, I will rollback and apply a simpler solution...

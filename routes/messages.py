@@ -19,3 +19,8 @@ def process_message(key: str):
 def get_by_company(company: str):
     result = model_message.get_by_company(company)
     return build_response(result)
+
+
+def get_prop(key: str, prop_name: str):
+    result = model_message.get_prop(key, prop_name)
+    return build_response(result)

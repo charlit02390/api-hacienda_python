@@ -1110,6 +1110,78 @@ paths:
           $ref: '#/components/responses/Error'
       security:
         - jwt: []
+  /api/companies/{company_id}/documents:
+    get:
+      tags:
+        - companies
+      operationId: routes.companies.get_documents
+      summary: Obtains the company's documents
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: doc_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - 'fe'
+              - 'fee'
+              - 'te'
+              - 'fec'
+              - 'nd'
+              - 'nc'
+        - name: files
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - jwt: []
+  /api/companies/{company_id}/messages:
+    get:
+      tags:
+        - companies
+      operationId: routes.companies.get_messages
+      summary: Obtains the company's recipient messages
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: files
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - jwt: [ ]
   /api/consult:
     get:
       tags:
@@ -1680,7 +1752,7 @@ paths:
         default:
           $ref: '#/components/responses/Error'
       security:
-        - api_key: []
+        - jwt: []
   /api/messages/{key}:
     get:
       tags:
@@ -1707,6 +1779,36 @@ paths:
           $ref: '#/components/responses/Error'
       security:
       - api_key: []
+  /api/messages/{key}/{prop_name}:
+    get:
+      tags:
+        - messages
+      summary: attempts to obtain the data for a given property of the resource
+      operationId: routes.messages.get_prop
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: prop_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - api_key: []
   /cabys/meds:
     get:
       tags:

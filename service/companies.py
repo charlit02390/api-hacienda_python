@@ -148,3 +148,38 @@ def patch_company(company_id, data, files):
             'message': 'No valid fields received in order to proceed with a patch.'
         }
     })
+
+
+def get_documents_by_type(company_id: str, doc_type: str, files: str = None):
+    company = companies.get_company_data(company_id)
+    if not company:
+        raise InputError('Company', company_id,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    documents = companies.get_companys_documents_by_type(
+        company['id'],
+        doc_type,
+        True if files is not None else False
+    )
+    return build_response_data({
+        'data': {
+            'documents': documents
+        }
+    })
+
+
+def get_messages(company_id: str, files: str = None):
+    company = companies.get_company_data(company_id)
+    if not company:
+        raise InputError('Company', company_id,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    messages = companies.get_messages(
+        company['id'],
+        True if files is not None else False
+    )
+    return build_response_data({
+        'data': {
+            'messages': messages
+        }
+    })
