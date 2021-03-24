@@ -624,7 +624,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`()
 BEGIN
 Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "procesando" ORDER BY d.document_type limit 20;
+inner join companies cp on d.company_id = cp.id where d.status = "procesando" and cp.is_active = true ORDER BY d.document_type limit 20;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -647,8 +647,8 @@ v_type_document varchar(50)
 )
 BEGIN
 Select cp.company_user, d.key_mh, d.status, d.isSent, d.dateanswer, d.datesign, d.document_type, 
-d.dni_receiver, d.dni_type_receiver, d.total_document, d.email, d.email_costs, CONVERT(d.signxml USING utf8) signxml,
-CONVERT(d.answerxml USING utf8) answerxml , CONVERT(d.pdfdocument USING utf8) as pdfdocument
+d.dni_receiver, d.dni_type_receiver, d.total_document, d.email, d.email_costs, if(d.signxml is not null, true, false) as signxml,
+if(d.answerxml is not null, true, false) as answerxml , if (d.pdfdocument is not null, true, false) as pdfdocument
 from documents d 
 inner join companies cp on d.company_id = cp.id  
 where cp.company_user= v_id_company 
@@ -673,7 +673,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsValidate`()
 BEGIN
 	Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "creado" ORDER BY d.document_type limit 20;
+inner join companies cp on d.company_id = cp.id where d.status = "creado" and cp.is_active = true ORDER BY d.document_type limit 20;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1271,7 +1271,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_obtenerpersona_registrocivil`(
-    p_cedula VARCHAR(9)
+    p_cedula VARCHAR(15)
 )
 BEGIN
 	SELECT `cedula`,
@@ -1468,6 +1468,30 @@ FROM	`message` AS msg INNER JOIN
 	companies as cmp ON msg.company_id = cmp.id;
 
 
+DROP VIEW IF EXISTS vw_message_simple;
+CREATE VIEW `vw_message_simple`
+AS
+SELECT	msg.id,
+	msg.company_id,
+	cmp.company_user,
+	msg.key_mh,
+	msg.status,
+	msg.code,
+	msg.issue_date,
+	msg.issuer_idn_num,
+	msg.issuer_idn_type,
+	msg.issuer_email,
+	msg.recipient_idn,
+	msg.recipient_seq_number,
+	IF(msg.signed_xml IS NOT NULL, TRUE, FALSE) AS signed_xml,
+	msg.answer_date,
+	IF(msg.answer_xml IS NOT NULL, TRUE, FALSE) AS answer_xml,
+	cmp.is_active as company_is_active,
+	msg.email_sent
+FROM	`message` AS msg INNER JOIN
+	companies as cmp ON msg.company_id = cmp.id;
+
+
 DROP PROCEDURE IF EXISTS usp_select_message;
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_select_message` (
@@ -1490,7 +1514,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCompany_message` (
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.company_user = ?';
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message_simple` AS v_msg WHERE v_msg.company_user = ?';
 	IF `p_limit` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
 	END IF;
@@ -1511,7 +1535,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByStatus_message` (
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.status = ?';
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message_simple` AS v_msg WHERE v_msg.status = ?';
 	IF `p_company_user` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
 	END IF;
@@ -1537,7 +1561,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCode_message` (
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.code = ?';
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message_simple` AS v_msg WHERE v_msg.code = ?';
 	IF `p_company_user` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
 	END IF;
@@ -1560,7 +1584,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByIssuerIDN_message` (
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.issuer_idn_num = ?';
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message_simple` AS v_msg WHERE v_msg.issuer_idn_num = ?';
 	IF `p_company_user` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
 	END IF;
@@ -1603,3 +1627,105 @@ BEGIN
 END $$
 DELIMITER ;
 -- --------------------------------------
+
+-- --------------------------------------
+-- dunno what i'm doin'
+DROP PROCEDURE IF EXISTS usp_getCompanysDocumentsByType;
+DELIMITER $$
+CREATE PROCEDURE usp_getCompanysDocumentsByType(
+	p_company_id INT UNSIGNED,
+	p_document_type VARCHAR(10),
+	p_return_files BOOLEAN
+)
+BEGIN
+	IF p_return_files THEN
+		SELECT
+			id,
+			company_id,
+			key_mh, status,
+			isSent,
+			dateanswer,
+			datesign,
+			document_type,
+			dni_type_receiver,
+			total_document,
+			total_taxes,
+			email,
+			CONVERT(signxml USING utf8) AS signxml,
+			CONVERT(answerxml USING utf8) AS answerxml,
+			CONVERT(pdfdocument USING utf8) AS pdfdocument
+		FROM documents
+		WHERE company_id = p_company_id
+			AND document_type = p_document_type;
+	ELSE
+		SELECT
+			id,
+			company_id,
+			key_mh, status,
+			isSent,
+			dateanswer,
+			datesign,
+			document_type,
+			dni_type_receiver,
+			total_document,
+			total_taxes,
+			email,
+			IF(signxml IS NOT NULL, TRUE, FALSE) AS signxml,
+			IF(answerxml IS NOT NULL, TRUE, FALSE) AS answerxml,
+			IF(pdfdocument IS NOT NULL, TRUE, FALSE) AS pdfdocument
+		FROM documents
+		WHERE company_id = p_company_id
+			AND document_type = p_document_type;
+	END IF;
+END $$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_getCompanysMessages;
+DELIMITER $$
+CREATE PROCEDURE usp_getCompanysMessages(
+	p_company_id INT UNSIGNED,
+	p_return_files BOOLEAN
+)
+BEGIN
+	IF p_return_files THEN
+		SELECT
+			id,
+			company_id,
+			key_mh,
+			status,
+			code,
+			issue_date,
+			issuer_idn_num,
+			issuer_idn_type,
+			issuer_email,
+			recipient_idn,
+			recipient_seq_number,
+			CONVERT(signed_xml USING utf8) AS signed_xml,
+			answer_date,
+			CONVERT(answer_xml USING utf8) AS answer_xml,
+			email_sent
+		FROM message
+		WHERE company_id = p_company_id;
+	ELSE
+		SELECT
+			id,
+			company_id,
+			key_mh,
+			status,
+			code,
+			issue_date,
+			issuer_idn_num,
+			issuer_idn_type,
+			issuer_email,
+			recipient_idn,
+			recipient_seq_number,
+			IF(signed_xml IS NOT NULL, TRUE, FALSE) AS signed_xml,
+			answer_date,
+			IF(answer_xml IS NOT NULL, TRUE, FALSE) AS answer_xml,
+			email_sent
+		FROM message
+		WHERE company_id = p_company_id;
+	END IF;
+END $$
+DELIMITER ;

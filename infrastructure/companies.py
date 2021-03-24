@@ -166,3 +166,25 @@ def update_state(company_id, new_state):
         raise DatabaseError(error_code=DBErrorCodes.DB_COMPANY_UPDATE) from dbae
 
     return True
+
+
+def get_companys_documents_by_type(company_id, doc_type, return_files: bool):
+    procedure = 'usp_getCompanysDocumentsByType'
+    args = (company_id, doc_type, return_files)
+    try:
+        return dba.fetchall_from_proc(procedure, args)
+    except dba.DbAdapterError as dbae:
+        raise DatabaseError(
+            error_code=DBErrorCodes.DB_COMPANY_SELECT_DOCS_BY_TYPE
+        ) from dbae
+
+
+def get_messages(company_id, return_files: bool):
+    procedure = 'usp_getCompanysMessages'
+    args = (company_id, return_files)
+    try:
+        return dba.fetchall_from_proc(procedure, args)
+    except dba.DbAdapterError as dbae:
+        raise DatabaseError(
+            error_code=DBErrorCodes.DB_COMPANY_SELECT_MESSAGES
+        ) from dbae

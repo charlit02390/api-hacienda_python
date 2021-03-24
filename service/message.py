@@ -130,6 +130,31 @@ def get_by_company(company: str):
     return build_response_data({'data': messages})
 
 
+def get_prop(key_mh: str, prop_name: str):
+    key, *sequence = key_mh.split('-', 1)
+    sequence = sequence[0] if sequence else None
+    message = dao_message.select(key, sequence)
+    if not message:
+        raise InputError(
+            'message', key if sequence is None else '-'.join((key, sequence)),
+            error_code=InputErrorCodes.NO_RECORD_FOUND
+        )
+
+    if prop_name not in message:
+        raise InputError(
+            error_code=InputErrorCodes.MISSING_PROPERTY,
+            message='"{}" no es una propiedad del recurso solicitado.'.format(
+                prop_name
+            )
+        )
+
+    return build_response_data({
+        'data': {
+            prop_name: message[prop_name]
+        }
+    })
+
+
 def send_mail(document: dict):
     smtp_data = dao_smtp.get_company_smtp(document['company_user'])
 
