@@ -1,6 +1,7 @@
 from traceback import format_exc
 from smtplib import SMTPConnectError, SMTPNotSupportedError, SMTPAuthenticationError, SMTPSenderRefused, SMTPDataError, \
     SMTPRecipientsRefused
+from time import sleep
 
 from flask import jsonify
 
@@ -133,7 +134,8 @@ def build_response(data: dict):
 def run_and_summ_collec_job(collec_cb, item_cb,
                             item_id_keys, collec_cb_args=(),
                             collec_cb_kwargs=None,
-                            item_cb_kwargs_map=None):
+                            item_cb_kwargs_map=None,
+                            sleepme=0):
     """
     Very generic function that runs functions designed as
     scheduled jobs and summarizes their results.
@@ -193,6 +195,7 @@ Params: {}
                 item_cb.__qualname__,
                 params, format_exc())
             )
+        sleep(sleepme)
 
     summary_str = """-Successful counter: {}
 -Errors ({}):

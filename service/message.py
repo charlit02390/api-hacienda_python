@@ -185,7 +185,8 @@ def job_process_messages():
     return run_and_summ_collec_job(collec_cb,
                                    item_cb, item_id_key,
                                    collec_cb_args, {},
-                                   item_cb_kwargs_map)
+                                   item_cb_kwargs_map,
+                                   sleepme=20)
 
 
 def _handle_created_message(company: dict, message: dict, token: str):
@@ -343,7 +344,7 @@ def query_document(env: str, key: str, token: str):
 
 
 def _handle_hacienda_api_response(response: requests.Response):
-    if response.status_code in _data_statuses:  # responses that return info. Usuarlly from a get request
+    if response.status_code in _data_statuses:  # responses that return info. Usually from a get request
         try:
             info = response.json()
         except ValueError as ver:

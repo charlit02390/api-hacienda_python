@@ -624,7 +624,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`()
 BEGIN
 Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "procesando" and cp.is_active = true ORDER BY d.document_type limit 20;
+inner join companies cp on d.company_id = cp.id where d.status in ("procesando", "error") and cp.is_active = true ORDER BY d.document_type limit 20;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1642,11 +1642,13 @@ BEGIN
 		SELECT
 			id,
 			company_id,
-			key_mh, status,
+			key_mh,
+			status,
 			isSent,
 			dateanswer,
 			datesign,
 			document_type,
+			dni_receiver,
 			dni_type_receiver,
 			total_document,
 			total_taxes,
@@ -1661,11 +1663,13 @@ BEGIN
 		SELECT
 			id,
 			company_id,
-			key_mh, status,
+			key_mh,
+			status,
 			isSent,
 			dateanswer,
 			datesign,
 			document_type,
+			dni_receiver,
 			dni_type_receiver,
 			total_document,
 			total_taxes,
@@ -1728,4 +1732,157 @@ BEGIN
 		WHERE company_id = p_company_id;
 	END IF;
 END $$
+DELIMITER ;
+-- -----------------------------------------------------
+-- Event based Request Pooling?
+DELIMITER //
+
+SELECT defaultinterval INTO @defaultInterval FROM requestpool WHERE id = 1 //
+CREATE OR REPLACE EVENT uev_requestpool_resetPool
+ON SCHEDULE
+	EVERY @defaultInterval SECOND
+DO
+	UPDATE requestpool SET pool = maxpool WHERE id = 1 //
+
+
+CREATE OR REPLACE FUNCTION ufn_isResetPoolSleeping()
+RETURNS BOOLEAN
+BEGIN
+	DECLARE isSleeping BOOLEAN DEFAULT 1;
+	
+	SELECT status = 'DISABLED'
+	INTO isSleeping
+	FROM INFORMATION_SCHEMA.EVENTS
+	WHERE event_schema = SCHEMA()
+		AND event_name = 'uev_requestpool_resetPool';
+		
+	RETURN isSleeping;
+END //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_resetInterval()
+BEGIN
+	DECLARE v_defaultInterval INT;
+
+    SELECT defaultinterval
+    INTO v_defaultInterval
+    FROM requestpool
+    WHERE id = 1;
+
+    ALTER EVENT uev_requestpool_resetPool
+    ON SCHEDULE
+    	EVERY v_defaultInterval SECOND
+    ENABLE;
+END //
+
+
+CREATE OR REPLACE EVENT uev_requestpool_resetInterval
+ON SCHEDULE
+	AT CURRENT_TIMESTAMP(6) + INTERVAL 1 SECOND
+ON COMPLETION PRESERVE
+DISABLE
+DO
+	CALL usp_requestpool_resetInterval() //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_setSleep(
+	p_sleep INT UNSIGNED
+)
+this_proc: BEGIN
+	DECLARE v_sleep INT UNSIGNED DEFAULT IF(p_sleep IS NOT NULL, p_sleep, 0);
+
+	IF ufn_isResetPoolSleeping() THEN
+		LEAVE this_proc;
+	END IF;
+
+	ALTER EVENT uev_requestpool_resetPool
+    	DISABLE;
+
+    ALTER EVENT uev_requestpool_resetInterval
+    ON SCHEDULE
+    	AT CURRENT_TIMESTAMP(6) + INTERVAL v_sleep SECOND
+    ENABLE;
+    
+    UPDATE requestpool SET pool = 0 WHERE id = 1;
+END //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_initBurst()
+BEGIN
+	DECLARE v_burstBegin TIMESTAMP(6) DEFAULT NOW(6);
+	DECLARE v_burstEnd TIMESTAMP(6) DEFAULT NOW(6);
+	DECLARE v_burstCurrent INT UNSIGNED DEFAULT 0;
+
+	SELECT burstbegin, burstend
+	INTO v_burstBegin, v_burstEnd
+	FROM requestpool
+	WHERE id = 1;
+	
+	IF v_burstBegin IS NULL
+			OR NOW(6) NOT BETWEEN v_burstBegin AND v_burstEnd THEN
+		UPDATE requestpool
+		SET burstbegin = NOW(6),
+			burstend = DATE_ADD(NOW(6), INTERVAL burstduration SECOND),
+			burstcurrent = 0
+		WHERE id = 1;
+	END IF;
+END //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_spend(
+    p_amount INT UNSIGNED
+)
+BEGIN
+	DECLARE v_hasRequestsAvailable TINYINT UNSIGNED DEFAULT 0;
+    DECLARE v_amount INT UNSIGNED DEFAULT IF(p_amount IS NOT NULL, p_amount, 0);
+	DECLARE v_burstBegin TIMESTAMP(6) DEFAULT NOW(6);
+	DECLARE v_burstEnd TIMESTAMP(6) DEFAULT NOW(6);
+	DECLARE v_burstLimit INT UNSIGNED DEFAULT 0;
+	DECLARE v_burstCurrent INT UNSIGNED DEFAULT 0;
+	DECLARE v_burstSleep INT UNSIGNED DEFAULT 0;
+
+	START TRANSACTION READ WRITE;
+
+    SELECT pool > 0 AND pool >= v_amount, burstlimit, burstsleep
+    INTO v_hasRequestsAvailable, v_burstLimit, v_burstSleep
+    FROM requestpool
+	WHERE id = 1;
+
+	IF v_hasRequestsAvailable THEN
+    	UPDATE requestpool
+    	SET pool = pool - v_amount
+    	WHERE id = 1;
+		
+		CALL usp_requestpool_initBurst();
+		
+		SELECT burstbegin, burstend, burstcurrent
+		INTO v_burstBegin, v_burstEnd, v_burstCurrent
+		FROM requestpool
+		WHERE id = 1;
+		
+		IF (v_burstCurrent + v_amount) >= v_burstLimit THEN
+			CALL usp_requestpool_setSleep(v_burstSleep);
+		ELSE
+			UPDATE requestpool
+			SET burstcurrent = burstcurrent + v_amount,
+				burstend = DATE_ADD(
+					burstend,
+					INTERVAL CAST(burstduration / 10 AS INT) SECOND
+				)
+			WHERE id = 1;
+		END IF;
+    END IF;
+    
+    COMMIT;
+    
+    SELECT v_hasRequestsAvailable AS success;
+END //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_isSleeping()
+BEGIN
+	SELECT ufn_isResetPoolSleeping() AS isSleeping;
+END //
+
+
 DELIMITER ;

@@ -41,11 +41,11 @@ def sent_email_fe(data):
     if not document:
         raise InputError('document', data['key_mh'], error_code=InputErrorCodes.NO_RECORD_FOUND)
 
-    primaryRecipient = document['email']
-    receivers = [primaryRecipient]
-    additionalRecipients = documents.get_additional_emails(data['key_mh'])
-    if isinstance(additionalRecipients, list):
-        receivers += list(x['email'] for x in additionalRecipients)
+    primary_recipient = document['email']
+    receivers = [primary_recipient]
+    additional_recipients = documents.get_additional_emails(data['key_mh'])
+    if isinstance(additional_recipients, list):
+        receivers += list(x['email'] for x in additional_recipients)
 
     subject = "Envio de " + fe_enums.tagNamePDF[document['document_type']] + ' Numero: ' + document['key_mh']
     body = 'Adjuntamos los datos de la ' + fe_enums.tagNamePDF[document['document_type']]
@@ -85,7 +85,7 @@ def send_custom_email(data, file1, file2, file3):
     attachments = []
     if file1:
         name_file1 = file1.filename
-        file1 = file1.stream.read()  # if this is a FileStorage werkzeug thingie, could prolly just file1.read()... to lazy to test...
+        file1 = file1.stream.read()
         attachments.append({'file': file1, 'name': name_file1})
 
     if file2:

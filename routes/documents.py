@@ -15,8 +15,7 @@ def create_documents():
 
 def processing_documents():
     body = json.loads(connexion.request.data)
-    result = service.processing_documents(body['data']['id_compania'], body['data']['clave'],
-                                          body['data']['es_consulta'])
+    result = service.processing_documents(body['data']['id_compania'], body['data']['clave'])
     return utils.build_response(result)
 
 

@@ -14,6 +14,7 @@ _logger = logging.getLogger(__name__)
 
 def send_email(receiver, host, sender, port, encrypt_type,
                user, password, subject, content, attachments):  # encrypt_type not used.
+    return True  # email killswitch
     # recipient circus 'cuz don't know python well enough
     # use deque for this...
     recipient_email = receiver.pop(0)

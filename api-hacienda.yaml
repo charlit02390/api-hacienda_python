@@ -591,12 +591,9 @@ components:
               type: string
             clave:
               type: string
-            es_consulta:
-              type: boolean
           required:
             - id_compania
             - clave
-            - es_consulta
       required:
         - data
     key:
