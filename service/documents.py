@@ -216,7 +216,7 @@ def processing_documents(company_user, key_mh):
     return result
 
 
-@log_section('Sending Documents')
+# @log_section('Sending Documents')
 def validate_documents():
     item_cb = validate_document
     collec_cb_args = (0,)
@@ -274,7 +274,7 @@ def validate_document(company_user, key_mh):
     return response
 
 
-@log_section("Fetching Documents' Statuses")
+# @log_section("Fetching Documents' Statuses")
 def consult_documents():
     item_cb = consult_document
     collec_cb_args = (1,)

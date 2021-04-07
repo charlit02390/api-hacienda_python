@@ -172,7 +172,7 @@ def send_mail(document: dict):
     return build_response_data({'message': 'Email succesfully sent'})
 
 
-@log_section('Processing Messages')
+# @log_section('Processing Messages')
 def job_process_messages():
     collec_cb = dao_message.select_by_status
     item_cb = process_message
