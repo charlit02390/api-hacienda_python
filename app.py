@@ -33,5 +33,6 @@ app.app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 errorhandlers.register_flask_app_handlers(app)
 
 if __name__ == '__main__':
-    scheduler.scheduled_jobs() # shouldn't this be outside of the if?
+    scheduler.scheduled_jobs()
     app.run(host='localhost', port=3005)
+
