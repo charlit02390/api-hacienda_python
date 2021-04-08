@@ -587,13 +587,13 @@ components:
         data:
           type: object
           properties:
-            id_compania:
+            nombre_usuario:
               type: string
-            clave:
+            clavelarga:
               type: string
           required:
-            - id_compania
-            - clave
+            - nombre_usuario
+            - clavelarga
       required:
         - data
     key:
