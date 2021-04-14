@@ -173,11 +173,11 @@ def send_mail(document: dict):
 
 
 # @log_section('Processing Messages')
-def job_process_messages():
+def job_process_messages(env):
     collec_cb = dao_message.select_by_status
     item_cb = process_message
     item_id_key = ('key_mh', 'recipient_seq_number')
-    collec_cb_args = ('procesando', None, True)
+    collec_cb_args = ('procesando', None, True, env)
     item_cb_kwargs_map = {
         'key_mh': 'key_mh',
         'rec_seq_num': 'recipient_seq_number'

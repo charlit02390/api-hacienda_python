@@ -620,11 +620,18 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`(
+	p_env VARCHAR(10)
+)
 BEGIN
 Select cp.company_user,  d.key_mh
-from documents d 
-inner join companies cp on d.company_id = cp.id where d.status in ("procesando", "error") and cp.is_active = true ORDER BY d.document_type limit 20;
+from documents d
+inner join companies cp on d.company_id = cp.id
+INNER JOIN companies_mh AS cmh ON cp.id = cmh.company_api
+where d.status in ("procesando", "error")
+and cp.is_active = true
+AND cmh.env = p_env
+ORDER BY d.document_type limit 35;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -669,11 +676,18 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsValidate`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsValidate`(
+	p_env VARCHAR(10)
+)
 BEGIN
-	Select cp.company_user,  d.key_mh
+Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "creado" and cp.is_active = true ORDER BY d.document_type limit 20;
+inner join companies cp on d.company_id = cp.id
+INNER JOIN companies_mh AS cmh ON cp.id = cmh.company_api
+where d.status = "creado"
+and cp.is_active = true
+AND cmh.env = p_env
+ORDER BY d.document_type limit 35;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1487,9 +1501,11 @@ SELECT	msg.id,
 	msg.answer_date,
 	IF(msg.answer_xml IS NOT NULL, TRUE, FALSE) AS answer_xml,
 	cmp.is_active as company_is_active,
-	msg.email_sent
+	msg.email_sent,
+	cmh.env AS company_env
 FROM	`message` AS msg INNER JOIN
-	companies as cmp ON msg.company_id = cmp.id;
+	companies as cmp ON msg.company_id = cmp.id INNER JOIN
+	companies_mh AS cmh ON cmp.id = cmh.company_api;
 
 
 DROP PROCEDURE IF EXISTS usp_select_message;
@@ -1532,6 +1548,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByStatus_message` (
 	IN `p_status` VARCHAR(30),
 	IN `p_company_user` VARCHAR(50),
 	IN `p_company_is_active` TINYINT UNSIGNED,
+	IN p_env VARCHAR(10),
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
@@ -1541,6 +1558,9 @@ BEGIN
 	END IF;
 	IF `p_company_is_active` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_is_active = ', `p_company_is_active`);
+	END IF;
+	IF p_env IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' AND v_msg.company_env = "', p_env, '"');
 	END IF;
 	IF `p_limit` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);

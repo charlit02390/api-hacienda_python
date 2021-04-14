@@ -22,7 +22,7 @@ class InputErrorCodes(IntEnum):
 
 
 class ValidationErrorCodes(IntEnum):
-    _BASE = 3 * 10
+    _BASE = 3 * 100
     INVALID_KEY_COMPOSITION = _BASE + 1
     INVALID_DATETIME_FORMAT = _BASE + 2
     INVALID_EMAIL = _BASE + 3
@@ -32,6 +32,7 @@ class ValidationErrorCodes(IntEnum):
     INVALID_TOTAL = _BASE + 7
     TAXCUT_AUTH_NOT_FOUND = _BASE + 8
     INVALID_DOCUMENT = _BASE + 9
+    INVALID_CABYS = _BASE + 10
 
 
 class EmailErrorCodes(IntEnum):

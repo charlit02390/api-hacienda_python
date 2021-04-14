@@ -78,9 +78,10 @@ def select_by_company(company_user: str, limit: int = None):
 
 
 def select_by_status(status: str, company_user: str = None,
-                     company_is_active: bool = None, limit: int = 20):
+                     company_is_active: bool = None, env: str = 'api-stag',
+                     limit: int = 20):
     procedure = 'usp_selectByStatus_message'
-    args = (status, company_user, company_is_active, limit)
+    args = (status, company_user, company_is_active, env, limit)
     try:
         return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
