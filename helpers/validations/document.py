@@ -614,6 +614,7 @@ def check_taxcut(authorization: str, line_number: int,
         else:
             # TODO: log
             raise HaciendaError(
+                status='Reintentar',
                 http_status=response.status_code,
                 headers=response.headers,
                 body=response.text,
@@ -628,6 +629,7 @@ def check_cabys(code: str, line_number: str,
     code_len = len(code.strip())
     if code_len != CABYS_VALID_LENGTH:
         raise ValidationError(
+            status='NoCabys {}'.format(line_number),
             error_code=ValidationErrorCodes.INVALID_CABYS,
             message=('La linea #{} posee un código CABYS con una'
                      ' longitud inválida de {} caracteres. La longitud debe'
@@ -642,13 +644,15 @@ def check_cabys(code: str, line_number: str,
     if response.status_code == 200:
         json = response.json()
         if len(json) == 0:  # hacienda returns a json array
-            raise ValidationError(error_code=ValidationErrorCodes.CABYS_NOT_FOUND,
-                                  message=('La linea #{} posee un código'
-                                           ' CABYS que no se encuentra en Hacienda.')
-                                  .format(line_number))
+            raise ValidationError(
+                status='NoCabys {}'.format(line_number),
+                error_code=ValidationErrorCodes.CABYS_NOT_FOUND,
+                message=('La linea #{} posee un código CABYS que no '
+                         'se encuentra en Hacienda.').format(line_number))
     else:
         # TODO: logging
         raise HaciendaError(
+            status='Reintentar',
             http_status=response.status_code,
             headers=response.headers,
             body=response.text,
@@ -672,6 +676,7 @@ def requests_get(endpoint: str, params: dict, timeout: int = 28,
     except requests.exceptions.RequestException as reqex:  # TODO: branch into more specific exceptions
         # TODO logging
         raise HaciendaError(
+            status='Reintentar',
             http_status=502,
             headers={},
             body=str(reqex),

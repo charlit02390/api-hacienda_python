@@ -104,14 +104,14 @@ def get_documents_company(company_id, state):  # MFD
     return dba.fetchall_from_proc(procname=procedure, args=args)
 
 
-def get_documents(state):
+def get_documents(state, env):
     if state == 0:
         procedure = 'sp_getDocumentsValidate'
     else:
         procedure = 'sp_getDocumentsConsult'
 
     try:
-        return dba.fetchall_from_proc(procname=procedure)
+        return dba.fetchall_from_proc(procname=procedure, args=(env,))
     except dba.DbAdapterError as dbae:
         raise DatabaseError(procedure,
                             error_code=DBErrorCodes.DB_DOCUMENT_JOBS) from dbae

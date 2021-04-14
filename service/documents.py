@@ -217,9 +217,9 @@ def processing_documents(company_user, key_mh):
 
 
 # @log_section('Sending Documents')
-def validate_documents():
+def validate_documents(env: str):
     item_cb = validate_document
-    collec_cb_args = (0,)
+    collec_cb_args = (0, env)
     return _run_and_summ_docs_job(item_cb=item_cb,
                                   collec_cb_args=collec_cb_args)
 
@@ -275,9 +275,9 @@ def validate_document(company_user, key_mh):
 
 
 # @log_section("Fetching Documents' Statuses")
-def consult_documents():
+def consult_documents(env):
     item_cb = consult_document
-    collec_cb_args = (1,)
+    collec_cb_args = (1, env)
     return _run_and_summ_docs_job(item_cb=item_cb,
                                   collec_cb_args=collec_cb_args)
 
