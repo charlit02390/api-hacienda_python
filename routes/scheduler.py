@@ -17,7 +17,7 @@ def scheduled_jobs():
 
 def schedule_stag():
     scheduler.add_job(
-        id='Validate documents',
+        id='Validate documents Stag',
         func=documents.validate_documents,
         trigger='interval',
         seconds=1000,
@@ -25,7 +25,7 @@ def schedule_stag():
     )
 
     scheduler.add_job(
-        id='Consult documents',
+        id='Consult documents Stag',
         func=documents.consult_documents,
         trigger='interval',
         seconds=1800,
@@ -34,7 +34,7 @@ def schedule_stag():
     )
 
     scheduler.add_job(
-        id='Process Messages',
+        id='Process Messages Stag',
         func=model_message.job_process_messages,
         trigger='interval',
         seconds=2100,
@@ -45,7 +45,7 @@ def schedule_stag():
 
 def schedule_prod():
     scheduler.add_job(
-        id='Validate documents',
+        id='Validate documents Prod',
         func=documents.validate_documents,
         trigger='interval',
         seconds=600,
@@ -53,7 +53,7 @@ def schedule_prod():
     )
 
     scheduler.add_job(
-        id='Consult documents',
+        id='Consult documents Prod',
         func=documents.consult_documents,
         trigger='interval',
         seconds=700,
@@ -62,7 +62,7 @@ def schedule_prod():
     )
 
     scheduler.add_job(
-        id='Process Messages',
+        id='Process Messages Prod',
         func=model_message.job_process_messages,
         trigger='interval',
         seconds=1000,
