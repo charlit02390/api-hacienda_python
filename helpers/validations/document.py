@@ -213,6 +213,7 @@ def validate_sequence(sequence: str, branch: str,
     return True
 
 
+# TODO: validate required and optional fields
 def validate_recipient(recipient: dict, doc_type: str):
     if recipient is None:
         if doc_type in OPTIONAL_RECIPIENT_DOC_TYPES:
@@ -224,7 +225,7 @@ def validate_recipient(recipient: dict, doc_type: str):
                          'receptor y este no fue especificado.').format(doc_type)
             )
 
-    rec_idn_type = recipient['tipoIdentificacion']
+    rec_idn_type = recipient['tipoIdentificacion']  # required
     try:  # should be unnecesary since it's validated in yaml
         idn_type_inst = IDNType(rec_idn_type)
     except ValueError:
@@ -234,7 +235,7 @@ def validate_recipient(recipient: dict, doc_type: str):
                      'identificación válido.').format(rec_idn_type)
         )
 
-    idn = recipient['numeroIdentificacion']
+    idn = recipient['numeroIdentificacion']  # required
     try:
         IDN(idn_type_inst, idn)
     except ValueError:
@@ -245,7 +246,7 @@ def validate_recipient(recipient: dict, doc_type: str):
                      ).format(idn, rec_idn_type)
         )
 
-    email = recipient['correo']
+    email = recipient['correo']  # optional
     additional_emails = recipient.get('correosAdicionales', [])
     if not isinstance(additional_emails, list):
         raise InputError(
@@ -473,14 +474,11 @@ def validate_line(line: dict, doc_type: str,
         tax_amount_prop = 'monto'
         tax_amount = Money(tax[tax_amount_prop])
         if tax_code == IVAFACTOR_REQ_TAX_CODE:
-            iva_factor = Money(iva_factor) - 1
-            calc_tax_amount = Money.mul(tax_subtotal, iva_factor)
+            tax_rate = Money(iva_factor) - 1
         else:
-            tax_rate = Money(tax['tarifa'])
-            calc_tax_amount = Money.div(
-                Money.mul(tax_subtotal, tax_rate),
-                100
-            )
+            tax_rate = Money(tax['tarifa']) / 100
+
+        calc_tax_amount = Money.mul(tax_subtotal, tax_rate)
 
         if calc_tax_amount != tax_amount:
             raise_invalid_detail_line(line_number, tax_amount_prop, tax_amount,
@@ -497,8 +495,11 @@ def validate_line(line: dict, doc_type: str,
             cut_percentage_prop = 'porcentajeExoneracion'
             cut_amount = Money(cut[cut_amount_prop])
             cut_percentage = cut[cut_percentage_prop]
+            validate_line_tax_cut_percentage(cut_percentage, tax_rate,
+                                             line_number)
             validate_line_tax_cut_amount(cut_amount_prop, cut_amount,
-                                         cut_percentage, tax_subtotal, line_number)
+                                         cut_percentage, tax_subtotal, calc_tax_amount,
+                                         line_number)
 
             calc_net_tax -= cut_amount
             tax_subtotal -= cut_amount
@@ -521,11 +522,34 @@ def validate_line(line: dict, doc_type: str,
     return True
 
 
+def validate_line_tax_cut_percentage(cut_percentage, tax_rate, line_number):
+    int_tax_rate = int(tax_rate * 100)
+    if Money(cut_percentage) > int_tax_rate:
+        raise ValidationError(
+            error_code=ValidationErrorCodes.INVALID_DETAIL_LINE,
+            message=('Linea Detalle #{}: el porcentaje de exoneración indicado:'
+                     ' "{}" no puede ser mayor al porcentaje de impuesto o factor iva '
+                     'del impuesto a exonerar ({}).').format(line_number,
+                                                             cut_percentage, str(int_tax_rate))
+        )
+
+
 def validate_line_tax_cut_amount(cut_amount_prop, cut_amount,
-                                 cut_percentage, line_subtotal, line_number):
-    calc_cut_amount = Money.mul(
-        line_subtotal, (Money.div(Money(cut_percentage), Money(100)))
+                                 cut_percentage, line_subtotal, calc_tax_amount,
+                                 line_number):
+    calc_cut_amount = min(
+        calc_tax_amount,
+        Money.mul(
+            line_subtotal, (Money.div(Money(cut_percentage), Money(100)))
+        )
     )
+
+    if calc_cut_amount < cut_amount:
+        remarks = ('El monto de exoneración no puede ser mayor al monto de'
+                   ' impuesto.',)
+        raise_invalid_detail_line(line_number, cut_amount_prop,
+                                  cut_amount, calc_cut_amount, remarks)
+
     if calc_cut_amount != cut_amount:
         remarks = ('Porcentaje Exoneracion: {}.'.format(cut_percentage),)
         raise_invalid_detail_line(line_number, cut_amount_prop,

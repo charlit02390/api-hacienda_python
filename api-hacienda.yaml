@@ -463,7 +463,7 @@ components:
               type: string
             numReferencia:
               type: string
-            codigo_vendedor:
+            codigoVendedor:
               type: string
             receptor:
               $ref: '#/components/schemas/doc_recipient'
@@ -726,13 +726,13 @@ components:
     email_mh:
       type: object
       properties:
-        company_user:
+        nombre_usuario:
           type: string
-        key_mh:
+        clavelarga:
           type: string
       required:
-        - company_user
-        - key_mh
+        - nombre_usuario
+        - clavelarga
     rspns_cabys:
       type: object
       properties:

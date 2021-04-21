@@ -194,6 +194,8 @@ def company_xml(sb, issuing_company, document_type):
                         '01' if not issuing_company.get('barrio') else str(issuing_company['barrio'])) + '</Barrio>')
                     sb.append('<OtrasSenas>' + escape(str(issuing_company['otrasSenas'] or 'NA')) + '</OtrasSenas>')
                     sb.append('</Ubicacion>')
+
+                if issuing_company.get('telefono'):
                     sb.append('<Telefono>')
                     sb.append('<CodigoPais>' + str(issuing_company['codigoPais']) + '</CodigoPais>')
                     sb.append('<NumTelefono>' + str(issuing_company['telefono']) + '</NumTelefono>')
@@ -303,6 +305,8 @@ def receptor_xml(sb, receiver_company, document_type):
                         sb.append(
                             '<OtrasSenas>' + escape(str(receiver_company['otrasSenas'] or 'NA')) + '</OtrasSenas>')
                         sb.append('</Ubicacion>')
+
+                    if receiver_company.get('telefono'):
                         sb.append('<Telefono>')
                         sb.append('<CodigoPais>' + str(receiver_company['codigoPais']) + '</CodigoPais>')
                         sb.append('<NumTelefono>' + str(receiver_company['telefono']) + '</NumTelefono>')
