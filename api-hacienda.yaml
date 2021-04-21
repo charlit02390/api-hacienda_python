@@ -726,13 +726,13 @@ components:
     email_mh:
       type: object
       properties:
-        nombre_usuario:
+        company_user:
           type: string
-        clavelarga:
+        key_mh:
           type: string
       required:
-        - nombre_usuario
-        - clavelarga
+        - company_user
+        - key_mh
     rspns_cabys:
       type: object
       properties:

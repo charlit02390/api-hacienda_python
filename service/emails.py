@@ -13,7 +13,7 @@ cfg = globalsettings.cfg
 
 
 def sent_email_fe(data):
-    smtp_data = company_smtp.get_company_smtp(data['nombre_usuario'])
+    smtp_data = company_smtp.get_company_smtp(data['company_user'])
 
     if smtp_data:
         host = smtp_data['host']
@@ -30,9 +30,9 @@ def sent_email_fe(data):
         port = cfg['email']['port']
         encrypt_type = cfg['email']['encrypt_type']
 
-    document = documents.get_document(data['clavelarga'])
+    document = documents.get_document(data['key_mh'])
     if not document:
-        raise InputError('document', data['clavelarga'], error_code=InputErrorCodes.NO_RECORD_FOUND)
+        raise InputError('document', data['key_mh'], error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     primary_recipient = document['email']
     receivers = [primary_recipient]
