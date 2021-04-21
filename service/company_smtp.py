@@ -58,7 +58,7 @@ def modify_company_smtp(data, id_company):
         raise InputError(error_code=InputErrorCodes.NO_RECORD_FOUND,
                          message="The company doesn't have SMTP data to be updated.")
 
-    company_smtp.modify_company_smtp(_host, _password, _user, _port,
+    company_smtp.modify_company_smtp(_host, _user, _password, _port,
                                      _encrypt_type, id_company, _sender)
 
     return build_response_data({'message': "The company's SMTP was successfully updated."})
