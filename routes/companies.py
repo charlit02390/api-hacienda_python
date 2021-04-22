@@ -43,6 +43,7 @@ def get_documents(company_id: str, doc_type: str, files: str = None):
     result = service.get_documents_by_type(company_id, doc_type, files)
     return utils.build_response(result)
 
+
 def get_messages(company_id: str, files: str = None):
     result = service.get_messages(company_id, files)
     return utils.build_response(result)

@@ -271,7 +271,7 @@ components:
             - '99'
         NumeroDocumento:
           type: string
-          pattern: ^([aA][lL])[-]([0-9]{8})[-]([0-9]{2})$ # format al-00000000-00
+          # pattern: ^([aA][lL])[-]([0-9]{8})[-]([0-9]{2})$ # format al-00000000-00
         NombreInstitucion:
           type: string
         FechaEmision:
