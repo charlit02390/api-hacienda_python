@@ -479,6 +479,11 @@ def validate_line(line: dict, doc_type: str,
             tax_rate = Money(tax['tarifa']) / 100
 
         calc_tax_amount = Money.mul(tax_subtotal, tax_rate)
+
+        if calc_tax_amount != tax_amount:
+            raise_invalid_detail_line(line_number, tax_amount_prop, tax_amount,
+                                      calc_tax_amount)
+
         calc_net_tax += tax_amount
 
         tax_cuts = tax.get('exoneracion', [])
@@ -496,13 +501,8 @@ def validate_line(line: dict, doc_type: str,
                                          cut_percentage, tax_subtotal, calc_tax_amount,
                                          line_number)
 
-            calc_tax_amount = max(0, calc_tax_amount - cut_amount)
-            calc_net_tax = max(0, calc_net_tax - cut_amount)
-            tax_subtotal = max(0, tax_subtotal - cut_amount)
-
-        if calc_tax_amount != tax_amount:
-            raise_invalid_detail_line(line_number, tax_amount_prop, tax_amount,
-                                      calc_tax_amount)
+            calc_net_tax -= cut_amount
+            tax_subtotal -= cut_amount
 
         tax_subtotal += tax_amount
 
