@@ -71,7 +71,7 @@
 				</td>
 				<td> <b>Moneda:</b> </td>
 				<td>
-					{{currency.tipoMoneda}}{% if currency.tipoMoneda != "CRC" %} T.c. {{currency.tipoCambio}}{% endif %}
+					{{currency.tipoMoneda}}{% if currency.tipoMoneda != "CRC" and currency.tipoCambio %} T.c. {{currency.tipoCambio}}{% endif %}
 				</td>
 			</tr>
 			<tr>

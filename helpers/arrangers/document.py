@@ -1,8 +1,10 @@
 from copy import deepcopy
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from service import fe_enums, utils
 from infrastructure import companies as companies_dao
+from infrastructure import documents as documents_dao
 # from helpers.debugging import time_my_func
 from helpers.errors.exceptions import ValidationError
 from helpers.errors.enums import ValidationErrorCodes
@@ -46,7 +48,10 @@ def arrange_xml_data(data: dict) -> dict:
                 references = [references]
 
             for ref in references:
-                if 'fecha' in ref:
+                document = documents_dao.get_document(ref['numeroReferencia'])
+                if document is not None:
+                    ref['fecha'] = document['datesign'].isoformat()
+                else:
                     ref['fecha'] = parse_datetime(ref['fecha'], 'referencia => fecha').isoformat()
 
             if references:
@@ -260,9 +265,10 @@ def build_pdf_body_data(data: dict) -> dict:
     )
 
     body_data['currency'] = {
-        'tipoMoneda': currency['tipoMoneda'],
-        'tipoCambio': utils.stringRound(currency['tipoCambio'])
+        'tipoMoneda': currency['tipoMoneda']
     }
+    if not data.get('sinTipoCambio'):
+        body_data['currency']['tipoCambio'] = utils.stringRound(currency['tipoCambio'])
 
     body_data['currencySymbol'] = fe_enums.currencies.get(
         currency['tipoMoneda'], ''
@@ -323,6 +329,8 @@ def build_pdf_body_data(data: dict) -> dict:
                     ).isoformat(),
                     'percentage': exemption['porcentajeExoneracion']
                 }
+            elif Decimal(exemptions[ex_doc_num]['percentage']) < Decimal(exemption['porcentajeExoneracion']):
+                exemptions[ex_doc_num]['percentage'] = exemption['porcentajeExoneracion']
 
     if exemptions:
         body_data['exemption'] = {
@@ -421,15 +429,24 @@ def generates_pdf(data: dict) -> bool:
 
 
 def references_fe(data: dict) -> bool:
-    ref = data.get('referencia', {})
-    if not isinstance(ref, dict):
+    ref = data.get('referencia')
+    if isinstance(ref, str) or ref is None:
+        return False
+
+    if not isinstance(ref, (dict, list)):  # jic
         raise ValidationError(
             error_code=ValidationErrorCodes.INVALID_DOCUMENT,
             message=('La propiedad "referencia" posee un valor de tipo inválido.'
                      ' Tipo recibido: {} . Tipo esperado: object').format(type(ref))
         )
 
-    doctype = ref['tipoDocumento'].strip()
+    if isinstance(ref, list):
+        if len(ref):
+            ref = ref[0]
+        else:
+            return False
+
+    doctype = ref.get('tipoDocumento', '').strip()
     if not doctype:
         raise ValidationError(
             error_code=ValidationErrorCodes.INVALID_DOCUMENT,

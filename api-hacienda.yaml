@@ -1306,7 +1306,7 @@ paths:
         default:
           $ref: '#/components/responses/Error'
       security:
-      - api_key: []
+        - api_key: []
   /api/documents/{key}/signed:
     get:
       tags:
@@ -1358,7 +1358,7 @@ paths:
         default:
           $ref: '#/components/responses/Error'
       security:
-      - api_key: []
+        - api_key: []
   /api/references/key:
     post:
       tags:

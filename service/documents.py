@@ -21,6 +21,33 @@ from helpers.arrangers import document as document_arranger
 docLogger = logging.getLogger(__name__)
 
 
+def makeqr(_key_mh: str, date_doc: str):
+    from base64 import b64encode
+    from hashlib import sha3_512
+    import qrcode
+    from io import BytesIO
+
+    # base_url = 'https://api.spykacr.com/api/queryqr/'
+    # h = sha3_512()
+    # h.update(_key_mh.encode())
+    # key_hash = h.hexdigest()
+
+    # check if duplicate hash
+
+    # qr_data = base_url + key_hash
+    qr_data = _key_mh
+    qr_img = qrcode.make(qr_data)
+    buffered = BytesIO()
+    qr_img.save(buffered, 'JPEG')
+    b64_img_data = b64encode(buffered.getvalue()).decode()
+
+    return b64_img_data
+    # return {
+    #     'b64img': b64_img_data,
+    #     'keyhash': key_hash
+    # }
+
+
 def create_document(data):
     _company_user = data['nombre_usuario']
 
@@ -115,12 +142,14 @@ def create_document(data):
 
     pdfencoded = None  # Por si ES tiquete que guarde nada como pdf
     if pdf_data is not None:  # _type_document != 'TE':
+        qr_img = makeqr(_key_mh, datecr)
+        pdf_data['footer']['qr_img'] = qr_img
+        pdf_data['footer']['qr_size'] = 95
         try:
             pdf = makepdf.render_pdf(pdf_data)
         except Exception as ex:  # TODO : be more specific about exceptions
             raise  # TODO : 'A problem occured when creating the PDF File for the document.' # INTERNAL ERROR
-        # Prueba de creacion de correo
-        # emails.sent_email(pdf, xml_sign)
+
         pdfencoded = base64.b64encode(pdf)
 
     # return {'status': 'procesando...'}
