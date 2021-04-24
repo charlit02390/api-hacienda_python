@@ -1,4 +1,3 @@
-
 import json
 import re
 from enum import Enum
@@ -17,6 +16,7 @@ class Search(Enum):
 class Find(Enum):
     SACS = cabys.find_sacs
 
+
 # Defines a minimum length for the search query sent by the user for searching
 _MIN_LENGTH = 3
 
@@ -28,21 +28,21 @@ def search(data, where):
     result = {}
     _query = data.get('query', '').strip()
     if _query and len(_query) >= _MIN_LENGTH:
-            # Search. Asume all good
-            # Dispatch to proper method depending on "where"
-            result = {'data' : where(format_query(_query))}
+        # Search. Asume all good
+        # Dispatch to proper method depending on "where"
+        result = {'data': where(format_query(_query))}
 
     else:
-        error = { 'message' : "There was no query specified in the request's body.",
-                 'code' : 21 }
-        result = {'http_status' : 400,
-                  'error': error }
+        error = {'message': "There was no query specified in the request's body.",
+                 'code': 21}
+        result = {'http_status': 400,
+                  'error': error}
 
     response = utils.build_response_data(
         result,
         warn_msg=(
             'No matches were found for the query "{}".'
-            ).format(_query))
+        ).format(_query))
     return response
 
 
@@ -51,16 +51,15 @@ def search(data, where):
 # function... I don't know...
 def find(data, where):
     _code = data.get('cabys', '').strip()
-    if _code in data:
+    if _code:
         # Go. Dispatch the "where" method
-        result = { 'data' : where(_code)}
-
+        result = {'data': where(_code)}
 
     else:
-       error = { 'message' : "There was no Cabys code specified in the request's body.",
-                'code': 21} 
-       result = {'http_status' : 400,
-                 'error': error }
+        error = {'message': "There was no Cabys code specified in the request's body.",
+                 'code': 21}
+        result = {'http_status': 400,
+                  'error': error}
 
     response = utils.build_response_data(
         result,
@@ -79,12 +78,12 @@ def get(code: str):
                 'error': {
                     'message': (
                         'No cabys was found for code {}.'
-                        ).format(code),
+                    ).format(code),
                     'code': 21
                 }
             }
         )
-    
+
     return utils.build_response_data({
         'data': found
     })
@@ -100,25 +99,24 @@ def format_query(query):
     pattern = re.compile(r'["](.*?)["]')
 
     # Get all parts enclosed in double quotes
-    quotedParts = pattern.findall(query)
+    quoted_parts = pattern.findall(query)
 
     # Get all parts NOT enclosed in double quotes...
-    queryNonQuotedParts = pattern.sub('', query)
+    query_non_quoted_parts = pattern.sub('', query)
 
     # Since these might mean different keywords, gotta split them with a whitespace
-    explodedquery = queryNonQuotedParts.split(' ')
+    explodedquery = query_non_quoted_parts.split(' ')
 
     # Clean any empty strings
     cleanerexplosion = [string for string in explodedquery if string != ""]
 
     # Join dem arrays
-    joinedParts = cleanerexplosion + quotedParts
+    joined_parts = cleanerexplosion + quoted_parts
 
     # Join them into a string separated by '|' for regexp "or"
-    formattedQuery = separator.join(joinedParts) # Hopefully this is it, and I'm done here
+    formatted_query = separator.join(joined_parts)  # Hopefully this is it, and I'm done here
 
     # le debug
-    print(formattedQuery)
+    print(formatted_query)
 
-    return formattedQuery # flush this trash
-
+    return formatted_query  # flush this trash

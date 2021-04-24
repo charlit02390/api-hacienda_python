@@ -9,6 +9,7 @@ from . import makepdf
 from . import emails
 from infrastructure import companies
 from infrastructure import documents
+from infrastructure import request_pool
 from infrastructure.dbadapter import connectToMySql
 from helpers.errors.enums import InputErrorCodes, InternalErrorCodes
 from helpers.errors.exceptions import InputError, ServerError
@@ -20,6 +21,33 @@ from helpers.arrangers import document as document_arranger
 docLogger = logging.getLogger(__name__)
 
 
+def makeqr(_key_mh: str, date_doc: str):
+    from base64 import b64encode
+    from hashlib import sha3_512
+    import qrcode
+    from io import BytesIO
+
+    # base_url = 'https://api.spykacr.com/api/queryqr/'
+    # h = sha3_512()
+    # h.update(_key_mh.encode())
+    # key_hash = h.hexdigest()
+
+    # check if duplicate hash
+
+    # qr_data = base_url + key_hash
+    qr_data = _key_mh
+    qr_img = qrcode.make(qr_data)
+    buffered = BytesIO()
+    qr_img.save(buffered, 'JPEG')
+    b64_img_data = b64encode(buffered.getvalue()).decode()
+
+    return b64_img_data
+    # return {
+    #     'b64img': b64_img_data,
+    #     'keyhash': key_hash
+    # }
+
+
 def create_document(data):
     _company_user = data['nombre_usuario']
 
@@ -27,24 +55,24 @@ def create_document(data):
     if not company_data:
         raise InputError('company',
                          _company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     if not company_data['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+        raise InputError(error_code=InputErrorCodes.INACTIVE_COMPANY)
 
     _key_mh = data['clavelarga']
     if documents.verify_exists(_key_mh):
         raise InputError('Document with key {}'.format(_key_mh),
-                         status=InputErrorCodes.DUPLICATE_RECORD)
+                         error_code=InputErrorCodes.DUPLICATE_RECORD)
 
     signature = companies.get_sign_data(_company_user)
     if not signature:
-        raise InputError(status=InputErrorCodes.NO_RECORD_FOUND,
+        raise InputError(error_code=InputErrorCodes.NO_RECORD_FOUND,
                          message=("No signature information was found"
                                   " for the company; can't sign the document,"
                                   " so the document can't be created."))
 
-    xml_data, pdf_data = document_arranger.arrange_data(data)
+    xml_data, pdf_data = document_arranger.arrange_data(data, company_data)
     document_validator.validate_data(xml_data)
 
     _type_document = xml_data['tipo']
@@ -75,16 +103,16 @@ def create_document(data):
             receptor=_receptor,
             total_servicio_gravado=xml_data['totalServGravados'],
             total_servicio_exento=xml_data['totalServExentos'],
-            totalServExonerado=xml_data['totalServExonerado'],
+            total_serv_exonerado=xml_data['totalServExonerado'],
             total_mercaderia_gravado=xml_data['totalMercanciasGravados'],
             total_mercaderia_exento=xml_data['totalMercanciasExentos'],
-            totalMercExonerada=xml_data['totalMercExonerada'],
-            totalOtrosCargos=xml_data['totalOtrosCargos'],
+            total_merc_exonerada=xml_data['totalMercExonerada'],
+            total_otros_cargos=xml_data['totalOtrosCargos'],
             base_total=xml_data['totalVentasNetas'],
             total_impuestos=_total_taxes,
             total_descuento=xml_data['totalDescuentos'],
             lines=_lines,
-            otrosCargos=xml_data.get('otrosCargos'),
+            otros_cargos=xml_data.get('otrosCargos'),
             invoice_comments=xml_data.get('otros'),
             referencia=xml_data.get('referencia'),
             payment_methods=xml_data['medioPago'],
@@ -114,19 +142,14 @@ def create_document(data):
 
     pdfencoded = None  # Por si ES tiquete que guarde nada como pdf
     if pdf_data is not None:  # _type_document != 'TE':
-        _logo = companies.get_logo_data(_company_user)
-        _logo = _logo['logo']
-        if _logo is not None:
-            _logo = _logo.decode('utf-8')
-
+        qr_img = makeqr(_key_mh, datecr)
+        pdf_data['footer']['qr_img'] = qr_img
+        pdf_data['footer']['qr_size'] = 95
         try:
-            pdf = makepdf.render_pdf(company_data,
-                                     _logo,
-                                     pdf_data)
+            pdf = makepdf.render_pdf(pdf_data)
         except Exception as ex:  # TODO : be more specific about exceptions
             raise  # TODO : 'A problem occured when creating the PDF File for the document.' # INTERNAL ERROR
-        # Prueba de creacion de correo
-        # emails.sent_email(pdf, xml_sign)
+
         pdfencoded = base64.b64encode(pdf)
 
     # return {'status': 'procesando...'}
@@ -152,7 +175,8 @@ def create_document(data):
 
     return {
         'status': 'procesando',
-        'message': 'Document successfully created.'
+        'http_status': 201,
+        'message': 'Documento creado exitosamente.'
     }
 
 
@@ -200,153 +224,275 @@ def save_additional_emails(key_mh, _emails, conn):
     return True
 
 
-@log_section('Sending Documents')
-def validate_documents():
+def processing_documents(company_user, key_mh):
+    document_data = documents.get_document(key_mh)
+    if not document_data:
+        raise InputError('document', key_mh,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    company_data = companies.get_company_data(company_user)
+    if not company_data:
+        raise InputError('company', company_user,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    if not company_data['is_active']:
+        raise InputError(error_code=InputErrorCodes.INACTIVE_COMPANY)
+
+    if document_data['status'] == 'creado':  # todo: optimize
+        result = validate_document(company_data, document_data)
+    else:
+        result = consult_document(company_data, document_data)
+    return result
+
+
+# @log_section('Sending Documents')
+def validate_documents(env: str):
     item_cb = validate_document
-    collec_cb_args = (0,)
+    collec_cb_args = (0, env)
     return _run_and_summ_docs_job(item_cb=item_cb,
                                   collec_cb_args=collec_cb_args)
 
 
 def validate_document(company_user, key_mh):
-    document_data = documents.get_document(key_mh)
-    if not document_data:
-        raise InputError('document', str(key_mh),
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+    response = {
+        'status': 'procesando',
+        'message': 'procesando'
+    }
 
-    company_data = companies.get_company_data(company_user)
-    if not company_data:
-        raise InputError('company', str(company_user),
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+    if not request_pool.spend():
+        return response
 
-    if not company_data['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+    if isinstance(company_user, str):
+        company_data = companies.get_company_data(company_user)
+    else:
+        company_data = company_user
+
+    if isinstance(key_mh, str):
+        document_data = documents.get_document(key_mh)
+    else:
+        document_data = key_mh
 
     date_cr = api_facturae.get_time_hacienda(False)
     date = api_facturae.get_time_hacienda(True)
 
     try:
-        token_m_h = api_facturae.get_token_hacienda(company_user,
-                                                    company_data['user_mh'],
-                                                    company_data['pass_mh'],
-                                                    company_data['env'])
+        token_m_h = api_facturae.get_token_hacienda(
+            company_data['company_user'], company_data['user_mh'],
+            company_data['pass_mh'], company_data['env']
+        )
     except Exception as ex:  # TODO : be more specific about exceptions
         raise  # TODO : 'A problem occured when attempting to get the token from Hacienda.' # INTERNAL ERROR
 
+    recipient = {
+        'dni_type_receiver': document_data['dni_type_receiver'],
+        'dni_receiver': document_data['dni_receiver']
+    }
     try:
-        response_json = api_facturae.send_xml_fe(company_data,
-                                                 document_data, key_mh, token_m_h,
-                                                 date_cr,
-                                                 document_data['signxml'],
-                                                 company_data['env'])
+        api_facturae.send_xml_fe(
+            company_data, recipient, document_data['key_mh'], token_m_h,
+            date_cr, document_data['signxml'], company_data['env']
+        )
     except Exception as ex:  # TODO : be more specific about exceptions
         raise  # TODO: 'error' : 'A problem occurred when attempting to send the document to Hacienda.' # INTERNAL ERROR
 
-    response_status = response_json.get('status')
-    response_text = response_json.get('text')
+    documents.update_document(
+        company_data['company_user'], document_data['key_mh'], None,
+        'procesando', date
+    )
 
-    if 200 <= response_status <= 299:
-        state_tributacion = 'procesando'
-        return_message = state_tributacion
-    else:
-        if response_text.find('ya fue recibido anteriormente') != -1:
-            state_tributacion = 'procesando'
-            return_message = 'Ya recibido anteriormente, se pasa a consultar'
-        else:
-            state_tributacion = 'procesando'
-            return_message = response_text
-
-    documents.update_document(company_user, key_mh, None,
-                              state_tributacion, date)
-
-    return {
-        'status': state_tributacion,
-        'message': return_message
-    }
+    return response
 
 
-@log_section('Fetching Documents\' Statuses')
-def consult_documents():
+# @log_section("Fetching Documents' Statuses")
+def consult_documents(env):
     item_cb = consult_document
-    collec_cb_args = (1,)
+    collec_cb_args = (1, env)
     return _run_and_summ_docs_job(item_cb=item_cb,
                                   collec_cb_args=collec_cb_args)
 
 
-def consult_document(company_user, key_mh):
-    document_data = documents.get_document(key_mh)
-    if not document_data:
-        raise InputError('document', key_mh,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+def consult_document(company_user, key_mh):  # todo: review this...
+    if isinstance(company_user, str):
+        company_data = companies.get_company_data(company_user)
+    else:
+        company_data = company_user
 
-    company_data = companies.get_company_data(company_user)
-    if not company_data:
-        raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
-
-    if not company_data['is_active']:
-        raise InputError(status=InputErrorCodes.INACTIVE_COMPANY)
+    if isinstance(key_mh, str):
+        document_data = documents.get_document(key_mh)
+    else:
+        document_data = key_mh
 
     date = api_facturae.get_time_hacienda(True)
 
+    response = {
+        'status': document_data['status'],
+        'data': {
+            'date': date,
+            'detail': extract_answer_detail(document_data['answerxml']),
+            'xml-respuesta': document_data['answerxml']
+        }
+    }
+
+    if not request_pool.spend():
+        return response
+
     try:
-        token_m_h = api_facturae.get_token_hacienda(company_user,
-                                                    company_data['user_mh'],
-                                                    company_data['pass_mh'],
-                                                    company_data['env'])
+        token_m_h = api_facturae.get_token_hacienda(
+            company_data['company_user'], company_data['user_mh'],
+            company_data['pass_mh'], company_data['env']
+        )
     except Exception as ex:  # TODO
         raise  # TODO : 'error' : 'A problem occured when attempting to get the token from Hacienda.' # INTERNAL ERROR
 
     try:
-        response_json = api_facturae.consulta_documentos(key_mh,
-                                                         company_data['env'], token_m_h,
-                                                         date,
-                                                         document_data['document_type'])
+        response_json = api_facturae.consulta_clave(
+            document_data['key_mh'], token_m_h, company_data['env']
+        )
     except Exception as ex:  # TODO : be more specific about exceptions
         raise  # TODO : A problem occurred when attempting to query the document to Hacienda.' # INTERNAL ERROR
 
-    response_status = response_json.get('ind-estado')
-    response_text = response_json.get('respuesta-xml')
+    res_doc_status = response_json.get('ind-estado')
+    res_answer_xml = response_json.get('respuesta-xml')
 
-    documents.update_document(company_user, key_mh, response_text,
-                              response_status, date)
+    if res_answer_xml is not None:  # got an xml? save it
+        documents.update_document(company_data['company_user'], document_data['key_mh'], res_answer_xml,
+                                  res_doc_status, date)
+    else:  # check if we already had an xml...
+        doc_answer_xml = document_data['answerxml']
+        if doc_answer_xml is not None:  # If we had one, do not overwrite it, but update answer date
+            documents.update_document(company_data['company_user'], document_data['key_mh'],
+                                      doc_answer_xml.encode('utf8'),
+                                      res_doc_status, date)
+        else:  # just update the answer date
+            documents.update_document(company_data['company_user'], document_data['key_mh'], None,
+                                      res_doc_status, date)
 
-    result = {
-        'status': response_status,
-        'data': {
-            'date': date
-        }
-    }
-    if response_status == 'aceptado' \
+    # just to mask that the document hasn't been sent to hacienda... for the dbase systems...
+    if res_doc_status == 'creado':
+        res_doc_status = 'procesando'
+
+    response['status'] = res_doc_status
+    if res_doc_status == 'aceptado' \
             and document_data['document_type'] != "TE" \
             and document_data['isSent'] is None:
         mail_sent = 0
         try:
             emails.sent_email_fe(document_data)
         except Exception as ex:  # TODO : be more specific about exceptions
-            docLogger.warning("***Email couldn't be sent for some reason:***", exc_info=ex)
-            result['data']['warning'] = 'A problem occurred when attempting to send the email.'  # WARNING
+            docLogger.warning("**Email couldn't be sent for some reason:***", exc_info=ex)
+            response['data']['warning'] = 'A problem occurred when attempting to send the email.'  # WARNING
             # temp juggling insanity... nevermind, don't look at it...
             mail_sent = get_smtp_error_code(ex)
 
-        documents.update_isSent(key_mh, mail_sent)
+        documents.update_isSent(document_data['key_mh'], mail_sent)
 
-    if response_text:
-        decoded = base64.b64decode(response_text)
-        parsed_answer_xml = etree.fromstring(decoded)
-        result['data']['detail'] = parsed_answer_xml.findtext(
-            '{*}DetalleMensaje'
-        ) or ''
+    if res_answer_xml:
+        response['data']['detail'] = extract_answer_detail(res_answer_xml)
 
-    result['data']['xml-respuesta'] = response_text
-    return result
+    response['data']['xml-respuesta'] = res_answer_xml
+    return response
+
+
+def document_report(company_user, document_type):
+    result = documents.get_documentsreport(company_user, document_type)
+    return build_response_data({'data': {'documents': result}})
+
+
+def get_pdf(key: str):
+    document = documents.get_document(key)
+    if not document:
+        raise InputError('document', key,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    if document['pdfdocument']:
+        data = {'data': {'pdf': document['pdfdocument']}}
+    else:
+        data = {
+            'message': """The specified document does not have a PDF file.
+Document Type: {}
+*If the document type is not 'TE', please contact the API Admin.""".format(
+                document['document_type'])
+        }
+
+    return build_response_data(data)
+
+
+def get_property(key: str, prop_name: str):
+    document = documents.get_document(key)
+    if not document:
+        raise InputError('document', key,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    if prop_name not in document:
+        raise InputError(
+            error_code=InputErrorCodes.MISSING_PROPERTY,
+            message='"{}" no es una propiedad del recurso solicitado.'.format(
+                prop_name
+            )
+        )
+
+    return build_response_data({
+        'data': {
+            prop_name: document[prop_name]
+        }
+    })
+
+
+# if this fails horribly, I will rollback and apply a simpler solution...
+_run_and_summ_docs_job = partial(
+    run_and_summ_collec_job,
+    collec_cb=documents.get_documents,
+    item_id_keys='key_mh',
+    item_cb_kwargs_map={
+        'company_user': 'company_user',
+        'key_mh': 'key_mh'
+    },
+    sleepme=15
+)
+
+
+def extract_answer_detail(xml) -> str:
+    if xml is None:
+        return ''
+
+    decoded = base64.b64decode(xml)
+    parsed_answer_xml = etree.fromstring(decoded)
+    return parsed_answer_xml.findtext('{*}DetalleMensaje') or ''
+
+
+def consult_voucher_byid(company_user, clave):
+    company_data = companies.get_company_data(company_user)
+    if not company_data:
+        raise InputError('company', company_user,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    try:
+        token_m_h = api_facturae.get_token_hacienda(company_user,
+                                                    company_data['user_mh'],
+                                                    company_data['pass_mh'],
+                                                    company_data['env'])
+    except Exception as ex:  # TODO : be more specific with exceptions
+        raise  # TODO : hacienda token error return 'A problem occurred when attempting to get the token from Hacienda.'
+
+    try:
+        response_json = api_facturae.get_voucher_byid(clave, token_m_h)
+    except Exception as ex:  # TODO : be more specific with exceptions
+        raise  # TODO : Internal get voucher error "A problem occurred when attempting to fetch the specified document."
+
+    response_status = response_json.get('status')
+    response_text = response_json.get('text')
+    if response_status == 200:
+        return build_response_data({'data': {'Comprobante': response_text}})
+    else:
+        raise ServerError(error_code=InternalErrorCodes.INTERNAL_ERROR)
+        # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
 
 
 def consult_document_notdatabase(company_user, key_mh, document_type):
     company_data = companies.get_company_data(company_user)
     if not company_data:
         raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     date = api_facturae.get_time_hacienda(True)
 
@@ -372,27 +518,14 @@ def consult_document_notdatabase(company_user, key_mh, document_type):
         return build_response_data({'message': response_status,
                                     'data': {'xml-respuesta': response_text}})
     else:
-        raise ServerError(status=InternalErrorCodes.INTERNAL_ERROR)  # TODO : new code: 2 bad data hacienda
-
-
-def processing_documents(company_user, key_mh, is_consult):
-    if is_consult:
-        result = consult_document(company_user, key_mh)
-    else:
-        result = validate_document(company_user, key_mh)
-    return result
-
-
-def document_report(company_user, document_type):
-    result = documents.get_documentsreport(company_user, document_type)
-    return build_response_data({'data': {'documents': result}})
+        raise ServerError(error_code=InternalErrorCodes.INTERNAL_ERROR)  # TODO : new code: 2 bad data hacienda
 
 
 def consult_vouchers(company_user, emisor, receptor, offset, limit):
     company_data = companies.get_company_data(company_user)
     if not company_data:
         raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     try:
         token_m_h = api_facturae.get_token_hacienda(company_user,
@@ -423,63 +556,5 @@ def consult_vouchers(company_user, emisor, receptor, offset, limit):
     if 200 <= response_status <= 206:
         return build_response_data({'data': {'Comprobantes': response_text}})
     else:
-        raise ServerError(InternalErrorCodes.INTERNAL_ERROR)  # TODO : Hacienda Unauthorized
+        raise ServerError(error_code=InternalErrorCodes.INTERNAL_ERROR)  # TODO : Hacienda Unauthorized
         # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
-
-
-def consult_voucher_byid(company_user, clave):
-    company_data = companies.get_company_data(company_user)
-    if not company_data:
-        raise InputError('company', company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
-
-    try:
-        token_m_h = api_facturae.get_token_hacienda(company_user,
-                                                    company_data['user_mh'],
-                                                    company_data['pass_mh'],
-                                                    company_data['env'])
-    except Exception as ex:  # TODO : be more specific with exceptions
-        raise  # TODO : hacienda token error return 'A problem occurred when attempting to get the token from Hacienda.'
-
-    try:
-        response_json = api_facturae.get_voucher_byid(clave, token_m_h)
-    except Exception as ex:  # TODO : be more specific with exceptions
-        raise  # TODO : Internal get voucher error "A problem occurred when attempting to fetch the specified document."
-
-    response_status = response_json.get('status')
-    response_text = response_json.get('text')
-    if response_status == 200:
-        return build_response_data({'data': {'Comprobante': response_text}})
-    else:
-        raise ServerError(InternalErrorCodes.INTERNAL_ERROR)
-        # return errors.build_internalerror_error('Hacienda considered the query as unauthorized.')
-
-
-def get_pdf(key: str):
-    document = documents.get_document(key)
-    if not document:
-        raise InputError('document', key,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
-
-    if document['pdfdocument']:
-        data = {'data': {'pdf': document['pdfdocument']}}
-    else:
-        data = {
-            'message': """The specified document does not have a PDF file.
-Document Type: {}
-*If the document type is not 'TE', please contact the API Admin.""".format(
-                document['document_type'])
-        }
-
-    return build_response_data(data)
-
-
-# if this fails horribly, I will rollback and apply a simpler solution...
-_run_and_summ_docs_job = partial(
-    run_and_summ_collec_job,
-    collec_cb=documents.get_documents,
-    item_id_keys='key_mh',
-    item_cb_kwargs_map={
-        'company_user': 'company_user',
-        'key_mh': 'key_mh'
-    })

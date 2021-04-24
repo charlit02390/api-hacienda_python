@@ -34,5 +34,5 @@ errorhandlers.register_flask_app_handlers(app)
 
 if __name__ == '__main__':
     scheduler.scheduled_jobs()
-    app.run(host='0.0.0.0', port=3005)
+    app.run(host='localhost', port=3005)
 

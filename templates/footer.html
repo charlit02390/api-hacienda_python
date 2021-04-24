@@ -1,60 +1,90 @@
 ﻿<!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8" />
-    <script>
-        function subst() {
-			var vars = {};
-			var query_strings_from_url = document.location.search.substring(1).split('&');
-			for (var query_string in query_strings_from_url) {
-				if (query_strings_from_url.hasOwnProperty(query_string)) {
-					var temp_var = query_strings_from_url[query_string].split('=', 2);
-					vars[temp_var[0]] = decodeURI(temp_var[1]);
-				}
+    <head>
+        <meta charset="utf-8"/>
+        <script>
+            function subst() {
+                var vars = {};
+                var query_strings_from_url = document.location.search.substring(1).split('&');
+                for (var query_string in query_strings_from_url) {
+                    if (query_strings_from_url.hasOwnProperty(query_string)) {
+                        var temp_var = query_strings_from_url[query_string].split('=', 2);
+                        vars[temp_var[0]] = decodeURI(temp_var[1]);
+                    }
+                }
+
+                var currentPage = document.getElementById('currPage');
+                var lastPage = document.getElementById('lastPage')
+                currentPage.textContent = vars['page'];
+                lastPage.textContent = vars['topage'];
             }
 
-            var currentPage = document.getElementById('currPage');
-            var lastPage = document.getElementById('lastPage')
-            currentPage.textContent = vars['page'];
-            lastPage.textContent = vars['topage'];
-        }
-    </script>
-    <style>
-		footer {
-            font-size: small
-		}
+        </script>
+        <style>
+            footer {
+                font-size: small;
+            }
 
-		p {
-            text-align: center;
-            margin: 2px 7px
-		}
+            p {
+                text-align: center;
+                margin: 2px 7px;
+            }
 
-		.page-count {
-            position: absolute;
-            left: 14px;
-            bottom: 0;
-		}
-    </style>
-</head>
+            .page-count {
+                vertical-align: bottom;
+                width: {{ qr_size + 20 }}px;
+            }
+
+            .notes {
+                vertical-align: middle;
+                margin-right: 20px;
+            }
+
+            img {
+                display: block;
+            }
+
+            .qr-code {
+                text-align: right;
+                vertical-align: bottom;
+                margin-bottom: 0px;
+            }
+
+        </style>
+    </head>
     <body onload="subst()">
         <footer>
-            <div class="container">
-                <p>
-                Este documento constituye factura comercial con titulo ejecutivo de acuerdo al art. 460 del C&oacutedigo de Comercio que podr&aacute
-                hacerse efectivo el d&iacutea de su vencimiento y en caso de ejecuci&oacuten, renuncio a mi domicilio y los tr&aacutemites de juicio ejecutivo.
-                CONFIRMACIONES: Para enviar confirmaciones de dep&oacutesito Correo: {{email}}
-                </p>
-                <div>
-                    <p>
-                        <b>Observaciones:</b>
-                    </p>
-                    {%for note in notes%}
-                    <p>{{note}}</p>
-                    {%endfor%}
-                    <p style="text-align:center">Autorizado mediante la Resolucion Version:  Fact Elec.</p>
-                    <div class="page-count">Página <span id="currPage"></span> de <span id="lastPage"></span></div>
-                </div>
-            </div>
+            <table>
+                <tbody>
+                <tr>
+                    <td class="page-count">
+                        <div>Página <span id="currPage"></span> de <span id="lastPage"></span></div>
+                    </td>
+                    <td class="notes">
+                        <div class="container">
+                            <p>
+                                Autorizada mediante resolución DGT-R-033-2019, publicada
+                                en La Gaceta, Alcance N°147 del 27 de junio de 2019. Versión
+                                del Documento Electrónico: 4.3
+                            </p>
+                            <div>
+                                {% if notes %}
+                                <p>
+                                    <b>Observaciones:</b>
+                                </p>
+                                {%for note in notes%}
+                                <p>{{note}}</p>
+                                {%endfor%}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="container qr-code">
+                        <img width="{{ qr_size }}}" src="data:;base64,{{ qr_img }}">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </footer>
-	</body>
+    </body>
 </html>

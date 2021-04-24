@@ -20,7 +20,7 @@ def save_document(company_id, key_mh, sign_xml, status, date, document_type, rec
                          conn=connection, assert_unique=True)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_DOCUMENT_CREATE) from dbae
+                            error_code=DBErrorCodes.DB_DOCUMENT_CREATE) from dbae
 
     return True
 
@@ -34,7 +34,7 @@ def save_document_line_info(id_company, line_number, quantity, unity,
         dba.execute_proc(proc_name=procedure, args=args, conn=connection, assert_unique=True)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_DOCUMENT_DETAIL_LINE_CREATE) from dbae
+                            error_code=DBErrorCodes.DB_DOCUMENT_DETAIL_LINE_CREATE) from dbae
 
     return True
 
@@ -46,7 +46,7 @@ def save_document_line_taxes(id_company, line_number, rate_code, code, rate, amo
         dba.execute_proc(proc_name=procedure, args=args, conn=connection, assert_unique=True)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_DOCUMENT_LINE_TAX_CREATE) from dbae
+                            error_code=DBErrorCodes.DB_DOCUMENT_LINE_TAX_CREATE) from dbae
 
     return True
 
@@ -59,7 +59,7 @@ def save_document_additional_email(key_mh, email, connection=None):
                          conn=connection, assert_unique=True)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_DOCUMENT_ADDITIONAL_EMAIL_CREATE) from dbae
+                            error_code=DBErrorCodes.DB_DOCUMENT_ADDITIONAL_EMAIL_CREATE) from dbae
 
     return True
 
@@ -72,7 +72,7 @@ def update_document(company_id, key_mh, answer_xml, status, date):
                          assert_unique=True)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_DOCUMENT_UPDATE) from dbae
+                            error_code=DBErrorCodes.DB_DOCUMENT_UPDATE) from dbae
 
     return True
 
@@ -85,7 +85,7 @@ def update_isSent(key_mh, isSent, connection=None):
                          assert_unique=True, conn=connection)
     except dba.DbAdapterError as dbae:
         raise DatabaseError(dbae.get_message(),
-                            status=DBErrorCodes.DB_DOCUMENT_UPDATE_ISSENT
+                            error_code=DBErrorCodes.DB_DOCUMENT_UPDATE_ISSENT
                             ) from dbae
 
 
@@ -95,7 +95,7 @@ def get_document(key_mh):
     try:
         return dba.fetchone_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_DOCUMENT_SELECT_ONE) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_DOCUMENT_SELECT_ONE) from dbae
 
 
 def get_documents_company(company_id, state):  # MFD
@@ -104,17 +104,17 @@ def get_documents_company(company_id, state):  # MFD
     return dba.fetchall_from_proc(procname=procedure, args=args)
 
 
-def get_documents(state):
+def get_documents(state, env):
     if state == 0:
         procedure = 'sp_getDocumentsValidate'
     else:
         procedure = 'sp_getDocumentsConsult'
 
     try:
-        return dba.fetchall_from_proc(procname=procedure)
+        return dba.fetchall_from_proc(procname=procedure, args=(env,))
     except dba.DbAdapterError as dbae:
         raise DatabaseError(procedure,
-                            status=DBErrorCodes.DB_DOCUMENT_JOBS) from dbae
+                            error_code=DBErrorCodes.DB_DOCUMENT_JOBS) from dbae
 
 
 def get_documentsreport(company_id, document_type):
@@ -123,7 +123,7 @@ def get_documentsreport(company_id, document_type):
     try:
         return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_DOCUMENT_SELECT_BY_COMPANY_AND_TYPE) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_DOCUMENT_SELECT_BY_COMPANY_AND_TYPE) from dbae
 
 
 def get_additional_emails(key_mh):
@@ -132,7 +132,7 @@ def get_additional_emails(key_mh):
     try:
         return dba.fetchall_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_DOCUMENT_SELECT_ADDITIONAL_EMAILS_BY_KEY) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_DOCUMENT_SELECT_ADDITIONAL_EMAILS_BY_KEY) from dbae
 
 
 def verify_exists(key_mh):
@@ -141,6 +141,6 @@ def verify_exists(key_mh):
     try:
         result = dba.fetchone_from_proc(procname=procedure, args=args)
     except dba.DbAdapterError as dbae:
-        raise DatabaseError(status=DBErrorCodes.DB_DOCUMENT_VERIFY) from dbae
+        raise DatabaseError(error_code=DBErrorCodes.DB_DOCUMENT_VERIFY) from dbae
 
     return result is not None

@@ -5,10 +5,11 @@ import requests
 from email.headerregistry import Address
 from email.errors import HeaderParseError
 
-from helpers.errors.exceptions import InputError, ValidationError, ServerError
+from helpers.errors.exceptions import InputError, ValidationError, ServerError, HaciendaError
 from helpers.errors.enums import InputErrorCodes, ValidationErrorCodes, InternalErrorCodes
 # from helpers.debugging import time_my_func
 from helpers.entities.numerics import DecimalMoney as Money
+from helpers.entities.strings import IDN, IDNType
 from service.fe_enums import SituacionComprobante
 
 OPTIONAL_RECIPIENT_DOC_TYPES = ('TE', 'FEE', 'NC', 'ND')
@@ -85,7 +86,7 @@ def validate_key_circumstance(key, circumstance):
     circumstance_code = SituacionComprobante[circumstance]
     if key_circumstance != circumstance_code:
         raise ValidationError(
-            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION,
+            error_code=ValidationErrorCodes.INVALID_KEY_COMPOSITION,
             message=('La clave posee un código de circumstancia ({}) que '
                      'no coincide con el especificado ({} => {}).'
                      ).format(key_circumstance, circumstance, circumstance_code)
@@ -100,7 +101,7 @@ def validate_key_sequence(key, sequence):
             message=('La clave posee un consecutivo ({}) que '
                      'no coincide con el del consecutivo especificado ({}).'
                      ).format(key_sequence, sequence),
-            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION
+            error_code=ValidationErrorCodes.INVALID_KEY_COMPOSITION
         )
 
 
@@ -112,7 +113,7 @@ def validate_key_identification(key, identification):
             message=('La clave posee un número de identificación ({}) que '
                      'no coincide con el del usuario especificado ({}).'
                      ).format(key_identification, identification),
-            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION
+            error_code=ValidationErrorCodes.INVALID_KEY_COMPOSITION
         )
 
 
@@ -131,7 +132,7 @@ def validate_key_date_year(key, year, dateisof):
     key_year = key[year_slice]
     if key_year != year:
         raise ValidationError(
-            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION,
+            error_code=ValidationErrorCodes.INVALID_KEY_COMPOSITION,
             message=('La clave posee un número de año ({}) que '
                      'no coincide con el de la fecha de comprobante '
                      'especificada (fecha: {}; año: {}).'
@@ -144,7 +145,7 @@ def validate_key_date_month(key, month, dateisof):
     key_month = key[month_slice]
     if key_month != month:
         raise ValidationError(
-            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION,
+            error_code=ValidationErrorCodes.INVALID_KEY_COMPOSITION,
             message=('La clave posee un número de mes ({}) que '
                      'no coincide con el de la fecha de comprobante '
                      'especificada (fecha: {}; mes: {}).'
@@ -161,7 +162,7 @@ def validate_key_date_day(key, day, dateisof):
                      'no coincide con el de la fecha de comprobante '
                      'especificada (fecha: {}; dia: {}).'
                      ).format(key_day, dateisof, day),
-            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION
+            error_code=ValidationErrorCodes.INVALID_KEY_COMPOSITION
         )
 
 
@@ -173,7 +174,7 @@ def validate_key_country_code(key):
             message=('La clave posee un código de país inválido {}. '
                      'El código de país debe ser {}.'
                      ).format(key_countrycode, KEY_VALID_COUNTRY_CODE),
-            status=ValidationErrorCodes.INVALID_KEY_COMPOSITION
+            error_code=ValidationErrorCodes.INVALID_KEY_COMPOSITION
         )
 
 
@@ -186,7 +187,7 @@ def validate_sequence(sequence: str, branch: str,
             message=('La sucursal en el consecutivo ({}) no '
                      'coincide con la sucursal provista ({}).'
                      ).format(seq_branch, branch),
-            status=ValidationErrorCodes.INVALID_SEQUENCE
+            error_code=ValidationErrorCodes.INVALID_SEQUENCE
         )
 
     terminal_slice = SEQUENCE_PARTS_SLICES['terminal']
@@ -196,7 +197,7 @@ def validate_sequence(sequence: str, branch: str,
             message=('La terminal en el consecutivo ({}) no '
                      'coincide con la terminal provista ({}).'
                      ).format(seq_terminal, terminal),
-            status=ValidationErrorCodes.INVALID_SEQUENCE
+            error_code=ValidationErrorCodes.INVALID_SEQUENCE
         )
 
     doctype_slice = SEQUENCE_PARTS_SLICES['doctype']
@@ -206,31 +207,53 @@ def validate_sequence(sequence: str, branch: str,
             message=('El tipo de documento en el consecutivo ({}) no '
                      'coincide con el tipo de documento provisto ({}).'
                      ).format(seq_doctype, doctype),
-            status=ValidationErrorCodes.INVALID_SEQUENCE
+            error_code=ValidationErrorCodes.INVALID_SEQUENCE
         )
 
     return True
 
 
+# TODO: validate required and optional fields
 def validate_recipient(recipient: dict, doc_type: str):
     if recipient is None:
         if doc_type in OPTIONAL_RECIPIENT_DOC_TYPES:
             return True
         else:
             raise ValidationError(
-                status=ValidationErrorCodes.INVALID_DOCUMENT,
+                error_code=ValidationErrorCodes.INVALID_DOCUMENT,
                 message=('El tipo de documento especificado({}) requiere de un '
-                         'receptor y este no fue especificado.'
-                         .format(doc_type))
+                         'receptor y este no fue especificado.').format(doc_type)
             )
 
-    email = recipient['correo']
+    rec_idn_type = recipient['tipoIdentificacion']  # required
+    try:  # should be unnecesary since it's validated in yaml
+        idn_type_inst = IDNType(rec_idn_type)
+    except ValueError:
+        raise ValidationError(
+            error_code=ValidationErrorCodes.INVALID_DOCUMENT,
+            message=('El tipo de identificación ("{}") no es un tipo de '
+                     'identificación válido.').format(rec_idn_type)
+        )
+
+    idn = recipient['numeroIdentificacion']  # required
+    try:
+        IDN(idn_type_inst, idn)
+    except ValueError:
+        raise ValidationError(
+            error_code=ValidationErrorCodes.INVALID_DOCUMENT,
+            message=('La identificación del receptor("{}") no posee la estructura '
+                     'correcta para el tipo de identificación("{}") especificada.'
+                     ).format(idn, rec_idn_type)
+        )
+
+    email = recipient['correo']  # optional
     additional_emails = recipient.get('correosAdicionales', [])
     if not isinstance(additional_emails, list):
-        raise InputError('Receptor>correosAdicionales',
-                         'Se recibio como tipo: {}. Se esperaba un arreglo.'
-                         .format(str(type(additional_emails))),
-                         status=InputErrorCodes.INCORRECT_TYPE)
+        raise InputError(
+            'Receptor>correosAdicionales',
+            'Se recibio como tipo: {}. Se esperaba un arreglo.'.format(str(type(additional_emails))),
+            error_code=InputErrorCodes.INCORRECT_TYPE
+        )
 
     for e in (email, *additional_emails):
         validate_email(e)
@@ -278,9 +301,9 @@ def calculate_totals(data: dict):
         else:
             tax_ratio = calculate_tax_ratio(taxes)
 
-            taxed = Money(amount_total * (1 - tax_ratio))
+            taxed = Money.mul(amount_total, (1 - tax_ratio))
             exempt = Money(0)
-            taxcut = Money(amount_total * tax_ratio)
+            taxcut = Money.mul(amount_total, tax_ratio)
 
         if line_is_service:
             calc_serv_taxed += taxed
@@ -405,7 +428,7 @@ def raise_invalid_detail_line(line_number, invalid_prop_name,
     if remarks is not None:
         template = ' '.join((template, 'Observaciones:', '\n'.join(remarks)))
 
-    raise ValidationError(status=ValidationErrorCodes.INVALID_DETAIL_LINE,
+    raise ValidationError(error_code=ValidationErrorCodes.INVALID_DETAIL_LINE,
                           message=template.format(line_number, invalid_prop_name,
                                                   invalid_prop_value, expected_prop_value))
 
@@ -421,7 +444,7 @@ def validate_line(line: dict, doc_type: str,
     amount_total = Money(line[amount_total_prop])
     unit_price = Money(line['precioUnitario'])
     amount = Money(line['cantidad'])
-    calc_amount_total = Money(amount * unit_price)
+    calc_amount_total = Money.mul(amount, unit_price)
     if amount_total != calc_amount_total:
         raise_invalid_detail_line(line_number, amount_total_prop, amount_total,
                                   calc_amount_total)
@@ -451,11 +474,11 @@ def validate_line(line: dict, doc_type: str,
         tax_amount_prop = 'monto'
         tax_amount = Money(tax[tax_amount_prop])
         if tax_code == IVAFACTOR_REQ_TAX_CODE:
-            iva_factor = Money(iva_factor) - 1
-            calc_tax_amount = Money(tax_subtotal * iva_factor)
+            tax_rate = Money(iva_factor) - 1
         else:
-            tax_rate = Money(tax['tarifa'])
-            calc_tax_amount = Money(tax_subtotal * tax_rate / 100)
+            tax_rate = Money(tax['tarifa']) / 100
+
+        calc_tax_amount = Money.mul(tax_subtotal, tax_rate)
 
         if calc_tax_amount != tax_amount:
             raise_invalid_detail_line(line_number, tax_amount_prop, tax_amount,
@@ -472,8 +495,11 @@ def validate_line(line: dict, doc_type: str,
             cut_percentage_prop = 'porcentajeExoneracion'
             cut_amount = Money(cut[cut_amount_prop])
             cut_percentage = cut[cut_percentage_prop]
+            validate_line_tax_cut_percentage(cut_percentage, tax_rate,
+                                             line_number)
             validate_line_tax_cut_amount(cut_amount_prop, cut_amount,
-                                         cut_percentage, tax_subtotal, line_number)
+                                         cut_percentage, tax_subtotal, calc_tax_amount,
+                                         line_number)
 
             calc_net_tax -= cut_amount
             tax_subtotal -= cut_amount
@@ -496,11 +522,34 @@ def validate_line(line: dict, doc_type: str,
     return True
 
 
+def validate_line_tax_cut_percentage(cut_percentage, tax_rate, line_number):
+    int_tax_rate = int(tax_rate * 100)
+    if Money(cut_percentage) > int_tax_rate:
+        raise ValidationError(
+            error_code=ValidationErrorCodes.INVALID_DETAIL_LINE,
+            message=('Linea Detalle #{}: el porcentaje de exoneración indicado:'
+                     ' "{}" no puede ser mayor al porcentaje de impuesto o factor iva '
+                     'del impuesto a exonerar ({}).').format(line_number,
+                                                             cut_percentage, str(int_tax_rate))
+        )
+
+
 def validate_line_tax_cut_amount(cut_amount_prop, cut_amount,
-                                 cut_percentage, line_subtotal, line_number):
-    calc_cut_amount = Money(
-        line_subtotal * (Money.div(Money(cut_percentage), Money(100)))
+                                 cut_percentage, line_subtotal, calc_tax_amount,
+                                 line_number):
+    calc_cut_amount = min(
+        calc_tax_amount,
+        Money.mul(
+            line_subtotal, (Money.div(Money(cut_percentage), Money(100)))
+        )
     )
+
+    if calc_cut_amount < cut_amount:
+        remarks = ('El monto de exoneración no puede ser mayor al monto de'
+                   ' impuesto.',)
+        raise_invalid_detail_line(line_number, cut_amount_prop,
+                                  cut_amount, calc_cut_amount, remarks)
+
     if calc_cut_amount != cut_amount:
         remarks = ('Porcentaje Exoneracion: {}.'.format(cut_percentage),)
         raise_invalid_detail_line(line_number, cut_amount_prop,
@@ -513,7 +562,7 @@ def validate_line_tax_code_uses(tax_code, doc_type, tax_base_prop, tax_base,
             and doc_type != 'FEE' \
             and tax_base:
         raise ValidationError(
-            status=ValidationErrorCodes.INVALID_DETAIL_LINE,
+            error_code=ValidationErrorCodes.INVALID_DETAIL_LINE,
             message=('A la linea #{} le falta un valor requerido'
                      ' para {}. Razón: esta linea incluye un impuesto'
                      ' con código {}'
@@ -524,7 +573,7 @@ def validate_line_tax_code_uses(tax_code, doc_type, tax_base_prop, tax_base,
     elif tax_code == IVAFACTOR_REQ_TAX_CODE \
             and not iva_factor:
         raise ValidationError(
-            status=ValidationErrorCodes.INVALID_DETAIL_LINE,
+            error_code=ValidationErrorCodes.INVALID_DETAIL_LINE,
             message=('A la linea #{}, en los detalles de impuesto,'
                      ' falta un valor requerido para {}. Razón: los'
                      ' impuestos con código {} requieren un monto en'
@@ -537,7 +586,7 @@ def validate_line_tax_code_uses(tax_code, doc_type, tax_base_prop, tax_base,
 def validate_total(data: dict, prop: str, calc_total: Money):
     total = Money(data[prop])
     if calc_total != total:
-        raise ValidationError(status=ValidationErrorCodes.INVALID_TOTAL,
+        raise ValidationError(error_code=ValidationErrorCodes.INVALID_TOTAL,
                               message=('El valor indicado para la propiedad "{}" ({}) '
                                        "no coincide con el valor calculado {}.")
                               .format(prop, total, calc_total))
@@ -557,18 +606,18 @@ def validate_email(email: str):
         indicating the email is not valid.
     """
     if not email:
-        raise ValidationError(status=ValidationErrorCodes.INVALID_EMAIL,
+        raise ValidationError(error_code=ValidationErrorCodes.INVALID_EMAIL,
                               message='Empty Email')
 
     if not isinstance(email, str):
-        raise ValidationError(status=ValidationErrorCodes.INVALID_EMAIL,
+        raise ValidationError(error_code=ValidationErrorCodes.INVALID_EMAIL,
                               message='Email is not a string')
 
     try:
         Address(addr_spec=email)
     except (ValueError, IndexError, HeaderParseError):
         raise ValidationError(email,
-                              status=ValidationErrorCodes.INVALID_EMAIL)
+                              error_code=ValidationErrorCodes.INVALID_EMAIL)
 
     return True
 
@@ -582,14 +631,19 @@ def check_taxcut(authorization: str, line_number: int,
     if response.status_code != 200:
         if response.status_code == 404:
             raise ValidationError(
-                status=ValidationErrorCodes.TAXCUT_AUTH_NOT_FOUND,
+                error_code=ValidationErrorCodes.TAXCUT_AUTH_NOT_FOUND,
                 message=('La linea #{} posee una exoneración con un '
                          'número de documento "{}" no encontrado en Hacienda.'
                          ).format(line_number, authorization))
         else:
-            raise ServerError(message=('Se presentó un problema al consultar '
-                                       'el documento de autorización de la exoneración '
-                                       'en Hacienda.'))
+            # TODO: log
+            raise HaciendaError(
+                status='Reintentar',
+                http_status=response.status_code,
+                headers=response.headers,
+                body=response.text,
+                error_code=InternalErrorCodes.HACIENDA_ERROR
+            )
 
     return True
 
@@ -599,7 +653,8 @@ def check_cabys(code: str, line_number: str,
     code_len = len(code.strip())
     if code_len != CABYS_VALID_LENGTH:
         raise ValidationError(
-            status=ValidationErrorCodes.INVALID_CABYS,
+            status='NoCabys {}'.format(line_number),
+            error_code=ValidationErrorCodes.INVALID_CABYS,
             message=('La linea #{} posee un código CABYS con una'
                      ' longitud inválida de {} caracteres. La longitud debe'
                      ' ser exactamente de {} caracteres.'
@@ -613,21 +668,25 @@ def check_cabys(code: str, line_number: str,
     if response.status_code == 200:
         json = response.json()
         if len(json) == 0:  # hacienda returns a json array
-            raise ValidationError(status=ValidationErrorCodes.CABYS_NOT_FOUND,
-                                  message=('La linea #{} posee un código'
-                                           ' CABYS que no se encuentra en Hacienda.')
-                                  .format(line_number))
+            raise ValidationError(
+                status='NoCabys {}'.format(line_number),
+                error_code=ValidationErrorCodes.CABYS_NOT_FOUND,
+                message=('La linea #{} posee un código CABYS que no '
+                         'se encuentra en Hacienda.').format(line_number))
     else:
         # TODO: logging
-        raise ServerError(status=InternalErrorCodes.HACIENDA_ERROR,
-                          message=('La consulta del código CABYS, para la'
-                                   ' linea #{}, a Hacienda presentó un problema.')
-                          .format(line_number))
+        raise HaciendaError(
+            status='Reintentar',
+            http_status=response.status_code,
+            headers=response.headers,
+            body=response.text,
+            error_code=InternalErrorCodes.HACIENDA_ERROR
+        )
 
     return True
 
 
-def requests_get(endpoint: str, params: dict, timeout: int = 4,
+def requests_get(endpoint: str, params: dict, timeout: int = 28,
                  request_session: requests.sessions.Session = None):
     try:
         if request_session is not None:
@@ -638,8 +697,13 @@ def requests_get(endpoint: str, params: dict, timeout: int = 4,
             response = requests.get(endpoint,
                                     params=params,
                                     timeout=timeout)
-    except requests.exceptions.RequestException:  # TODO: branch into more specific exceptions
-        raise ServerError(message=('Se presentó un problema'
-                                   ' al enviar la verificación de CABYS'
-                                   ' a Hacienda.'))
+    except requests.exceptions.RequestException as reqex:  # TODO: branch into more specific exceptions
+        # TODO logging
+        raise HaciendaError(
+            status='Reintentar',
+            http_status=502,
+            headers={},
+            body=str(reqex),
+            error_code=InternalErrorCodes.HACIENDA_ERROR
+        )
     return response

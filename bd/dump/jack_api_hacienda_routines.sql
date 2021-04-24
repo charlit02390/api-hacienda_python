@@ -620,11 +620,18 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsConsult`(
+	p_env VARCHAR(10)
+)
 BEGIN
 Select cp.company_user,  d.key_mh
-from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "procesando" limit 20;
+from documents d
+inner join companies cp on d.company_id = cp.id
+INNER JOIN companies_mh AS cmh ON cp.id = cmh.company_api
+where d.status in ("procesando", "error")
+and cp.is_active = true
+AND cmh.env = p_env
+ORDER BY d.document_type limit 35;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -647,8 +654,8 @@ v_type_document varchar(50)
 )
 BEGIN
 Select cp.company_user, d.key_mh, d.status, d.isSent, d.dateanswer, d.datesign, d.document_type, 
-d.dni_receiver, d.dni_type_receiver, d.total_document, d.email, d.email_costs, CONVERT(d.signxml USING utf8) signxml,
-CONVERT(d.answerxml USING utf8) answerxml , CONVERT(d.pdfdocument USING utf8) as pdfdocument
+d.dni_receiver, d.dni_type_receiver, d.total_document, d.email, d.email_costs, if(d.signxml is not null, true, false) as signxml,
+if(d.answerxml is not null, true, false) as answerxml , if (d.pdfdocument is not null, true, false) as pdfdocument
 from documents d 
 inner join companies cp on d.company_id = cp.id  
 where cp.company_user= v_id_company 
@@ -669,11 +676,18 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsValidate`()
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getDocumentsValidate`(
+	p_env VARCHAR(10)
+)
 BEGIN
-	Select cp.company_user,  d.key_mh
+Select cp.company_user,  d.key_mh
 from documents d 
-inner join companies cp on d.company_id = cp.id where d.status = "creado" limit 20;
+inner join companies cp on d.company_id = cp.id
+INNER JOIN companies_mh AS cmh ON cp.id = cmh.company_api
+where d.status = "creado"
+and cp.is_active = true
+AND cmh.env = p_env
+ORDER BY d.document_type limit 35;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1018,8 +1032,8 @@ v_date datetime,
 v_document_type varchar(45),
 v_dni_type varchar(10),
 v_dni varchar(50),
-v_total_document float,
-v_total_taxes float,
+v_total_document DECIMAL(18,5),
+v_total_taxes DECIMAL(18,5),
 v_pdf longblob,
 v_email varchar(128),
 v_email_costs varchar(128)
@@ -1271,7 +1285,7 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_obtenerpersona_registrocivil`(
-    p_cedula VARCHAR(9)
+    p_cedula VARCHAR(15)
 )
 BEGIN
 	SELECT `cedula`,
@@ -1459,13 +1473,39 @@ SELECT	msg.id,
 	msg.issuer_email,
 	msg.recipient_idn,
 	msg.recipient_seq_number,
-	msg.signed_xml,
+	CONVERT(msg.signed_xml USING utf8),
 	msg.answer_date,
-	msg.answer_xml,
+	CONVERT(msg.answer_xml USING utf8),
 	cmp.is_active as company_is_active,
 	msg.email_sent
 FROM	`message` AS msg INNER JOIN
 	companies as cmp ON msg.company_id = cmp.id;
+
+
+DROP VIEW IF EXISTS vw_message_simple;
+CREATE VIEW `vw_message_simple`
+AS
+SELECT	msg.id,
+	msg.company_id,
+	cmp.company_user,
+	msg.key_mh,
+	msg.status,
+	msg.code,
+	msg.issue_date,
+	msg.issuer_idn_num,
+	msg.issuer_idn_type,
+	msg.issuer_email,
+	msg.recipient_idn,
+	msg.recipient_seq_number,
+	IF(msg.signed_xml IS NOT NULL, TRUE, FALSE) AS signed_xml,
+	msg.answer_date,
+	IF(msg.answer_xml IS NOT NULL, TRUE, FALSE) AS answer_xml,
+	cmp.is_active as company_is_active,
+	msg.email_sent,
+	cmh.env AS company_env
+FROM	`message` AS msg INNER JOIN
+	companies as cmp ON msg.company_id = cmp.id INNER JOIN
+	companies_mh AS cmh ON cmp.id = cmh.company_api;
 
 
 DROP PROCEDURE IF EXISTS usp_select_message;
@@ -1490,7 +1530,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCompany_message` (
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.company_user = ?';
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message_simple` AS v_msg WHERE v_msg.company_user = ?';
 	IF `p_limit` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
 	END IF;
@@ -1508,15 +1548,19 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByStatus_message` (
 	IN `p_status` VARCHAR(30),
 	IN `p_company_user` VARCHAR(50),
 	IN `p_company_is_active` TINYINT UNSIGNED,
+	IN p_env VARCHAR(10),
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.status = ?';
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message_simple` AS v_msg WHERE v_msg.status = ?';
 	IF `p_company_user` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
 	END IF;
 	IF `p_company_is_active` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_is_active = ', `p_company_is_active`);
+	END IF;
+	IF p_env IS NOT NULL THEN
+		SET @q = CONCAT(@q, ' AND v_msg.company_env = "', p_env, '"');
 	END IF;
 	IF `p_limit` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' LIMIT ', `p_limit`);
@@ -1537,7 +1581,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByCode_message` (
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.code = ?';
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message_simple` AS v_msg WHERE v_msg.code = ?';
 	IF `p_company_user` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
 	END IF;
@@ -1560,7 +1604,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `usp_selectByIssuerIDN_message` (
 	IN `p_limit` INT UNSIGNED
 )
 BEGIN
-	SET @q = 'SELECT v_msg.*	FROM	`vw_message` AS v_msg WHERE v_msg.issuer_idn_num = ?';
+	SET @q = 'SELECT v_msg.*	FROM	`vw_message_simple` AS v_msg WHERE v_msg.issuer_idn_num = ?';
 	IF `p_company_user` IS NOT NULL THEN
 		SET @q = CONCAT(@q, ' AND v_msg.company_user = ', `p_company_user`);
 	END IF;
@@ -1603,3 +1647,262 @@ BEGIN
 END $$
 DELIMITER ;
 -- --------------------------------------
+
+-- --------------------------------------
+-- dunno what i'm doin'
+DROP PROCEDURE IF EXISTS usp_getCompanysDocumentsByType;
+DELIMITER $$
+CREATE PROCEDURE usp_getCompanysDocumentsByType(
+	p_company_id INT UNSIGNED,
+	p_document_type VARCHAR(10),
+	p_return_files BOOLEAN
+)
+BEGIN
+	IF p_return_files THEN
+		SELECT
+			id,
+			company_id,
+			key_mh,
+			status,
+			isSent,
+			dateanswer,
+			datesign,
+			document_type,
+			dni_receiver,
+			dni_type_receiver,
+			total_document,
+			total_taxes,
+			email,
+			CONVERT(signxml USING utf8) AS signxml,
+			CONVERT(answerxml USING utf8) AS answerxml,
+			CONVERT(pdfdocument USING utf8) AS pdfdocument
+		FROM documents
+		WHERE company_id = p_company_id
+			AND document_type = p_document_type;
+	ELSE
+		SELECT
+			id,
+			company_id,
+			key_mh,
+			status,
+			isSent,
+			dateanswer,
+			datesign,
+			document_type,
+			dni_receiver,
+			dni_type_receiver,
+			total_document,
+			total_taxes,
+			email,
+			IF(signxml IS NOT NULL, TRUE, FALSE) AS signxml,
+			IF(answerxml IS NOT NULL, TRUE, FALSE) AS answerxml,
+			IF(pdfdocument IS NOT NULL, TRUE, FALSE) AS pdfdocument
+		FROM documents
+		WHERE company_id = p_company_id
+			AND document_type = p_document_type;
+	END IF;
+END $$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS usp_getCompanysMessages;
+DELIMITER $$
+CREATE PROCEDURE usp_getCompanysMessages(
+	p_company_id INT UNSIGNED,
+	p_return_files BOOLEAN
+)
+BEGIN
+	IF p_return_files THEN
+		SELECT
+			id,
+			company_id,
+			key_mh,
+			status,
+			code,
+			issue_date,
+			issuer_idn_num,
+			issuer_idn_type,
+			issuer_email,
+			recipient_idn,
+			recipient_seq_number,
+			CONVERT(signed_xml USING utf8) AS signed_xml,
+			answer_date,
+			CONVERT(answer_xml USING utf8) AS answer_xml,
+			email_sent
+		FROM message
+		WHERE company_id = p_company_id;
+	ELSE
+		SELECT
+			id,
+			company_id,
+			key_mh,
+			status,
+			code,
+			issue_date,
+			issuer_idn_num,
+			issuer_idn_type,
+			issuer_email,
+			recipient_idn,
+			recipient_seq_number,
+			IF(signed_xml IS NOT NULL, TRUE, FALSE) AS signed_xml,
+			answer_date,
+			IF(answer_xml IS NOT NULL, TRUE, FALSE) AS answer_xml,
+			email_sent
+		FROM message
+		WHERE company_id = p_company_id;
+	END IF;
+END $$
+DELIMITER ;
+-- -----------------------------------------------------
+-- Event based Request Pooling?
+DELIMITER //
+
+SELECT defaultinterval INTO @defaultInterval FROM requestpool WHERE id = 1 //
+CREATE OR REPLACE EVENT uev_requestpool_resetPool
+ON SCHEDULE
+	EVERY @defaultInterval SECOND
+DO
+	UPDATE requestpool SET pool = maxpool WHERE id = 1 //
+
+
+CREATE OR REPLACE FUNCTION ufn_isResetPoolSleeping()
+RETURNS BOOLEAN
+BEGIN
+	DECLARE isSleeping BOOLEAN DEFAULT 1;
+	
+	SELECT status = 'DISABLED'
+	INTO isSleeping
+	FROM INFORMATION_SCHEMA.EVENTS
+	WHERE event_schema = SCHEMA()
+		AND event_name = 'uev_requestpool_resetPool';
+		
+	RETURN isSleeping;
+END //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_resetInterval()
+BEGIN
+	DECLARE v_defaultInterval INT;
+
+    SELECT defaultinterval
+    INTO v_defaultInterval
+    FROM requestpool
+    WHERE id = 1;
+
+    ALTER EVENT uev_requestpool_resetPool
+    ON SCHEDULE
+    	EVERY v_defaultInterval SECOND
+    ENABLE;
+END //
+
+
+CREATE OR REPLACE EVENT uev_requestpool_resetInterval
+ON SCHEDULE
+	AT CURRENT_TIMESTAMP(6) + INTERVAL 1 SECOND
+ON COMPLETION PRESERVE
+DISABLE
+DO
+	CALL usp_requestpool_resetInterval() //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_setSleep(
+	p_sleep INT UNSIGNED
+)
+this_proc: BEGIN
+	DECLARE v_sleep INT UNSIGNED DEFAULT IF(p_sleep IS NOT NULL, p_sleep, 0);
+
+	IF ufn_isResetPoolSleeping() THEN
+		LEAVE this_proc;
+	END IF;
+
+	ALTER EVENT uev_requestpool_resetPool
+    	DISABLE;
+
+    ALTER EVENT uev_requestpool_resetInterval
+    ON SCHEDULE
+    	AT CURRENT_TIMESTAMP(6) + INTERVAL v_sleep SECOND
+    ENABLE;
+    
+    UPDATE requestpool SET pool = 0 WHERE id = 1;
+END //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_initBurst()
+BEGIN
+	DECLARE v_burstBegin TIMESTAMP(6) DEFAULT NOW(6);
+	DECLARE v_burstEnd TIMESTAMP(6) DEFAULT NOW(6);
+	DECLARE v_burstCurrent INT UNSIGNED DEFAULT 0;
+
+	SELECT burstbegin, burstend
+	INTO v_burstBegin, v_burstEnd
+	FROM requestpool
+	WHERE id = 1;
+	
+	IF v_burstBegin IS NULL
+			OR NOW(6) NOT BETWEEN v_burstBegin AND v_burstEnd THEN
+		UPDATE requestpool
+		SET burstbegin = NOW(6),
+			burstend = DATE_ADD(NOW(6), INTERVAL burstduration SECOND),
+			burstcurrent = 0
+		WHERE id = 1;
+	END IF;
+END //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_spend(
+    p_amount INT UNSIGNED
+)
+BEGIN
+	DECLARE v_hasRequestsAvailable TINYINT UNSIGNED DEFAULT 0;
+    DECLARE v_amount INT UNSIGNED DEFAULT IF(p_amount IS NOT NULL, p_amount, 0);
+	DECLARE v_burstBegin TIMESTAMP(6) DEFAULT NOW(6);
+	DECLARE v_burstEnd TIMESTAMP(6) DEFAULT NOW(6);
+	DECLARE v_burstLimit INT UNSIGNED DEFAULT 0;
+	DECLARE v_burstCurrent INT UNSIGNED DEFAULT 0;
+	DECLARE v_burstSleep INT UNSIGNED DEFAULT 0;
+
+	START TRANSACTION READ WRITE;
+
+    SELECT pool > 0 AND pool >= v_amount, burstlimit, burstsleep
+    INTO v_hasRequestsAvailable, v_burstLimit, v_burstSleep
+    FROM requestpool
+	WHERE id = 1;
+
+	IF v_hasRequestsAvailable THEN
+    	UPDATE requestpool
+    	SET pool = pool - v_amount
+    	WHERE id = 1;
+		
+		CALL usp_requestpool_initBurst();
+		
+		SELECT burstbegin, burstend, burstcurrent
+		INTO v_burstBegin, v_burstEnd, v_burstCurrent
+		FROM requestpool
+		WHERE id = 1;
+		
+		IF (v_burstCurrent + v_amount) >= v_burstLimit THEN
+			CALL usp_requestpool_setSleep(v_burstSleep);
+		ELSE
+			UPDATE requestpool
+			SET burstcurrent = burstcurrent + v_amount,
+				burstend = DATE_ADD(
+					burstend,
+					INTERVAL CAST(burstduration / 10 AS INT) SECOND
+				)
+			WHERE id = 1;
+		END IF;
+    END IF;
+    
+    COMMIT;
+    
+    SELECT v_hasRequestsAvailable AS success;
+END //
+
+
+CREATE OR REPLACE PROCEDURE usp_requestpool_isSleeping()
+BEGIN
+	SELECT ufn_isResetPoolSleeping() AS isSleeping;
+END //
+
+
+DELIMITER ;

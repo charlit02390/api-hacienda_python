@@ -41,13 +41,13 @@
 					<b>Cliente:</b>
 				</td>
 				<td colspan="4">
-					{{receiver.nombre}}
+					{{recipient.name}}
 				</td>
 			</tr>
 			<tr>
-				<td> <b>{{type_iden_receptor}}:</b> </td>
+				<td> <b>{{type_iden_recipient}}:</b> </td>
 				<td colspan="2">
-					{{receiver.numeroIdentificacion}}
+					{{recipient.idn_number}}
 				</td>
 				<td> <b>Condici&oacuten:</b> </td>
 				<td>
@@ -57,7 +57,7 @@
 			<tr>
 				<td> <b>Tel&eacutefono:</b> </td>
 				<td colspan="2">
-					{{receiver.telefono}}
+					{{recipient.phone}}
 				</td>
 				<td> <b>Medio(s) de Pago:</b> </td>
 				<td>
@@ -67,17 +67,17 @@
 			<tr>
 				<td> <b>Correo:</b> </td>
 				<td colspan="2">
-					{{receiver.correo}}
+					{{recipient.email}}
 				</td>
 				<td> <b>Moneda:</b> </td>
 				<td>
-					{{currency.tipoMoneda}}{% if currency.tipoMoneda != "CRC" %} T.c. {{currency.tipoCambio}}{% endif %}
+					{{currency.tipoMoneda}}{% if currency.tipoMoneda != "CRC" and currency.tipoCambio %} T.c. {{currency.tipoCambio}}{% endif %}
 				</td>
 			</tr>
 			<tr>
 				<td> <b>Direcci&oacuten:</b> </td>
 				<td colspan="2">
-					{{receiver.otrasSenas}}
+					{{recipient.address}}
 				</td>
 				{% if order_num %}
 				<td> <b>Nro. de Orden</b> </td>

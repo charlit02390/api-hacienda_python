@@ -1,4 +1,3 @@
-
 import traceback
 
 from werkzeug.exceptions import InternalServerError, HTTPException
@@ -12,6 +11,31 @@ from helpers.errors import exceptions
 from helpers.errors.enums import InternalErrorCodes
 from helpers.debugging import DEBUG_G_VAR_NAME
 
+from jsonschema import validate  # for development
+
+schema = {
+    'type': 'object',
+    'properties': {
+        'status': {
+            'type': 'string'
+        },
+        'code': {
+            'type': 'number'
+        },
+        'detail': {
+            'type': 'string'
+        },
+        'message': {
+            'type': 'string'
+        }
+    },
+    'required': [
+        'status',
+        'code',
+        'detail'
+    ]
+}
+
 
 def internal_server_error_handler(exception: InternalServerError):
     _original_exception = exception.original_exception
@@ -22,18 +46,21 @@ def internal_server_error_handler(exception: InternalServerError):
 
 
 def generic_exception_handler(exception: InternalServerError):
-    error = {'http_status' : 500,
-             'status' : InternalErrorCodes.INTERNAL_ERROR,
-            'details' : exception.description}
+    error = {'http_status': 500,
+             'code': InternalErrorCodes.INTERNAL_ERROR,
+             'status': exceptions.IBError.status,
+             'detail': exception.description}
     if g.get(DEBUG_G_VAR_NAME):
         error['debug'] = exceptions.IBError._build_debug_info(exception.original_exception)
-        
+
     mimetype = 'application/json'
+    validate(instance=error, schema=schema)
     return FlaskApi.get_response(build_response(error), mimetype)
 
 
 def iberror_handler(exception: exceptions.IBError):
     data = exception.to_response()
+    validate(instance=data, schema=schema)
     http_status_code = exception.code
     response = (data, http_status_code)
     mimetype = 'application/json'

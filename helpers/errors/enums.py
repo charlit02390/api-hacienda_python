@@ -18,10 +18,11 @@ class InputErrorCodes(IntEnum):
     NO_RECORD_FOUND = _BASE + 4
     P12_PIN_MISMATCH = _BASE + 5
     INACTIVE_COMPANY = _BASE + 6
+    DOCUMENT_NOT_YET_SENT = _BASE + 7
 
 
 class ValidationErrorCodes(IntEnum):
-    _BASE = 3 * 10
+    _BASE = 3 * 100
     INVALID_KEY_COMPOSITION = _BASE + 1
     INVALID_DATETIME_FORMAT = _BASE + 2
     INVALID_EMAIL = _BASE + 3
@@ -31,6 +32,7 @@ class ValidationErrorCodes(IntEnum):
     INVALID_TOTAL = _BASE + 7
     TAXCUT_AUTH_NOT_FOUND = _BASE + 8
     INVALID_DOCUMENT = _BASE + 9
+    INVALID_CABYS = _BASE + 10
 
 
 class EmailErrorCodes(IntEnum):
@@ -58,6 +60,8 @@ class DBErrorCodes(IntEnum):
     DB_COMPANY_SIGNATURE = _COMPANY + 9
     DB_COMPANY_LOGO = _COMPANY + 10
     DB_COMPANY_VERIFY = _COMPANY + 11
+    DB_COMPANY_SELECT_DOCS_BY_TYPE = _COMPANY + 12
+    DB_COMPANY_SELECT_MESSAGES = _COMPANY + 13
     #   END_COMPANY
 
     #   COMPANY_SMTP

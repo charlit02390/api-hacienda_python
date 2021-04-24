@@ -7,8 +7,42 @@ servers:
   - url: https://localhost:3005
 components:
   responses:
-    404NoMatches:
-      description: No matches found for the requested query
+    OK:
+      description: Everything went well a proper response is sent
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/stdResponse'
+    Created:
+      description: The specified resource was created
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/stdResponse'
+    BadRequest:
+      description: The request contained invalid data.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+    Unauth:
+      description: The requester must use the proper authentification scheme in order to access the resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+    NotFound:
+      description: the specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+    Error:
+      description: an internal server error was produced
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
   requestBodies:
     search:
       required: true
@@ -237,7 +271,7 @@ components:
             - '99'
         NumeroDocumento:
           type: string
-          pattern: ^([aA][lL])[-]([0-9]{8})[-]([0-9]{2})$ # format al-00000000-00
+          # pattern: ^([aA][lL])[-]([0-9]{8})[-]([0-9]{2})$ # format al-00000000-00
         NombreInstitucion:
           type: string
         FechaEmision:
@@ -429,7 +463,7 @@ components:
               type: string
             numReferencia:
               type: string
-            codigo_vendedor:
+            codigoVendedor:
               type: string
             receptor:
               $ref: '#/components/schemas/doc_recipient'
@@ -553,16 +587,13 @@ components:
         data:
           type: object
           properties:
-            id_compania:
+            nombre_usuario:
               type: string
-            clave:
+            clavelarga:
               type: string
-            es_consulta:
-              type: boolean
           required:
-            - id_compania
-            - clave
-            - es_consulta
+            - nombre_usuario
+            - clavelarga
       required:
         - data
     key:
@@ -800,19 +831,37 @@ components:
       type: object
       properties:
         status:
-          type: integer
+          type: string
         message:
           type: string
         data:
           anyOf:
-          - type: object
-          - type: array
-        detail:
-          type: string
-        debug:
-          type: string
+            - type: object
+            - type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/rspns_cabys'
+                  - $ref: '#/components/schemas/rspns_sac'
+                  - $ref: '#/components/schemas/rspns_med'
+                  - $ref: '#/components/schemas/rspns_person'
+                  - type: object
       required:
       - status
+    errorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        code:
+          type: number
+        message:
+          type: string
+        detail:
+          type: object
+      required:
+        - status
+        - code
+        - detail
     idn:
       type: object
       properties:
@@ -920,10 +969,14 @@ paths:
         - companies
       operationId: routes.companies.route_list_companies
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     post:
@@ -938,10 +991,14 @@ paths:
               $ref: '#/components/schemas/company_post_put'
       operationId: routes.companies.route_save_company
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "201":
+          $ref: '#/components/responses/Created'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     put:
@@ -956,10 +1013,16 @@ paths:
               $ref: '#/components/schemas/company_post_put'
       operationId: routes.companies.route_modify_company
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
   /api/companies/{company_id}:
@@ -967,6 +1030,7 @@ paths:
       tags:
         - companies
       operationId: routes.companies.route_get_company_byid
+      summary: returns the data for the given company
       parameters:
         - name: company_id
           in: path
@@ -975,16 +1039,22 @@ paths:
           schema:
             type: string
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     delete:
       tags:
         - companies
-      description: deletes a single company based on the id supplied
+      summary: deletes a single company based on the id supplied
       operationId: routes.companies.route_delete_company
       parameters:
         - name: company_id
@@ -994,10 +1064,16 @@ paths:
           schema:
             type: string
       responses:
-        200:
-          description: The company has been deleted
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     patch:
@@ -1019,16 +1095,90 @@ paths:
             schema:
               $ref: '#/components/schemas/company'
       responses:
-        200:
-          description: company successfully patched
-        400:
-          description: invalid data
-        404:
-          description: company not found
-        500:
-          description: internal error
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
+  /api/companies/{company_id}/documents:
+    get:
+      tags:
+        - companies
+      operationId: routes.companies.get_documents
+      summary: Obtains the company's documents
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: doc_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - 'fe'
+              - 'fee'
+              - 'te'
+              - 'fec'
+              - 'nd'
+              - 'nc'
+        - name: files
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - jwt: []
+  /api/companies/{company_id}/messages:
+    get:
+      tags:
+        - companies
+      operationId: routes.companies.get_messages
+      summary: Obtains the company's recipient messages
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: files
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - jwt: [ ]
   /api/consult:
     get:
       tags:
@@ -1075,10 +1225,14 @@ paths:
                    tipo_documento:
                      type: string
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     patch:
@@ -1093,10 +1247,16 @@ paths:
             schema:
               $ref: '#/components/schemas/mh_validations'
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - api_key: []
     post:
@@ -1111,10 +1271,14 @@ paths:
               $ref: '#/components/schemas/document'
       operationId: routes.documents.create_documents
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "201":
+          $ref: '#/components/responses/Created'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - api_key: []
   /api/documents/{key}/pdf:
@@ -1131,14 +1295,70 @@ paths:
         schema:
           type: string
       responses:
-        200:
-          description: Ok
-        401:
-          description: Unauthorized
-        404:
-          description: Not Found
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
-      - api_key: []
+        - api_key: []
+  /api/documents/{key}/signed:
+    get:
+      tags:
+        - utilities
+      summary: Gets the api generated signed xml for the specified document
+      operationId: routes.documents.get_signed
+      parameters:
+        - name: key
+          in: path
+          description: the key for the document to fetch it's pdf
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - api_key: []
+  /api/documents/{key}/answer:
+    get:
+      tags:
+      - utilities
+      summary: Gets the api generated Hacienda Answer xml for the specified document
+      operationId: routes.documents.get_answer
+      parameters:
+      - name: key
+        in: path
+        description: the key for the document to fetch it's pdf
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - api_key: []
   /api/references/key:
     post:
       tags:
@@ -1173,10 +1393,14 @@ paths:
               $ref: '#/components/schemas/user'
       operationId: routes.users.create_new_user
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "201":
+          $ref: '#/components/responses/Created'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     put:
@@ -1191,10 +1415,16 @@ paths:
               $ref: '#/components/schemas/user'
       operationId: routes.users.route_modify_user
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     get:
@@ -1203,10 +1433,16 @@ paths:
       summary: Get the information of all users
       operationId: routes.users.route_list_users
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
   /api/users/companies:
@@ -1222,10 +1458,16 @@ paths:
               $ref: '#/components/schemas/user_companies'
       operationId: routes.users.route_delete_user_companies
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
   /api/users/{user_id}:
@@ -1242,10 +1484,16 @@ paths:
         schema:
           type: string
       responses:
-        200:
-          description: The user has been deleted
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     get:
@@ -1261,10 +1509,16 @@ paths:
         schema:
           type: string
       responses:
-        200:
-          description: the information was successfully displayed
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
   /api/companies/{company_id}/smtp:
@@ -1287,10 +1541,16 @@ paths:
         schema:
           type: string
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "201":
+          $ref: '#/components/responses/Created'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     get:
@@ -1306,10 +1566,16 @@ paths:
         schema:
           type: string
       responses:
-        200:
-          description: the information was successfully displayed
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     delete:
@@ -1325,10 +1591,16 @@ paths:
         schema:
           type: string
       responses:
-        200:
-          description: the information was successfully displayed
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     put:
@@ -1350,10 +1622,16 @@ paths:
         schema:
           type: string
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
   /api/email:
@@ -1369,10 +1647,14 @@ paths:
               $ref: '#/components/schemas/email'
       operationId: routes.emails.route_send_email
       responses:
-        200:
-          description: Everything is ok
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - jwt: []
     get:
@@ -1387,16 +1669,16 @@ paths:
               $ref: '#/components/schemas/email_mh'
       operationId: routes.emails.send_email_fe
       responses:
-        200:
-          description: Everything is ok
-          content:
-            'application/json':
-              schema:
-                type: string
-        401:
-          description: UnAuthorized Token please renew again
-        500:
-          description: there was an error starting the facial recognition system
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - api_key: []
   /api/auth:
@@ -1411,14 +1693,15 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/login'
-
       responses:
-        '200':
-          description: JWT token
-          content:
-            'application/json':
-              schema:
-                type: string
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - api_key: []
   /api/messages:
@@ -1434,20 +1717,39 @@ paths:
             schema:
               $ref: '#/components/schemas/message'
       responses:
-        '201':
-          description: Message created.
-          content:
-            'application/json':
-              schema:
-                $ref: '#/components/schemas/stdResponse'
-        '400':
-          description: Bad request
-          content:
-            'application/json':
-              schema:
-                $ref: '#/components/schemas/stdResponse'
+        "201":
+          $ref: '#/components/responses/Created'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
       - api_key: []
+    get:
+      tags:
+        - RecipientMessage
+      summary: Returns the RecipientMessages issued by a Company.
+      operationId: routes.messages.get_by_company
+      parameters:
+        - name: company
+          in: query
+          required: true
+          description: results will be filtered through this company identifier.
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - jwt: []
   /api/messages/{key}:
     get:
       tags:
@@ -1462,20 +1764,48 @@ paths:
         schema:
           type: string
       responses:
-        200:
-          description: Message handled correctly. Either the message was sent to hacienda or it's info was queried from Hacienda.
-          content:
-            'application/json':
-              schema:
-                $ref: '#/components/schemas/stdResponse'
-        404:
-          description: Messate not found.
-          content:
-            'application/json':
-              schema:
-                $ref: '#/components/schemas/stdResponse'
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
       security:
       - api_key: []
+  /api/messages/{key}/{prop_name}:
+    get:
+      tags:
+        - messages
+      summary: attempts to obtain the data for a given property of the resource
+      operationId: routes.messages.get_prop
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: prop_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+      security:
+        - api_key: []
   /cabys/meds:
     get:
       tags:
@@ -1491,14 +1821,14 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/search'
       responses:
-        200:
-          description: Matches found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rspns_med'
-        404:
-          $ref: '#/components/responses/404NoMatches'
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - api_key: []
   /cabys/sacs:
@@ -1525,14 +1855,14 @@ paths:
               required:
               - cabys
       responses:
-        200:
-          description: Matches found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rspns_sac'
-        400:
-          $ref: '#/components/responses/404NoMatches'
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - api_key: []
   /cabys/goods:
@@ -1546,14 +1876,14 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/search'
       responses:
-        200:
-          description: Matches found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rspns_cabys'
-        404:
-          $ref: '#/components/responses/404NoMatches'
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - api_key: []
   /cabys/goods/{code}:
@@ -1570,24 +1900,14 @@ paths:
           schema:
             type: string
       responses:
-        200:
-          description: ok #TODO
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/stdResponse'
-        400:
-          description: bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/stdResponse'
-        404:
-          description: not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/stdResponse'
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
   /registry/persons/{person_id}:
     get:
       tags:
@@ -1602,14 +1922,14 @@ paths:
           schema:
             type: string
       responses:
-        200:
-          description: Person found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/rspns_person'
-        404:
-          description: Person not found
+        "200":
+          $ref: '#/components/responses/OK'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauth'
+        default:
+          $ref: '#/components/responses/Error'
       security:
         - api_key: []
   /comprobantes:

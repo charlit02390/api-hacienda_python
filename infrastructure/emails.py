@@ -6,13 +6,15 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from mimetypes import guess_type
+
 # @todo: use the new email.message api
 
 _logger = logging.getLogger(__name__)
 
 
 def send_email(receiver, host, sender, port, encrypt_type,
-               user, password, subject, content, attachments): # encrypt_type not used.       
+               user, password, subject, content, attachments):  # encrypt_type not used.
+    # return True  # email killswitch
     # recipient circus 'cuz don't know python well enough
     # use deque for this...
     recipient_email = receiver.pop(0)
@@ -38,7 +40,7 @@ def send_email(receiver, host, sender, port, encrypt_type,
 
     if isinstance(attachments, list):
         for att in attachments:
-            try: # each attachment should be a dictionary
+            try:  # each attachment should be a dictionary
                 file = att['file']
                 name = att['name']
             except KeyError as ker:
@@ -55,14 +57,14 @@ def send_email(receiver, host, sender, port, encrypt_type,
     # Log in to server using secure context and send email
     context = ssl.create_default_context()
     with smtplib.SMTP(host, port) as server:
-        #server.set_debuglevel(2) # comment this out for prod or suffer b64 garbage in logs
+        # server.set_debuglevel(2) # comment this out for prod or suffer b64 garbage in logs
         server.ehlo()
         server.starttls(context=context)
         server.ehlo()
         server.login(user, password)
         server.sendmail(sender, receiver, text)
     return True
-    
+
 
 def create_email_files(file, filename):
     _type = guess_type(filename)

@@ -1,4 +1,3 @@
-
 import connexion
 import json
 from service import company_smtp as service

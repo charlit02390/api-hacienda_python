@@ -19,7 +19,7 @@ def create_company(data, files):
     if company_exists:
         raise InputError('The company with ID: {}'
                          .format(_company_user),
-                         status=InputErrorCodes.DUPLICATE_RECORD)
+                         error_code=InputErrorCodes.DUPLICATE_RECORD)
 
     signature = files['firma'].read()
     _pin = data['pin']
@@ -57,7 +57,7 @@ def create_company(data, files):
                              _state, _county, _district, _neighbor,
                              _address, _phone_code, _phone, _email,
                              _activity_code, _is_active, _user_mh,
-                             _pass_mh, b64signature, _logo,_pin,
+                             _pass_mh, b64signature, _logo, _pin,
                              _env, _expiration_date)
 
     return build_response_data({'message': 'company created successfully!'})
@@ -65,16 +65,16 @@ def create_company(data, files):
 
 def get_list_companies(id_company=0):
     if id_company == 0:
-        result = {'data': {'companies': companies.get_companies()} }
+        result = {'data': {'companies': companies.get_companies()}}
     else:
-        result = {'data' : {'company': companies.get_company_data(id_company)}}
+        result = {'data': {'company': companies.get_company_data(id_company)}}
 
     return build_response_data(result)
 
 
 def delete_company(id_company):
     companies.delete_company_data(id_company)
-    return build_response_data({'message':'The company has been succesfully deleted.'})
+    return build_response_data({'message': 'The company has been succesfully deleted.'})
 
 
 def modify_company(data, files):
@@ -84,7 +84,7 @@ def modify_company(data, files):
     )
     if not company_exists:
         raise InputError('Company', _company_user,
-                         status=InputErrorCodes.NO_RECORD_FOUND)
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     signature = files['firma'].read()
     _pin = data['pin']
@@ -146,5 +146,40 @@ def patch_company(company_id, data, files):
         'http_status': 400,
         'error': {
             'message': 'No valid fields received in order to proceed with a patch.'
+        }
+    })
+
+
+def get_documents_by_type(company_id: str, doc_type: str, files: str = None):
+    company = companies.get_company_data(company_id)
+    if not company:
+        raise InputError('Company', company_id,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    documents = companies.get_companys_documents_by_type(
+        company['id'],
+        doc_type,
+        True if files is not None else False
+    )
+    return build_response_data({
+        'data': {
+            'documents': documents
+        }
+    })
+
+
+def get_messages(company_id: str, files: str = None):
+    company = companies.get_company_data(company_id)
+    if not company:
+        raise InputError('Company', company_id,
+                         error_code=InputErrorCodes.NO_RECORD_FOUND)
+
+    messages = companies.get_messages(
+        company['id'],
+        True if files is not None else False
+    )
+    return build_response_data({
+        'data': {
+            'messages': messages
         }
     })

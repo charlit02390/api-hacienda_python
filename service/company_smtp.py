@@ -8,6 +8,7 @@ from helpers.errors.enums import InputErrorCodes
 from helpers.errors.exceptions import InputError
 from helpers.utils import build_response_data
 
+
 def save_company_smtp(data, id_company):
     _host = data['host']
     _user = data['user']
@@ -19,28 +20,28 @@ def save_company_smtp(data, id_company):
     company_exists = companies.verify_company(id_company)
 
     if not company_exists:
-        raise InputError('Company', str(id_company), status=InputErrorCodes.NO_RECORD_FOUND)
+        raise InputError('Company', str(id_company), error_code=InputErrorCodes.NO_RECORD_FOUND)
 
     company_smtp_exists = company_smtp.verify_company_smtp(id_company)
 
     if company_smtp_exists:
-        raise InputError(status=InputErrorCodes.DUPLICATE_RECORD,
+        raise InputError(error_code=InputErrorCodes.DUPLICATE_RECORD,
                          message="The company already has SMTP data.")
 
     company_smtp.save_company_smtp(_host, _user, _password, _port,
                                    _encrypt_type, id_company, _sender)
 
-    return build_response_data({'message' : 'SMTP data created successfully'})
+    return build_response_data({'message': 'SMTP data created successfully'})
 
 
 def get_company_smtp(id_company):
-    result = {'data':{'smtp': company_smtp.get_company_smtp(id_company)}}
+    result = {'data': {'smtp': company_smtp.get_company_smtp(id_company)}}
     return build_response_data(result)
 
 
 def delete_company_smtp(id_company):
     company_smtp.delete_company_smtp(id_company)
-    return build_response_data({'message' : "The company's SMTP has been deleted."})
+    return build_response_data({'message': "The company's SMTP has been deleted."})
 
 
 def modify_company_smtp(data, id_company):
@@ -54,9 +55,10 @@ def modify_company_smtp(data, id_company):
     company_smtp_exists = company_smtp.verify_company_smtp(id_company)
 
     if not company_smtp_exists:
-        raise InputError(status=InputErrorCodes.NO_RECORD_FOUND, message="The company doesn't have SMTP data to be updated.")
+        raise InputError(error_code=InputErrorCodes.NO_RECORD_FOUND,
+                         message="The company doesn't have SMTP data to be updated.")
 
-    company_smtp.modify_company_smtp(_host, _password, _user, _port,
+    company_smtp.modify_company_smtp(_host, _user, _password, _port,
                                      _encrypt_type, id_company, _sender)
 
-    return build_response_data({'message' : "The company's SMTP was successfully updated."})
+    return build_response_data({'message': "The company's SMTP was successfully updated."})
